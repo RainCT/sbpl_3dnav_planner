@@ -1,0 +1,225 @@
+goal_tolerance:
+  xyz: 0.02 0.02 0.02
+  yaw: 0.1
+
+object_pose_in_gripper:
+  right:
+    xyz: -0.20 -0.1 0.0
+    rpy: 0.0 0.0 0.0
+  left:
+    xyz: -0.20 0.1 0.0
+    rpy: 0.0 0.0 0.0
+
+use_current_pose_as_start_state: true
+start_state:
+  right: 0.5028 0.0231 0.0000 -1.1453 2.5936 -1.1810 -2.9137
+  left: 0.2315 0.0794 0.0000 -1.4092 2.9035 -1.3364 -3.0853
+  base: 2.02 2.02 3.14
+  spine: 0.0
+
+
+  - name: kitchen_run8_1
+    goal: dishwasher_6
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_2
+    goal: fridge2_2
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_3
+    goal: table_4
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_4
+    goal: lower_cabinet2_3
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_5
+    goal: fridge3_1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_6
+    goal: dishwasher_1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_7
+    goal: fridge1_1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_8
+    goal: fridge2_1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_9
+    goal: cabinet2_2
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_10
+    goal: fridge1_2
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_11
+    goal: counter1_4
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_12
+    goal: counter2_2
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_13
+    goal: dishwasher_2
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_14
+    goal: counter2_1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_15
+    goal: cabinet1_3
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_16
+    goal: fridge1_4
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_17
+    goal: cabinet1_2
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_18
+    goal: table_5
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_19
+    goal: fridge2_3
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_20
+    goal: cabinet1_6
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_21
+    goal: cabinet1_5
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_22
+    goal: lower_cabinet2_2
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_23
+    goal: counter1_6
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_24
+    goal: sink_3
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_25
+    goal: sink_1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_26
+    goal: counter1_3
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_27
+    goal: fridge3_4
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_28
+    goal: counter1_5
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_29
+    goal: table_6
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_30
+    goal: lower_cabinet2_4
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_31
+    goal: dishwasher_3
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_32
+    goal: sink_2
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_33
+    goal: table_3
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_34
+    goal: dishwasher_4
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_35
+    goal: table_1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_36
+    goal: table_2
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_37
+    goal: fridge1_3
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_38
+    goal: fridge3_3
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_39
+    goal: fridge2_4
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_40
+    goal: counter1_1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_run8_41
+    goal: cabinet1_1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"

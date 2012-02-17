@@ -1,0 +1,66 @@
+goal_tolerance:
+  xyz: 0.02 0.02 0.02
+  yaw: 0.1
+
+object_pose_in_gripper:
+  right:
+    xyz: -0.20 -0.1 0.0
+    rpy: 0.0 0.0 0.0
+  left:
+    xyz: -0.20 0.1 0.0
+    rpy: 0.0 0.0 0.0
+
+use_current_pose_as_start_state: true
+start_state:
+  right: 0.5028 0.0231 0.0000 -1.1453 2.5936 -1.1810 -2.9137
+  left: 0.2315 0.0794 0.0000 -1.4092 2.9035 -1.3364 -3.0853
+  base: 2.02 2.02 3.14
+  spine: 0.0
+
+experiments:
+
+  - name: kitchen_bootstrap4_1
+    goal: lower_cabinet2_3
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_bootstrap4_2
+    goal: fridge2_3
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_bootstrap4_3
+    goal: cabinet2_2
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_bootstrap4_4
+    goal: sink_3
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_bootstrap4_5
+    goal: counter2_1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_bootstrap4_6
+    goal: dishwasher_5
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_bootstrap4_7
+    goal: counter1_1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_bootstrap4_8
+    goal: table_6
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"
+  - name: kitchen_bootstrap4_9
+    goal: cabinet1_4
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin?"

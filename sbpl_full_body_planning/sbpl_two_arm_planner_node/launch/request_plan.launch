@@ -1,0 +1,31 @@
+<launch>
+
+  <node pkg="topic_tools" type="throttle" name="throttle_joint_states" args="messages joint_states 0.5" />
+
+  <node pkg="sbpl_two_arm_planner_node" type="requestPlan" name="request_plan" output="screen" respawn="false" >
+
+    <param name="start_x" value="0.745" />
+    <param name="start_y" value="0.50" />
+    <param name="start_z" value="0.920" />
+    <param name="start_r" value="0.0" />
+    <param name="start_p" value="0.0" />
+    <param name="start_y" value="0.0" />
+
+    <param name="goal_x" value="0.745" />
+    <param name="goal_y" value="1.0" />
+    <param name="goal_z" value="0.820" />
+    <param name="goal_r" value="0.0" />
+    <param name="goal_p" value="0.0" />
+    <param name="goal_y" value="0.0" />
+
+    <param name="right_arm_pose_on_object_x" value="0.0" />
+    <param name="right_arm_pose_on_object_y" value="-0.15" />
+    <param name="right_arm_pose_on_object_z" value="0.0" />
+
+    <param name="left_arm_pose_on_object_x" value="0.0" />
+    <param name="left_arm_pose_on_object_y" value="0.15" />
+    <param name="left_arm_pose_on_object_z" value="0.0" />
+
+  </node>
+
+</launch>

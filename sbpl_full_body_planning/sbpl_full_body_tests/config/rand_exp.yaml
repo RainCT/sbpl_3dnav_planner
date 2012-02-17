@@ -1,0 +1,271 @@
+goal_tolerance:
+  xyz: 0.02 0.02 0.02
+  yaw: 0.1
+
+object_pose_in_gripper:
+  right:
+    xyz: -0.20 -0.1 0.0
+    rpy: 0.0 0.0 0.0
+  left:
+    xyz: -0.20 0.1 0.0
+    rpy: 0.0 0.0 0.0
+
+use_current_pose_as_start_state: true
+start_state:
+  right: 0.0 0.018 0.00 -0.43 0.00 -0.00 0.0
+  left: 0.0 0.018 0.00 -0.43 0.00 -0.00 0.0
+  base: 1.9 0.6 1.57
+  spine: 0.0
+
+experiments:
+
+  - name: box0_pickup
+    goal: palette0
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 0"
+  - name: box0_putdown
+    goal: shelf0
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 0"
+  - name: box1_pickup
+    goal: palette1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 1"
+  - name: box1_putdown
+    goal: shelf1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 1"
+  - name: box2_pickup
+    goal: palette2
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 2"
+  - name: box2_putdown
+    goal: shelf2
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 2"
+  - name: box3_pickup
+    goal: palette3
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 3"
+  - name: box3_putdown
+    goal: shelf3
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 3"
+  - name: box4_pickup
+    goal: palette4
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 4"
+  - name: box4_putdown
+    goal: shelf4
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 4"
+  - name: box5_pickup
+    goal: palette5
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 5"
+  - name: box5_putdown
+    goal: shelf5
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 5"
+  - name: box6_pickup
+    goal: palette6
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 6"
+  - name: box6_putdown
+    goal: shelf6
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 6"
+  - name: box7_pickup
+    goal: palette7
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 7"
+  - name: box7_putdown
+    goal: shelf7
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 7"
+  - name: box8_pickup
+    goal: palette8
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 8"
+  - name: box8_putdown
+    goal: shelf8
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 8"
+  - name: box9_pickup
+    goal: palette9
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 9"
+  - name: box9_putdown
+    goal: shelf9
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 9"
+  - name: box10_pickup
+    goal: palette10
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 10"
+  - name: box10_putdown
+    goal: shelf10
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 10"
+  - name: box11_pickup
+    goal: palette11
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 11"
+  - name: box11_putdown
+    goal: shelf11
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 11"
+  - name: box12_pickup
+    goal: palette12
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 12"
+  - name: box12_putdown
+    goal: shelf12
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 12"
+  - name: box13_pickup
+    goal: palette13
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 13"
+  - name: box13_putdown
+    goal: shelf13
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 13"
+  - name: box14_pickup
+    goal: palette14
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 14"
+  - name: box14_putdown
+    goal: shelf14
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 14"
+  - name: box15_pickup
+    goal: palette15
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 15"
+  - name: box15_putdown
+    goal: shelf15
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 15"
+  - name: box16_pickup
+    goal: palette16
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 16"
+  - name: box16_putdown
+    goal: shelf16
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 16"
+  - name: box17_pickup
+    goal: palette17
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 17"
+  - name: box17_putdown
+    goal: shelf17
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 17"
+  - name: box18_pickup
+    goal: palette18
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 18"
+  - name: box18_putdown
+    goal: shelf18
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 18"
+  - name: box19_pickup
+    goal: palette19
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 19"
+  - name: box19_putdown
+    goal: shelf19
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 19"
+  - name: box20_pickup
+    goal: palette20
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 20"
+  - name: box20_putdown
+    goal: shelf20
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 20"
+  - name: box21_pickup
+    goal: palette21
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 21"
+  - name: box21_putdown
+    goal: shelf21
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 21"
+  - name: box22_pickup
+    goal: palette22
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 22"
+  - name: box22_putdown
+    goal: shelf22
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 22"
+  - name: box23_pickup
+    goal: palette23
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 23"
+  - name: box23_putdown
+    goal: shelf23
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 23"
+  - name: box24_pickup
+    goal: palette24
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 24"
+  - name: box24_putdown
+    goal: shelf24
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 24"

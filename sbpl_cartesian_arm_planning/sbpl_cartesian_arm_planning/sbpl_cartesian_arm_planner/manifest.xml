@@ -1,0 +1,27 @@
+<package>
+  <description brief="Motion Planning Research for a Robotic Manipulator">
+
+  </description>
+  <author>Benjamin Cohen/bcohen@seas.upenn.edu</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes="" />
+  <url>http://www.ros.org/wiki/sbpl</url>
+
+<!-- from sbpl_arm_planner -->
+	<depend package="roscpp"/>
+	<depend package="sbpl" />
+	<depend package="angles" />
+	<depend package="kdl" />
+	<depend package="kdl_parser" />
+	<depend package="distance_field" />
+	<depend package="urdf" />
+	<depend package="pr2_arm_kinematics"/>
+  <depend package="sbpl_arm_planner" />
+	<depend package="bullet" />
+	<depend package="tf" />
+
+    <export>
+     <cpp cflags="-I${prefix}/include  -O3 -g" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib  -lsbpl_cartesian_arm_planner"/>
+    </export>
+
+</package>

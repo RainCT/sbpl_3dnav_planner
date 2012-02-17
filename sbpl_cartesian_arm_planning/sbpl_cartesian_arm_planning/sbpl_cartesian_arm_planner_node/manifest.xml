@@ -1,0 +1,45 @@
+<package>
+  <description brief="sbpl_arm_planner_node">
+
+    sbpl_arm_planner_node
+
+  </description>
+  <author>Benjamin Cohen/bcohen@seas.upenn.edu</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes="" />
+  <url>http://www.ros.org/wiki/sbpl_arm_planner_node</url>
+
+<!-- from sbpl_arm_planner -->
+	<depend package="sbpl" />
+	<depend package="angles" />
+	<depend package="kdl" />
+	<depend package="urdf" />
+	<depend package="pr2_arm_kinematics"/>
+	<depend package="kinematics_msgs"/>
+
+<!-- from sbpl_arm_planner_node -->
+	<depend package="roscpp"/>
+	<depend package="rospy"/>
+	<depend package="bullet" />
+	<depend package="tf" />
+	<depend package="mapping_msgs" />
+	<depend package="motion_planning_msgs" />
+	<depend package="visualization_msgs" />
+	<depend package="sensor_msgs" />
+  <depend package="message_filters" />
+  <depend package="geometric_shapes" />
+
+  <depend package="planning_environment" />
+  <depend package="planning_models" />
+	<depend package="sbpl_cartesian_arm_planner" />
+  <!--	<depend package="sbpl_arm_planner_node" /> -->
+
+  <!-- for aviz -->
+  <depend package="pr2_controllers_msgs"/>
+  <depend package="actionlib"/>
+  <depend package="move_arm_msgs"/>
+  <depend package="geometry_msgs"/>
+  <depend package="kdl_parser" />
+
+
+</package>

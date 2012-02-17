@@ -1,0 +1,26 @@
+goal_tolerance:
+  xyz: 0.02 0.02 0.02
+  yaw: 0.1
+
+object_pose_in_gripper:
+  right:
+    xyz: -0.20 -0.1 0.0
+    rpy: 0.0 0.0 0.0
+  left:
+    xyz: -0.20 0.1 0.0
+    rpy: 0.0 0.0 0.0
+
+use_current_pose_as_start_state: true
+start_state:
+  right: 0.0 0.018 0.00 -0.43 0.00 -0.00 0.0
+  left: 0.0 0.018 0.00 -0.43 0.00 -0.00 0.0
+  base: 0.45 0.45 0.0
+  spine: 0.0
+
+experiments:
+
+  - name: goal0
+    goal: goal0
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin buddy?"

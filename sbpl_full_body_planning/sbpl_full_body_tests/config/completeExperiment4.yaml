@@ -1,0 +1,1021 @@
+goal_tolerance:
+  xyz: 0.02 0.02 0.02
+  yaw: 0.1
+
+object_pose_in_gripper:
+  right:
+    xyz: -0.20 -0.1 0.0
+    rpy: 0.0 0.0 0.0
+  left:
+    xyz: -0.20 0.1 0.0
+    rpy: 0.0 0.0 0.0
+
+use_current_pose_as_start_state: false
+start_state:
+  right: 0.0 0.018 0.00 -0.43 0.00 -0.00 0.0
+  left: 0.0 0.018 0.00 -0.43 0.00 -0.00 0.0
+  base: 1.9 0.6 1.57
+  spine: 0.0
+
+experiments:
+
+  - name: box000_pickup
+    goal: palette0
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 0"
+    start:
+      right: 0.000000 0.018000 0.000000 -0.430000 0.000000 -0.000000 0.000000
+      left: 0.000000 0.018000 0.000000 -0.430000 0.000000 -0.000000 0.000000
+      base: 1.900000 0.600000 1.570000
+      torso: 0.000000
+  - name: box000_putdown
+    goal: shelf0
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 0"
+    start:
+      right: -0.062593 -0.087845 0.000000 -0.380515 -2.610945 -0.530486 2.673045
+      left: -0.298393 -0.054682 0.000000 -0.460441 -2.310831 -0.698382 2.443681
+      base: 1.260000 1.140000 1.570796
+      torso: 0.000000
+  - name: box001_pickup
+    goal: palette1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 1"
+    start:
+      right: 0.038449 0.131497 0.000000 -0.423634 -2.636548 -0.331001 2.659825
+      left: -0.192450 0.243679 0.000000 -0.682932 -2.374891 -0.578069 2.462735
+      base: 1.420000 1.040000 3.141593
+      torso: 0.000000
+  - name: box001_putdown
+    goal: shelf1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 1"
+    start:
+      right: 0.141575 0.115371 0.000000 -0.659037 2.544872 -0.631036 -2.639898
+      left: -0.088031 -0.069211 0.000000 -0.222568 2.780165 -0.310697 -2.796095
+      base: 1.180000 1.220000 1.570796
+      torso: 0.000000
+  - name: box002_pickup
+    goal: palette2
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 2"
+    start:
+      right: 0.099669 0.846867 0.000000 -0.720939 0.672421 -0.160435 -0.666132
+      left: -0.157508 0.827198 0.000000 -0.684707 -0.841232 -0.212000 0.829968
+      base: 1.340000 0.920000 3.141600
+      torso: 0.000000
+  - name: box002_putdown
+    goal: shelf2
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 2"
+    start:
+      right: -0.037127 -0.235256 0.000000 -0.170705 -2.599551 -0.465056 2.647814
+      left: -0.273664 -0.146717 0.000000 -0.380567 -2.351453 -0.691222 2.480530
+      base: 1.380000 1.160000 1.570796
+      torso: 0.000000
+  - name: box003_pickup
+    goal: palette3
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 3"
+    start:
+      right: 0.012121 0.859493 0.000000 -0.486428 0.033245 -0.373253 -0.030957
+      left: -0.249252 0.720861 0.000000 -0.213420 -0.482521 -0.560513 0.417573
+      base: 1.280000 1.100000 3.141593
+      torso: 0.000000
+  - name: box003_putdown
+    goal: shelf3
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 3"
+    start:
+      right: 0.065655 0.108798 0.000000 -0.795187 2.741292 -0.727047 -2.835385
+      left: -0.165577 -0.088260 0.000000 -0.310855 3.062545 -0.400237 -3.068769
+      base: 1.220000 1.200000 1.570796
+      torso: 0.000000
+  - name: box004_pickup
+    goal: palette4
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 4"
+    start:
+      right: 0.039430 -0.236197 0.000000 -0.168523 -2.759520 -0.432505 2.791778
+      left: -0.197490 -0.080807 0.000000 -0.543793 -2.523777 -0.724103 2.652426
+      base: 1.300000 0.580000 2.748894
+      torso: 0.240000
+  - name: box004_putdown
+    goal: shelf4
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 4"
+    start:
+      right: -0.286352 0.425783 0.000000 -0.895213 -2.564598 -0.544258 2.633516
+      left: -0.494273 0.107246 0.000000 -0.178383 -1.701937 -0.498946 1.719891
+      base: 1.400000 1.260000 1.579523
+      torso: 0.000000
+  - name: box005_pickup
+    goal: palette5
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 5"
+    start:
+      right: 0.038449 -0.111032 0.000000 -0.191632 -2.650960 -0.340251 2.675088
+      left: -0.192450 0.046272 0.000000 -0.562698 -2.449042 -0.635648 2.552948
+      base: 1.360000 0.540000 3.141593
+      torso: 0.240000
+  - name: box005_putdown
+    goal: shelf5
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 5"
+    start:
+      right: -0.280039 0.659847 0.000000 -1.200431 -2.980014 -0.546387 3.003214
+      left: -0.420607 0.318500 0.349066 -0.487092 -2.238425 -0.410507 1.931877
+      base: 1.420000 1.260000 1.570796
+      torso: 0.000000
+  - name: box006_pickup
+    goal: palette6
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 6"
+    start:
+      right: 0.109560 0.159728 0.000000 -0.423267 2.742039 -0.284915 -2.756574
+      left: -0.109560 0.159728 0.000000 -0.423267 -2.742039 -0.284915 2.756574
+      base: 1.360000 0.680000 3.141593
+      torso: 0.000000
+  - name: box006_putdown
+    goal: shelf6
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 6"
+    start:
+      right: -0.085799 0.230262 0.000000 -0.390742 -2.074583 -0.323533 2.097422
+      left: -0.314860 0.245586 0.000000 -0.424895 -1.878631 -0.539101 1.925606
+      base: 1.380000 1.180000 1.570796
+      torso: 0.000000
+  - name: box007_pickup
+    goal: palette7
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 7"
+    start:
+      right: 0.070471 0.820134 0.000000 -0.544038 0.253378 -0.284725 -0.243583
+      left: -0.186058 0.768557 0.000000 -0.445324 -0.534973 -0.371323 0.504553
+      base: 1.360000 1.420000 3.132866
+      torso: 0.000000
+  - name: box007_putdown
+    goal: shelf7
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 7"
+    start:
+      right: -0.230285 0.828328 0.000000 -1.261432 -3.060878 -0.434348 3.068345
+      left: -0.358623 0.528065 0.349066 -0.691430 -2.183293 -0.404327 1.906027
+      base: 1.420000 1.260000 1.570796
+      torso: 0.000000
+  - name: box008_pickup
+    goal: palette8
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 8"
+    start:
+      right: 0.070471 0.785440 0.000000 -0.411872 0.191065 -0.379850 -0.177742
+      left: -0.186058 0.715294 0.000000 -0.272062 -0.413601 -0.478299 0.371564
+      base: 1.280000 1.420000 3.132866
+      torso: 0.000000
+  - name: box008_putdown
+    goal: shelf8
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 8"
+    start:
+      right: -0.416536 0.585545 0.000000 -1.040524 -2.352815 -0.606822 2.450583
+      left: -0.563714 0.224511 0.494533 -0.285661 -2.085661 -0.698388 1.614666
+      base: 1.460000 1.300000 1.570796
+      torso: 0.000000
+  - name: box009_pickup
+    goal: palette9
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 9"
+    start:
+      right: -0.013311 0.692862 0.000000 -0.154803 -0.393557 -0.573697 0.335554
+      left: -0.285236 0.795853 0.000000 -0.364482 -0.896039 -0.634996 0.788542
+      base: 1.220000 0.800000 2.748894
+      torso: 0.000000
+  - name: box009_putdown
+    goal: shelf9
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 9"
+    start:
+      right: -0.090271 0.045890 0.000000 -0.634983 -2.653862 -0.647613 2.741359
+      left: -0.331034 0.047826 0.000000 -0.639820 -2.334810 -0.771195 2.499102
+      base: 1.280000 1.140000 1.579523
+      torso: 0.000000
+  - name: box010_pickup
+    goal: palette10
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 10"
+    start:
+      right: 0.146121 1.006467 0.000000 -0.616533 0.753360 -0.513112 -0.685088
+      left: -0.140367 0.793334 0.000000 -0.217032 0.102481 -0.578708 -0.085883
+      base: 1.240000 0.580000 3.141593
+      torso: 0.000000
+  - name: box010_putdown
+    goal: shelf10
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 10"
+    start:
+      right: -0.307617 0.697147 0.000000 -1.137445 -2.885215 -0.453246 2.910139
+      left: -0.413387 0.208114 1.221730 -0.252748 -2.520685 -0.469560 1.310703
+      base: 1.460000 1.280000 1.570796
+      torso: 0.000000
+  - name: box011_pickup
+    goal: palette11
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 11"
+    start:
+      right: 0.061461 -0.130527 0.000000 -0.348441 3.008849 -0.482592 -3.023861
+      left: -0.162653 -0.212240 0.000000 -0.156630 -2.714480 -0.401631 2.744888
+      base: 1.420000 1.020000 3.141600
+      torso: 0.160000
+  - name: box011_putdown
+    goal: shelf11
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 11"
+    start:
+      right: -0.283096 0.800887 0.000000 -1.075961 -2.321915 -0.392131 2.361357
+      left: -0.422866 0.560776 0.349066 -0.630628 -1.919700 -0.627183 1.638463
+      base: 1.420000 1.260000 1.570796
+      torso: 0.000000
+  - name: box012_pickup
+    goal: palette12
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 12"
+    start:
+      right: 0.010526 -0.030133 0.000000 -0.595375 3.123617 -0.625585 -3.127020
+      left: -0.217554 -0.111529 0.000000 -0.394108 -2.713448 -0.546701 2.769860
+      base: 1.300000 0.660000 -3.132866
+      torso: 0.240000
+  - name: box012_putdown
+    goal: shelf12
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 12"
+    start:
+      right: -0.365189 0.949860 0.000000 -1.154824 -2.444387 -0.264794 2.461792
+      left: -0.524870 0.502428 0.349066 -0.307278 -1.457660 -0.480286 1.099212
+      base: 1.420000 1.260000 1.570796
+      torso: 0.000000
+  - name: box013_pickup
+    goal: palette13
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 13"
+    start:
+      right: -0.106991 0.882804 0.000000 -0.462464 -0.654307 -0.513016 0.589120
+      left: -0.390743 0.847121 0.000000 -0.394957 -0.989751 -0.724417 0.850917
+      base: 1.200000 1.140000 3.141593
+      torso: 0.000000
+  - name: box013_putdown
+    goal: shelf13
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 13"
+    start:
+      right: -0.154319 0.013140 0.000000 -0.790966 -2.923446 -0.789818 2.986788
+      left: -0.380506 -0.161160 0.000000 -0.345666 -2.452355 -0.623641 2.552023
+      base: 1.420000 1.220000 1.579523
+      torso: 0.000000
+  - name: box014_pickup
+    goal: palette14
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 14"
+    start:
+      right: 0.137587 0.243076 0.000000 -0.613735 2.776483 -0.394262 -2.802317
+      left: -0.086960 0.260633 0.000000 -0.654127 -2.918019 -0.402498 2.935363
+      base: 1.360000 0.680000 3.141593
+      torso: 0.000000
+  - name: box014_putdown
+    goal: shelf14
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 14"
+    start:
+      right: -0.110455 0.252888 0.000000 -0.253138 -1.571586 -0.306804 1.571625
+      left: -0.338332 0.230956 0.000000 -0.204670 -1.526445 -0.535265 1.519245
+      base: 1.060000 1.360000 1.186824
+      torso: 0.000000
+  - name: box015_pickup
+    goal: palette15
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 15"
+    start:
+      right: 0.035882 0.237179 0.000000 -0.667758 3.055801 -0.431978 -3.063648
+      left: -0.187514 0.182705 0.000000 -0.541362 -2.646030 -0.402830 2.680118
+      base: 1.320000 0.720000 3.141593
+      torso: 0.000000
+  - name: box015_putdown
+    goal: shelf15
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 15"
+    start:
+      right: -0.307617 0.719622 0.000000 -1.115015 -2.859265 -0.409956 2.881575
+      left: -0.446677 0.221255 1.221730 -0.162237 -2.400056 -0.434817 1.174315
+      base: 1.800000 1.220000 1.954769
+      torso: 0.000000
+  - name: box016_pickup
+    goal: palette16
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 16"
+    start:
+      right: 0.010000 0.243112 0.000000 -0.483071 3.099541 -0.240163 -3.100747
+      left: -0.206992 0.113211 0.000000 -0.191757 -1.928380 -0.221194 1.936543
+      base: 1.380000 1.120000 3.141593
+      torso: 0.000000
+  - name: box016_putdown
+    goal: shelf16
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 16"
+    start:
+      right: -0.154319 0.013140 0.000000 -0.790966 -2.923446 -0.789818 2.986788
+      left: -0.380506 -0.161160 0.000000 -0.345666 -2.452355 -0.623641 2.552023
+      base: 1.380000 1.240000 1.579523
+      torso: 0.000000
+  - name: box017_pickup
+    goal: palette17
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 17"
+    start:
+      right: 0.010810 -0.070030 0.000000 -0.651414 3.125226 -0.721511 -3.129304
+      left: -0.223243 -0.139288 0.000000 -0.472897 -2.765347 -0.646685 2.836162
+      base: 1.420000 1.020000 3.141593
+      torso: 0.160000
+  - name: box017_putdown
+    goal: shelf17
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 17"
+    start:
+      right: -0.037127 -0.235256 0.000000 -0.170705 -2.599551 -0.465056 2.647814
+      left: -0.273664 -0.146717 0.000000 -0.380567 -2.351453 -0.691222 2.480530
+      base: 1.300000 1.260000 1.570796
+      torso: 0.080000
+  - name: box018_pickup
+    goal: palette18
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 18"
+    start:
+      right: 0.068464 0.749578 0.000000 -0.473603 0.246532 -0.284131 -0.237021
+      left: -0.180859 0.690675 0.000000 -0.356854 -0.509025 -0.378046 0.478473
+      base: 1.280000 1.040000 3.141593
+      torso: 0.000000
+  - name: box018_putdown
+    goal: shelf18
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 18"
+    start:
+      right: 0.035882 -0.063499 0.000000 -0.439064 3.067204 -0.503734 -3.076416
+      left: -0.187514 -0.158063 0.000000 -0.215145 -2.661751 -0.415685 2.697254
+      base: 1.220000 1.140000 1.579523
+      torso: 0.000000
+  - name: box019_pickup
+    goal: palette19
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 19"
+    start:
+      right: -0.015788 -0.030324 0.000000 -0.594892 -3.114621 -0.625388 3.119724
+      left: -0.242500 -0.140170 0.000000 -0.325429 -2.637995 -0.520827 2.695758
+      base: 1.300000 0.660000 -3.132866
+      torso: 0.240000
+  - name: box019_putdown
+    goal: shelf19
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 19"
+    start:
+      right: -0.106560 0.903832 0.000000 -0.948337 2.029759 -0.100187 -2.031759
+      left: -0.299327 0.559805 0.349066 -0.299044 -0.964116 -0.344237 0.629100
+      base: 1.420000 1.320000 1.570796
+      torso: 0.000000
+  - name: box020_pickup
+    goal: palette20
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 20"
+    start:
+      right: 0.192450 0.276318 0.000000 -0.690304 2.347092 -0.560115 -2.429737
+      left: -0.038449 0.164825 0.000000 -0.434861 2.603475 -0.311837 -2.624968
+      base: 1.360000 0.660000 3.141593
+      torso: 0.000000
+  - name: box020_putdown
+    goal: shelf20
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 20"
+    start:
+      right: -0.354897 0.243637 0.000000 -0.983835 -2.639149 -0.806092 2.778080
+      left: -0.561766 -0.040981 0.000000 -0.287683 -2.044652 -0.641805 2.140265
+      base: 1.440000 1.320000 1.579523
+      torso: 0.000000
+  - name: box021_pickup
+    goal: palette21
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 21"
+    start:
+      right: -0.011323 0.097911 0.000000 -0.411766 -2.542701 -0.374438 2.575676
+      left: -0.242337 0.175845 0.000000 -0.592725 -2.282802 -0.595663 2.377037
+      base: 1.320000 1.080000 3.141593
+      torso: 0.000000
+  - name: box021_putdown
+    goal: shelf21
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 21"
+    start:
+      right: -0.141956 0.075262 0.000000 -0.633665 -2.555408 -0.643451 2.653255
+      left: -0.379561 0.041629 0.000000 -0.551422 -2.215274 -0.749466 2.369321
+      base: 1.060000 1.400000 1.178097
+      torso: 0.000000
+  - name: box022_pickup
+    goal: palette22
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 22"
+    start:
+      right: 0.035882 -0.063499 0.000000 -0.439064 3.067204 -0.503734 -3.076416
+      left: -0.187514 -0.158063 0.000000 -0.215145 -2.661751 -0.415685 2.697254
+      base: 1.380000 1.220000 3.141600
+      torso: 0.180000
+  - name: box022_putdown
+    goal: shelf22
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 22"
+    start:
+      right: 0.066585 0.496940 0.000000 -0.279324 -0.543669 -0.252841 0.529474
+      left: -0.176166 0.664039 0.000000 -0.622036 -1.463748 -0.374766 1.455832
+      base: 1.060000 1.280000 1.186824
+      torso: 0.000000
+  - name: box023_pickup
+    goal: palette23
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 23"
+    start:
+      right: 0.212144 0.163905 0.000000 -0.498028 2.560467 -0.393638 -2.596372
+      left: -0.010256 0.238866 0.000000 -0.671695 -3.117145 -0.432943 3.119400
+      base: 1.300000 0.600000 3.141593
+      torso: 0.000000
+  - name: box023_putdown
+    goal: shelf23
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 23"
+    start:
+      right: -0.413425 0.865952 0.000000 -1.005611 -1.878055 -0.435086 1.907388
+      left: -0.563724 0.477660 0.569066 -0.277542 -1.819904 -0.748465 1.214870
+      base: 1.480000 1.320000 1.570796
+      torso: 0.000000
+  - name: box024_pickup
+    goal: palette24
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 24"
+    start:
+      right: 0.118526 0.341068 0.000000 -0.771006 -2.956643 -0.436492 2.973644
+      left: -0.122176 0.450403 0.000000 -1.023772 -2.595398 -0.647125 2.690033
+      base: 1.280000 0.640000 2.748894
+      torso: 0.000000
+  - name: box024_putdown
+    goal: shelf24
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 24"
+    start:
+      right: 0.037844 0.289551 0.000000 -0.790663 2.680661 -0.548885 -2.740857
+      left: -0.185679 0.018657 0.000000 -0.167059 3.069544 -0.148782 -3.070337
+      base: 1.260000 1.120000 1.570796
+      torso: 0.000000
+  - name: box025_pickup
+    goal: palette25
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 25"
+    start:
+      right: 0.012121 0.859493 0.000000 -0.486428 0.033245 -0.373253 -0.030957
+      left: -0.249252 0.720861 0.000000 -0.213420 -0.482521 -0.560513 0.417573
+      base: 1.340000 1.420000 3.132866
+      torso: 0.000000
+  - name: box025_putdown
+    goal: shelf25
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 25"
+    start:
+      right: -0.062593 0.360442 0.000000 -0.615779 -2.332393 -0.361632 2.365816
+      left: -0.298393 0.385125 0.000000 -0.670185 -2.051303 -0.565026 2.123753
+      base: 1.380000 1.160000 1.570796
+      torso: 0.000000
+  - name: box026_pickup
+    goal: palette26
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 26"
+    start:
+      right: 0.061461 -0.130527 0.000000 -0.348441 3.008849 -0.482592 -3.023861
+      left: -0.162653 -0.212240 0.000000 -0.156630 -2.714480 -0.401631 2.744888
+      base: 1.360000 0.920000 3.141600
+      torso: 0.240000
+  - name: box026_putdown
+    goal: shelf26
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 26"
+    start:
+      right: 0.167122 0.221512 0.000000 -0.700287 2.451405 -0.592451 -2.541046
+      left: -0.063279 0.088386 0.000000 -0.389843 2.718035 -0.328700 -2.738275
+      base: 1.180000 1.220000 1.570796
+      torso: 0.000000
+  - name: box027_pickup
+    goal: palette27
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 27"
+    start:
+      right: 0.039430 -0.082373 0.000000 -0.393616 -2.809115 -0.499298 2.847256
+      left: -0.197490 0.023402 0.000000 -0.654345 -2.527897 -0.729281 2.657939
+      base: 1.320000 1.160000 2.748894
+      torso: 0.180000
+  - name: box027_putdown
+    goal: shelf27
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 27"
+    start:
+      right: -0.230285 0.753222 0.000000 -1.324612 -3.078900 -0.572284 3.088869
+      left: -0.409366 0.494624 0.139626 -0.784729 -2.407536 -0.421261 2.325052
+      base: 1.420000 1.260000 1.570796
+      torso: 0.000000
+  - name: box028_pickup
+    goal: palette28
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 28"
+    start:
+      right: 0.118925 0.142244 0.000000 -0.801832 2.652486 -0.720775 -2.761198
+      left: -0.115527 0.001299 0.000000 -0.454401 2.958631 -0.459761 -2.977271
+      base: 1.380000 0.660000 3.141593
+      torso: 0.240000
+  - name: box028_putdown
+    goal: shelf28
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 28"
+    start:
+      right: -0.054260 0.545956 0.000000 -0.318755 -1.131476 -0.497893 1.079627
+      left: -0.330363 0.742176 0.000000 -0.712131 -1.536770 -0.723573 1.525408
+      base: 1.080000 1.320000 1.178097
+      torso: 0.000000
+  - name: box029_pickup
+    goal: palette29
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 29"
+    start:
+      right: 0.145327 0.091074 0.000000 -0.749375 2.615037 -0.729802 -2.732758
+      left: -0.090267 -0.039934 0.000000 -0.425368 2.908586 -0.476377 -2.933744
+      base: 1.300000 0.920000 3.141593
+      torso: 0.240000
+  - name: box029_putdown
+    goal: shelf29
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 29"
+    start:
+      right: -0.041345 0.737121 0.000000 -0.449247 -0.706428 -0.371207 0.671817
+      left: -0.304715 0.775942 0.000000 -0.524565 -1.144488 -0.555748 1.079840
+      base: 1.400000 1.260000 1.570796
+      torso: 0.000000
+  - name: box030_pickup
+    goal: palette30
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 30"
+    start:
+      right: 0.099669 0.812144 0.000000 -0.528953 0.343679 -0.299774 -0.329460
+      left: -0.157508 0.786759 0.000000 -0.480522 -0.484877 -0.343232 0.460520
+      base: 1.280000 0.580000 3.141600
+      torso: 0.000000
+  - name: box030_putdown
+    goal: shelf30
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 30"
+    start:
+      right: -0.336002 0.978391 0.000000 -1.140596 -2.425367 -0.213640 2.436737
+      left: -0.496683 0.549886 0.349066 -0.344756 -1.413845 -0.471606 1.062601
+      base: 1.420000 1.260000 1.570796
+      torso: 0.000000
+  - name: box031_pickup
+    goal: palette31
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 31"
+    start:
+      right: 0.358526 0.704799 0.000000 -0.385219 1.101677 -0.631860 -1.009948
+      left: 0.065953 0.718472 -0.174533 -0.417310 0.996830 -0.450652 -0.806978
+      base: 1.260000 0.520000 3.141593
+      torso: 0.000000
+  - name: box031_putdown
+    goal: shelf31
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 31"
+    start:
+      right: -0.086451 1.039691 0.000000 -0.672956 -0.237153 -0.376338 0.221111
+      left: -0.363147 0.854693 0.000000 -0.339162 -0.656678 -0.621011 0.559951
+      base: 1.460000 1.320000 1.570796
+      torso: 0.000000
+  - name: box032_pickup
+    goal: palette32
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 32"
+    start:
+      right: -0.044415 0.079765 0.000000 -0.886950 -3.080142 -0.808129 3.099111
+      left: -0.281232 0.005080 0.000000 -0.685838 -2.711277 -0.727910 2.811457
+      base: 1.320000 0.680000 -3.132866
+      torso: 0.240000
+  - name: box032_putdown
+    goal: shelf32
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 32"
+    start:
+      right: -0.069691 0.730921 0.000000 -0.437060 -0.754899 -0.393793 0.715297
+      left: -0.331870 0.744084 0.000000 -0.462882 -1.126880 -0.592080 1.050367
+      base: 1.120000 1.280000 1.579523
+      torso: 0.000000
+  - name: box033_pickup
+    goal: palette33
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 33"
+    start:
+      right: 0.092619 -0.113090 0.000000 -0.462985 -2.952759 -0.584298 2.983518
+      left: -0.149281 0.003358 0.000000 -0.764216 -2.660337 -0.821103 2.799725
+      base: 1.400000 0.920000 3.141593
+      torso: 0.240000
+  - name: box033_putdown
+    goal: shelf33
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 33"
+    start:
+      right: -0.242579 0.738967 0.000000 -1.021235 -2.106270 -0.516840 2.169633
+      left: -0.384137 0.631268 0.349066 -0.843912 -2.009388 -0.856670 1.804047
+      base: 1.420000 1.260000 1.570796
+      torso: 0.000000
+  - name: box034_pickup
+    goal: palette34
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 34"
+    start:
+      right: 0.106482 0.744233 0.000000 -0.189643 -0.169477 -0.561071 0.143882
+      left: -0.172750 0.944634 0.000000 -0.575274 -0.819896 -0.516094 0.750179
+      base: 1.200000 0.740000 2.748894
+      torso: 0.000000
+  - name: box034_putdown
+    goal: shelf34
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 34"
+    start:
+      right: 0.115841 0.165007 0.000000 -0.707427 2.582836 -0.617959 -2.670300
+      left: -0.112676 -0.029580 0.000000 -0.248668 2.845240 -0.290244 -2.856963
+      base: 1.180000 1.200000 1.570800
+      torso: 0.000000
+  - name: box035_pickup
+    goal: palette35
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 35"
+    start:
+      right: 0.303013 0.905317 0.000000 -0.435403 0.877959 -0.671754 -0.756026
+      left: 0.014138 0.844244 0.000000 -0.318802 0.402671 -0.562342 -0.345869
+      base: 1.200000 0.500000 3.141593
+      torso: 0.000000
+  - name: box035_putdown
+    goal: shelf35
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 35"
+    start:
+      right: -0.252700 1.080892 0.069813 -1.059930 -1.419327 -0.119283 1.385200
+      left: -0.467364 0.655301 0.349066 -0.299867 -1.128959 -0.524108 0.761787
+      base: 1.780000 1.280000 1.963495
+      torso: 0.000000
+  - name: box036_pickup
+    goal: palette36
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 36"
+    start:
+      right: 0.010000 0.185988 0.000000 -0.483071 3.107445 -0.297246 -3.108941
+      left: -0.206992 0.057472 0.000000 -0.191757 -2.138358 -0.246211 2.152326
+      base: 1.420000 1.080000 3.141593
+      torso: 0.000000
+  - name: box036_putdown
+    goal: shelf36
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 36"
+    start:
+      right: 0.232985 0.650540 0.174533 -0.791211 -2.689440 -0.158646 2.555429
+      left: -0.071393 0.804374 0.000000 -1.082588 -2.356757 -0.383693 2.394465
+      base: 1.400000 1.220000 1.570796
+      torso: 0.000000
+  - name: box037_pickup
+    goal: palette37
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 37"
+    start:
+      right: 0.145327 0.134901 0.000000 -0.783071 2.609267 -0.721058 -2.725046
+      left: -0.090267 0.011529 0.000000 -0.478857 2.909489 -0.478348 -2.934760
+      base: 1.320000 0.580000 3.141593
+      torso: 0.240000
+  - name: box037_putdown
+    goal: shelf37
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 37"
+    start:
+      right: -0.068315 0.264250 0.000000 -0.802205 -3.008842 -0.541852 3.027681
+      left: -0.291457 0.149369 0.000000 -0.530912 -2.463394 -0.475749 2.520067
+      base: 1.380000 1.180000 1.579523
+      torso: 0.000000
+  - name: box038_pickup
+    goal: palette38
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 38"
+    start:
+      right: 0.121684 0.054965 0.000000 -0.735496 -3.023261 -0.683965 3.049706
+      left: -0.125610 0.148015 0.000000 -0.987826 -2.720379 -0.884986 2.865122
+      base: 1.320000 1.160000 2.748894
+      torso: 0.180000
+  - name: box038_putdown
+    goal: shelf38
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 38"
+    start:
+      right: -0.349553 0.544707 0.000000 -1.021323 -2.217623 -0.708392 2.353422
+      left: -0.560390 0.401196 0.100000 -0.708727 -1.937433 -0.866586 1.974971
+      base: 1.420000 1.260000 1.570796
+      torso: 0.000000
+  - name: box039_pickup
+    goal: palette39
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 39"
+    start:
+      right: -0.011916 -0.236248 0.000000 -0.308625 -2.754441 -0.579543 2.812822
+      left: -0.255160 -0.158661 0.000000 -0.501303 -2.472398 -0.780095 2.629401
+      base: 1.240000 0.680000 2.748894
+      torso: 0.180000
+  - name: box039_putdown
+    goal: shelf39
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 39"
+    start:
+      right: 0.118925 0.098611 0.000000 -0.768785 2.658065 -0.730134 -2.768656
+      left: -0.115527 -0.051453 0.000000 -0.397870 2.957230 -0.456045 -2.975709
+      base: 1.180000 1.220000 1.570796
+      torso: 0.000000
+  - name: box040_pickup
+    goal: palette40
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 40"
+    start:
+      right: 0.013918 -0.143859 0.000000 -0.316654 -2.748119 -0.492911 2.790996
+      left: -0.223186 -0.042127 0.000000 -0.565079 -2.478113 -0.722695 2.611313
+      base: 1.320000 1.240000 3.141593
+      torso: 0.180000
+  - name: box040_putdown
+    goal: shelf40
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 40"
+    start:
+      right: -0.076630 0.356654 0.000000 -0.355584 -1.568685 -0.469330 1.568429
+      left: -0.338183 0.530123 0.000000 -0.725304 -1.783846 -0.751818 1.858730
+      base: 1.060000 1.300000 1.178097
+      torso: 0.000000
+  - name: box041_pickup
+    goal: palette41
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 41"
+    start:
+      right: 0.010000 0.267138 0.000000 -0.472913 3.092690 -0.206015 -3.093723
+      left: -0.206992 0.129337 0.000000 -0.165454 -1.741076 -0.210075 1.744828
+      base: 1.380000 1.120000 3.141593
+      torso: 0.000000
+  - name: box041_putdown
+    goal: shelf41
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 41"
+    start:
+      right: 0.053223 0.646186 0.000000 -0.836931 -2.063493 -0.387577 2.096281
+      left: -0.227584 0.817971 0.000000 -1.174059 -2.024814 -0.703369 2.140028
+      base: 1.080000 1.260000 1.178097
+      torso: 0.000000
+  - name: box042_pickup
+    goal: palette42
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 42"
+    start:
+      right: 0.015501 0.739959 0.000000 -0.454812 -0.576381 -0.336336 0.550351
+      left: -0.249021 0.825204 0.000000 -0.617721 -1.163401 -0.488377 1.116257
+      base: 1.320000 1.080000 3.141593
+      torso: 0.000000
+  - name: box042_putdown
+    goal: shelf42
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 42"
+    start:
+      right: 0.167122 0.348137 0.000000 -0.719407 2.332555 -0.513589 -2.401548
+      left: -0.063279 0.215643 0.000000 -0.421423 2.561626 -0.244545 -2.575386
+      base: 1.180000 1.220000 1.570796
+      torso: 0.000000
+  - name: box043_pickup
+    goal: palette43
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 43"
+    start:
+      right: 0.043909 -0.083439 0.000000 -0.792932 -2.944262 -0.885990 3.015798
+      left: -0.220547 -0.037429 0.000000 -0.933915 -2.649270 -1.028777 2.871648
+      base: 1.340000 1.480000 3.141593
+      torso: 0.180000
+  - name: box043_putdown
+    goal: shelf43
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 43"
+    start:
+      right: -0.213823 -0.007097 0.000000 -0.824220 -2.855737 -0.851898 2.950404
+      left: -0.438190 -0.222674 0.000000 -0.269423 -2.360343 -0.646702 2.472067
+      base: 1.440000 1.300000 1.579523
+      torso: 0.020000
+  - name: box044_pickup
+    goal: palette44
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 44"
+    start:
+      right: 0.113584 1.042981 0.000000 -0.744368 0.827785 -0.427010 -0.780795
+      left: -0.170706 0.851506 0.000000 -0.403350 0.059125 -0.448839 -0.053281
+      base: 1.160000 0.920000 -2.757620
+      torso: 0.000000
+  - name: box044_putdown
+    goal: shelf44
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 44"
+    start:
+      right: -0.242579 0.019523 0.000000 -0.901487 -2.595215 -0.957725 2.804999
+      left: -0.496333 -0.048615 0.000000 -0.708886 -2.262370 -0.977484 2.547660
+      base: 1.460000 1.280000 1.570796
+      torso: 0.000000
+  - name: box045_pickup
+    goal: palette45
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 45"
+    start:
+      right: 0.038449 0.131497 0.000000 -0.423634 -2.636548 -0.331001 2.659825
+      left: -0.192450 0.243679 0.000000 -0.682932 -2.374891 -0.578069 2.462735
+      base: 1.420000 1.040000 3.141593
+      torso: 0.000000
+  - name: box045_putdown
+    goal: shelf45
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 45"
+    start:
+      right: 0.012499 0.916739 0.000000 -0.525017 0.032730 -0.391910 -0.030250
+      left: -0.256708 0.793698 0.000000 -0.290416 -0.498428 -0.559918 0.432090
+      base: 1.440000 1.400000 1.570796
+      torso: 0.000000
+  - name: box046_pickup
+    goal: palette46
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 46"
+    start:
+      right: -0.145723 0.451657 0.000000 -0.884288 -2.437516 -0.544733 2.513393
+      left: -0.389295 0.421254 0.000000 -0.816385 -2.096645 -0.693298 2.217201
+      base: 1.360000 1.160000 3.141593
+      torso: 0.000000
+  - name: box046_putdown
+    goal: shelf46
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 46"
+    start:
+      right: -0.040203 0.709295 0.000000 -0.648570 -1.324177 -0.244081 1.316959
+      left: -0.296329 0.742692 0.000000 -0.713123 -1.515778 -0.493492 1.508342
+      base: 1.400000 1.240000 1.562070
+      torso: 0.000000
+  - name: box047_pickup
+    goal: palette47
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 47"
+    start:
+      right: 0.070471 0.785440 0.000000 -0.411872 0.191065 -0.379850 -0.177742
+      left: -0.186058 0.715294 0.000000 -0.272062 -0.413601 -0.478299 0.371564
+      base: 1.280000 1.420000 3.132866
+      torso: 0.000000
+  - name: box047_putdown
+    goal: shelf47
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 47"
+    start:
+      right: -0.254936 0.059772 0.000000 -1.024865 -2.834614 -0.987307 2.968689
+      left: -0.485227 -0.089809 0.000000 -0.599368 -2.449315 -0.819367 2.626501
+      base: 1.480000 1.240000 1.579523
+      torso: 0.000000
+  - name: box048_pickup
+    goal: palette48
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 48"
+    start:
+      right: 0.089236 0.057629 0.000000 -0.664397 2.985950 -0.612476 -3.013901
+      left: -0.141160 0.041780 0.000000 -0.624730 -2.888964 -0.597866 2.931379
+      base: 1.300000 0.920000 3.141593
+      torso: 0.240000
+  - name: box048_putdown
+    goal: shelf48
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 48"
+    start:
+      right: -0.354897 0.622906 0.000000 -0.983835 -2.332095 -0.500659 2.397511
+      left: -0.459323 0.212116 1.221730 -0.275885 -2.623763 -0.726919 1.402236
+      base: 1.460000 1.300000 1.570796
+      torso: 0.000000
+  - name: box049_pickup
+    goal: palette49
+    pre_action: attach
+    post_action: detach
+    sound_bite: "picking up box 49"
+    start:
+      right: 0.099669 -0.041989 0.000000 -0.919363 3.020236 -0.964813 -3.072241
+      left: -0.157508 -0.051466 0.000000 -0.889572 -2.947543 -0.950030 3.027778
+      base: 1.340000 1.480000 3.132866
+      torso: 0.180000
+  - name: box049_putdown
+    goal: shelf49
+    pre_action: attach
+    post_action: detach
+    sound_bite: "putting down box 49"
+    start:
+      right: 0.115841 0.203672 0.000000 -0.728735 2.569547 -0.603302 -2.654081
+      left: -0.112676 0.021171 0.000000 -0.300386 2.846182 -0.291169 -2.857946
+      base: 1.540000 1.180000 1.954769
+      torso: 0.000000

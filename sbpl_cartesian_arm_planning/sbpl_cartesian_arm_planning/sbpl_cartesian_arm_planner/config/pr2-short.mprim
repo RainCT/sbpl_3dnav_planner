@@ -1,0 +1,125 @@
+degrees_of_freedom: 7
+xyz_resolution(meters): 0.02
+rpy_resolution(degrees): 2.0
+free_angle_resolution(degrees): 5.0
+
+type: long_distance
+group: 7
+intermediate_steps: 1
+1 0 0 0 0 0 0
+
+type: long_distance
+group: 7
+intermediate_steps: 1
+-1 0 0 0 0 0 0
+
+type: long_distance
+group: 7
+intermediate_steps: 1
+0 1 0 0 0 0 0
+
+type: long_distance
+group: 7
+intermediate_steps: 1
+0 -1 0 0 0 0 0
+
+type: long_distance
+group: 7
+intermediate_steps: 1
+0 0 1 0 0 0 0
+
+type: long_distance
+group: 7
+intermediate_steps: 1
+0 0 -1 0 0 0 0
+
+type: long_distance
+group: 8
+intermediate_steps: 1
+1 1 0 0 0 0 0 
+
+type: long_distance
+group: 8
+intermediate_steps: 1
+-1 -1 0 0 0 0 0 
+
+type: long_distance
+group: 8
+intermediate_steps: 1
+-1 1 0 0 0 0 0 
+
+type: long_distance
+group: 8
+intermediate_steps: 1
+1 -1 0 0 0 0 0 
+
+type: long_distance
+group: 8
+intermediate_steps: 1
+0 1 1 0 0 0 0 
+
+type: long_distance
+group: 8
+intermediate_steps: 1
+0 1 -1 0 0 0 0 
+
+type: long_distance
+group: 8
+intermediate_steps: 1
+0 -1 1 0 0 0 0 
+
+type: long_distance
+group: 8
+intermediate_steps: 1
+0 -1 -1 0 0 0 0 
+
+type: long_distance
+group: 9
+intermediate_steps: 1
+1 1 1 0 0 0 0 
+
+type: long_distance
+group: 9
+intermediate_steps: 1
+1 1 -1 0 0 0 0 
+
+type: long_distance
+group: 9
+intermediate_steps: 1
+1 -1 1 0 0 0 0 
+
+type: long_distance
+group: 9
+intermediate_steps: 1
+1 -1 -1 0 0 0 0 
+
+type: long_distance
+group: 9
+intermediate_steps: 1
+-1 1 1 0 0 0 0 
+
+type: long_distance
+group: 9
+intermediate_steps: 1
+-1 1 -1 0 0 0 0 
+
+type: long_distance
+group: 9
+intermediate_steps: 1
+-1 -1 1 0 0 0 0 
+
+type: long_distance
+group: 9
+intermediate_steps: 1
+-1 -1 -1 0 0 0 0 
+
+type: long_distance
+group: 10
+intermediate_steps: 1
+0 0 0 0 0 0 1
+
+type: long_distance
+group: 10
+intermediate_steps: 1
+0 0 0 0 0 0 -1
+

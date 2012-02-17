@@ -1,0 +1,49 @@
+<package>
+  <description brief="sbpl_full_body_tests">
+
+     sbpl_full_body_tests
+
+  </description>
+  <author>Benjamin Cohen</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/sbpl_full_body_tests</url>
+
+<!-- from sbpl_arm_planner -->
+  <depend package="sbpl" />
+  <depend package="angles" />
+  <depend package="kdl" />
+  <depend package="urdf" />
+  <depend package="pr2_arm_kinematics"/>
+  <depend package="kinematics_msgs"/>
+
+<!-- from sbpl_arm_planner_node -->
+  <depend package="roscpp"/>
+  <depend package="rospy"/>
+  <depend package="bullet" />
+  <depend package="tf" />
+  <depend package="mapping_msgs" />
+  <depend package="motion_planning_msgs" />
+  <depend package="visualization_msgs" />
+  <depend package="sensor_msgs" />
+  <depend package="message_filters" />
+  <depend package="geometric_shapes" />
+
+  <depend package="planning_environment" />
+  <depend package="planning_models" />
+  <depend package="sbpl_cartesian_arm_planner" />
+  <depend package="sbpl_two_arm_planner" />
+  <depend package="sbpl_two_arm_planner_node" />
+  <depend package="pr2_mechanism_msgs" /> <!-- for switching controllers -->
+
+  <!-- for aviz -->
+  <depend package="pr2_controllers_msgs"/>
+  <depend package="actionlib"/>
+  <depend package="move_arm_msgs"/>
+  <depend package="geometry_msgs"/>
+  <depend package="kdl_parser" />
+
+  <depend package="pviz" />
+</package>
+
+

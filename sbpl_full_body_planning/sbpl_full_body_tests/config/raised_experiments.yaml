@@ -1,0 +1,112 @@
+goal_tolerance:
+  xyz: 0.02 0.02 0.02
+  yaw: 0.1
+
+object_pose_in_gripper:
+  right:
+    xyz: -0.20 -0.1 0.0
+    rpy: 0.0 0.0 0.0
+  left:
+    xyz: -0.20 0.1 0.0
+    rpy: 0.0 0.0 0.0
+
+start_state:
+  right: 0.0 0.018 0.00 -0.43 0.00 -0.00 0.0
+  left: 0.0 0.018 0.00 -0.43 0.00 -0.00 0.0
+  base: 1.9 0.6 1.57
+  spine: 0.0
+
+experiments:
+
+  - name: box0_pickup
+    goal: palette1_2
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin buddy?"
+  - name: box1_pickup
+    goal: palette1_1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "something about a pickle..."
+  - name: box2_pickup
+    goal: palette2_2
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin buddy?"
+  - name: box3_pickup
+    goal: palette2_1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "something about a pickle..."
+  - name: box4_pickup
+    goal: palette3_2
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin buddy?"
+  - name: box5_pickup
+    goal: palette3_1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "something about a pickle..."
+  - name: box6_pickup
+    goal: palette4_2
+    pre_action: attach
+    post_action: detach
+    sound_bite: "how ya doin buddy?"
+  - name: box7_pickup
+    goal: palette4_1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "something about a pickle..."
+  - name: box8_pickup
+    goal: palette5_1
+    pre_action: attach
+    post_action: detach
+    sound_bite: "something about a pickle..."
+
+  - name: box0_putdown
+    goal: shelf2_2
+    pre_action: detach
+    post_action: attach
+    sound_bite: "i'm on a roll"
+  - name: box1_putdown
+    goal: shelf3_2
+    pre_action: detach
+    post_action: attach
+    sound_bite: "i'm on a roll"
+  - name: box2_putdown
+    goal: shelf1_2
+    pre_action: detach
+    post_action: attach
+    sound_bite: "i'm on a roll"
+  - name: box3_putdown
+    goal: shelf2_1
+    pre_action: detach
+    post_action: attach
+    sound_bite: "i'm on a roll"
+  - name: box4_putdown
+    goal: shelf2_3
+    pre_action: detach
+    post_action: attach
+    sound_bite: "i'm on a roll"
+  - name: box5_putdown
+    goal: shelf1_1
+    pre_action: detach
+    post_action: attach
+    sound_bite: "i'm on a roll"
+  - name: box6_putdown
+    goal: shelf1_3
+    pre_action: detach
+    post_action: attach
+    sound_bite: "i'm on a roll"
+  - name: box7_putdown
+    goal: shelf3_1
+    pre_action: detach
+    post_action: attach
+    sound_bite: "i'm on a roll"
+  - name: box8_putdown
+    goal: shelf3_3
+    pre_action: detach
+    post_action: attach
+    sound_bite: "i'm on a roll"
+
