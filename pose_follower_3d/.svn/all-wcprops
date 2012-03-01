@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/wg-ros-pkg/!svn/ver/52622/branches/trunk_diamondback/sandbox/3d_navigation/pose_follower_3d
+END
+manifest.xml
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/svn/wg-ros-pkg/!svn/ver/51362/branches/trunk_diamondback/sandbox/3d_navigation/pose_follower_3d/manifest.xml
+END
+2011-04-27-17-18-59.bag
+K 25
+svn:wc:ra_dav:version-url
+V 120
+/svn/wg-ros-pkg/!svn/ver/51210/branches/trunk_diamondback/sandbox/3d_navigation/pose_follower_3d/2011-04-27-17-18-59.bag
+END
+blp_plugin.xml
+K 25
+svn:wc:ra_dav:version-url
+V 111
+/svn/wg-ros-pkg/!svn/ver/51132/branches/trunk_diamondback/sandbox/3d_navigation/pose_follower_3d/blp_plugin.xml
+END
+mainpage.dox
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/svn/wg-ros-pkg/!svn/ver/51123/branches/trunk_diamondback/sandbox/3d_navigation/pose_follower_3d/mainpage.dox
+END
+CMakeLists.txt
+K 25
+svn:wc:ra_dav:version-url
+V 111
+/svn/wg-ros-pkg/!svn/ver/51123/branches/trunk_diamondback/sandbox/3d_navigation/pose_follower_3d/CMakeLists.txt
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/svn/wg-ros-pkg/!svn/ver/51123/branches/trunk_diamondback/sandbox/3d_navigation/pose_follower_3d/Makefile
+END
