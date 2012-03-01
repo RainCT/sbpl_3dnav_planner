@@ -1,0 +1,54 @@
+<launch>
+
+  <node pkg="sbpl_two_arm_planner_node" type="requestPlan" name="request_plan" output="screen" respawn="false" >
+
+    <param name="setup_experiment" value="true" />
+
+    <param name="start_x" value="0.50" /> 
+    <param name="start_y" type="double" value="0.50" />
+    <param name="start_z" type="double" value="0.398" />
+    <param name="start_roll" value="0.0" />
+    <param name="start_pitch" value="0.0" />
+    <param name="start_yaw" value="-0.0" />
+
+    <param name="goal_x" type="double" value="0.52" />
+    <param name="goal_y" type="double" value="1.0" />
+    <param name="goal_z" value="1.0" /> 
+    <param name="goal_roll" value="0.0" />
+    <param name="goal_pitch" value="0.0" />
+    <param name="goal_yaw" value="0.0" />
+    <param name="tolerance_roll" value="0.03" />
+    <param name="tolerance_pitch" value="0.03" />
+    <param name="tolerance_yaw" value="0.03" />
+
+    <param name="object_offset_x" value="0.0" />
+    <param name="object_offset_y" value="-0.0" />
+    <param name="object_offset_z" value="0.00" />
+
+    <param name="raise_torso" value="false" />
+    <param name="go_to_start" value="true" />
+    <param name="plan_path" value="true" />
+    <param name="execute_plan" value="true" />
+    <param name="filter_trajectory" value="true" />
+
+    <param name="attached_object_filename" value="$(find sbpl_two_arm_planner_node)/metal_tray.txt" />
+    <param name="known_objects_filename" value="$(find sbpl_two_arm_planner_node)/env/bar.env" />
+    <!-- <param name="known_objects_filename" value="" /> -->
+    <param name="remove_current_object" value="pole" />
+
+    <param name="right_arm_pose_on_object_x" value="0.0" />
+    <param name="right_arm_pose_on_object_y" value="-0.36" />
+    <param name="right_arm_pose_on_object_z" value="0.0" />
+    <param name="right_arm_pose_on_object_roll" value="1.57" />
+    <param name="right_arm_pose_on_object_pitch" value="0.0" />
+    <param name="right_arm_pose_on_object_yaw" value="1.57" />
+
+    <param name="left_arm_pose_on_object_x" value="-0.00" />
+    <param name="left_arm_pose_on_object_y" value="0.36" />   <!-- Really 0.18 but 0.14 also for the gripper -->
+    <param name="left_arm_pose_on_object_z" value="0.00" />
+    <param name="left_arm_pose_on_object_roll" value="1.57" />
+    <param name="left_arm_pose_on_object_pitch" value="0.00" />
+    <param name="left_arm_pose_on_object_yaw" value="-1.57" />
+  </node>
+
+</launch>
