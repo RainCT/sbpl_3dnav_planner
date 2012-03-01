@@ -15,13 +15,13 @@ SBPLFullBodyExperiment::SBPLFullBodyExperiment() : ph_("~")
 
   use_current_state_as_start_ = false;
 
-  collision_object_pub_ = nh_.advertise<mapping_msgs::CollisionObject>("collision_object", 5);
-  attached_object_pub_ = nh_.advertise<mapping_msgs::AttachedCollisionObject>("attached_collision_object", 1);
-  sbpl_attached_object_pub_ = nh_.advertise<mapping_msgs::AttachedCollisionObject>("sbpl_attached_collision_object", 1);
+  collision_object_pub_ = nh_.advertise<arm_navigation_msgs::CollisionObject>("collision_object", 5);
+  attached_object_pub_ = nh_.advertise<arm_navigation_msgs::AttachedCollisionObject>("attached_collision_object", 1);
+  sbpl_attached_object_pub_ = nh_.advertise<arm_navigation_msgs::AttachedCollisionObject>("sbpl_attached_collision_object", 1);
 
   ROS_INFO("[exp] Waiting for the planning service..Did you start it up first?.");
-  ros::service::waitForService(PLANNING_SERVICE);
-  planner_client_ = nh_.serviceClient<sbpl_two_arm_planner_node::GetTwoArmPlan>(PLANNING_SERVICE, true);
+  //ros::service::waitForService(PLANNING_SERVICE);
+  //planner_client_ = nh_.serviceClient<sbpl_3dnav_planner::GetTwoArmPlan>(PLANNING_SERVICE, true);
   ROS_INFO("[exp] Connected to the planning service.");
 
   goal_sub_ = nh_.subscribe<geometry_msgs::PoseStamped>("goal", 1, &SBPLFullBodyExperiment::sendGoal, this);
@@ -294,7 +294,7 @@ bool SBPLFullBodyExperiment::addCollisionObjects(std::string filename, std::vect
   char sTemp[1024];
   std::vector<std::vector<double> > objects;
   std::vector<std::string> object_ids;
-  mapping_msgs::CollisionObject object;
+  arm_navigation_msgs::CollisionObject object;
 
   FILE* fCfg = fopen(filename.c_str(), "r");
   if(fCfg == NULL)
@@ -337,8 +337,8 @@ bool SBPLFullBodyExperiment::addCollisionObjects(std::string filename, std::vect
   for(size_t i = 0; i < objects.size(); i++)
   {
     object.id = object_ids[i];
-    object.operation.operation = mapping_msgs::CollisionObjectOperation::ADD;
-    object.shapes[0].type = geometric_shapes_msgs::Shape::BOX;
+    object.operation.operation = arm_navigation_msgs::CollisionObjectOperation::ADD;
+    object.shapes[0].type = arm_navigation_msgs::Shape::BOX;
     object.header.frame_id = "map";
     object.header.stamp = ros::Time::now();
 
@@ -368,9 +368,9 @@ bool SBPLFullBodyExperiment::addCollisionObjects(std::string filename, std::vect
 
 void SBPLFullBodyExperiment::removeCollisionObject(std::string id)
 {
-  mapping_msgs::CollisionObject object;
+  arm_navigation_msgs::CollisionObject object;
   object.id = id;
-  object.operation.operation = mapping_msgs::CollisionObjectOperation::REMOVE;
+  object.operation.operation = arm_navigation_msgs::CollisionObjectOperation::REMOVE;
   object.header.stamp = ros::Time::now();
 
   collision_object_pub_.publish(object);
@@ -383,7 +383,7 @@ bool SBPLFullBodyExperiment::attachObject(std::string object_file, geometry_msgs
   double radius=0;
   float temp[4];
   geometry_msgs::Point point;
-  mapping_msgs::AttachedCollisionObject att_object, sbpl_att_object;
+  arm_navigation_msgs::AttachedCollisionObject att_object, sbpl_att_object;
  
   att_object.link_name = "r_gripper_r_finger_tip_link";
   att_object.touch_links.push_back("r_gripper_palm_link");
@@ -396,10 +396,10 @@ bool SBPLFullBodyExperiment::attachObject(std::string object_file, geometry_msgs
   att_object.touch_links.push_back("l_gripper_l_finger_tip_link");
   att_object.touch_links.push_back("l_gripper_r_finger_tip_link");
   att_object.object.header.frame_id = "r_wrist_roll_link";
-  att_object.object.operation.operation = mapping_msgs::CollisionObjectOperation::ADD;
+  att_object.object.operation.operation = arm_navigation_msgs::CollisionObjectOperation::ADD;
   att_object.object.header.stamp = ros::Time::now();
   att_object.object.shapes.resize(1);
-  att_object.object.shapes[0].type = geometric_shapes_msgs::Shape::BOX;
+  att_object.object.shapes[0].type = arm_navigation_msgs::Shape::BOX;
   att_object.object.poses.resize(1);
   att_object.object.poses[0] = rarm_object_pose;
 
@@ -485,8 +485,8 @@ bool SBPLFullBodyExperiment::attachObject(std::string object_file, geometry_msgs
 
 bool SBPLFullBodyExperiment::requestPlan(RobotPose &start_state, RobotPose goal_state, std::vector<std::vector<double> > &traj)
 {
-  sbpl_two_arm_planner_node::GetTwoArmPlan::Request req;
-  sbpl_two_arm_planner_node::GetTwoArmPlan::Response res;
+  sbpl_3dnav_planner::GetTwoArmPlan::Request req;
+  sbpl_3dnav_planner::GetTwoArmPlan::Response res;
     
   req.goal.header.frame_id = "map";
   req.start.header.frame_id = "map";

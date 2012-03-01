@@ -1,5 +1,5 @@
 <launch>
-
+    <param name="/use_sim_time" value="true"/>
   <include file="$(find pr2_machine)/$(env ROBOT).machine" />
 
   <!-- load ik -->
@@ -9,9 +9,9 @@
   <!-- send pr2 urdf to param server -->
   <param name="robot_description" command="$(find xacro)/xacro.py '$(find pr2_description)/robots/pr2.urdf.xacro'" />
 
-  <include file="$(find sbpl_two_arm_planner_node)/launch/sbpl_planning_both_arms.launch"/>
+  <include file="$(find sbpl_3dnav_planner)/launch/sbpl_planning_both_arms.launch"/>
   
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find sbpl_two_arm_planner_node)/maps/video.pgm 0.020" />
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find sbpl_3dnav_planner)/maps/video.pgm 0.020" />
 
   <!-- <include file="$(find pr2_navigation_global)/amcl_node.xml" /> -->
 

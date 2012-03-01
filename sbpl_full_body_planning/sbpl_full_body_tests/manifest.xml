@@ -22,8 +22,8 @@
   <depend package="rospy"/>
   <depend package="bullet" />
   <depend package="tf" />
-  <depend package="mapping_msgs" />
-  <depend package="motion_planning_msgs" />
+  <depend package="arm_navigation_msgs" />
+  <depend package="arm_navigation_msgs" />
   <depend package="visualization_msgs" />
   <depend package="sensor_msgs" />
   <depend package="message_filters" />
@@ -32,14 +32,14 @@
   <depend package="planning_environment" />
   <depend package="planning_models" />
   <depend package="sbpl_cartesian_arm_planner" />
-  <depend package="sbpl_two_arm_planner" />
-  <depend package="sbpl_two_arm_planner_node" />
+  <depend package="sbpl_full_body_planner" />
+  <depend package="sbpl_3dnav_planner" />
   <depend package="pr2_mechanism_msgs" /> <!-- for switching controllers -->
 
   <!-- for aviz -->
   <depend package="pr2_controllers_msgs"/>
   <depend package="actionlib"/>
-  <depend package="move_arm_msgs"/>
+  <depend package="arm_navigation_msgs"/>
   <depend package="geometry_msgs"/>
   <depend package="kdl_parser" />
 

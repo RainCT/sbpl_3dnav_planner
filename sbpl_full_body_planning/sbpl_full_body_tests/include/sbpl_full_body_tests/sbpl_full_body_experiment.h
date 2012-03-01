@@ -6,8 +6,8 @@
 #include <list>
 #include <map>
 #include <tf/tf.h>
-#include <mapping_msgs/AttachedCollisionObject.h>
-#include <sbpl_two_arm_planner_node/GetTwoArmPlan.h>
+#include <arm_navigation_msgs/AttachedCollisionObject.h>
+#include <sbpl_3dnav_planner/GetTwoArmPlan.h>
 #include <trajectory_msgs/JointTrajectory.h>
 #include <sbpl_arm_planner/body_pose.h>
 #include <pviz/pviz.h>
