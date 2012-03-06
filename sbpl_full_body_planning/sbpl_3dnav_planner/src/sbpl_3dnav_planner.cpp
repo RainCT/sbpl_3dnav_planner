@@ -279,7 +279,7 @@ void Sbpl3DNavPlanner::collisionMapCallback(const arm_navigation_msgs::Collision
 
 void Sbpl3DNavPlanner::collisionObjectCallback(const arm_navigation_msgs::CollisionObjectConstPtr &collision_object)
 {
-	if(colmap_mutex_.try_lock()){
+	if(colmap_mutex_.try_lock()) {
 		// for some reason, it wasn't getting all of the 'all' messages...
 		if (collision_object->id.compare("all") == 0) {
 			cspace_->removeAllCollisionObjects();
@@ -309,12 +309,15 @@ void Sbpl3DNavPlanner::collisionObjectCallback(const arm_navigation_msgs::Collis
 		if (attached_object_) {
 			visualizeAttachedObject();
 		}
+
+		colmap_mutex_.unlock();
 	}
+
 }
 
 void Sbpl3DNavPlanner::jointStatesCallback(const sensor_msgs::JointStateConstPtr &state)
 {
-	ROS_INFO("joint states callback");
+	ROS_DEBUG("joint states callback");
 	for(unsigned int i=0; i<rjoint_names_.size(); i++){
 		unsigned int j;
 		for(j=0; j<state->name.size(); j++)
@@ -365,7 +368,6 @@ void Sbpl3DNavPlanner::jointStatesCallback(const sensor_msgs::JointStateConstPtr
 		body_pos_.z = state->position[j];
 	//head_pan_ = state->position[13-3];
 	//head_tilt_ = state->position[14-3];
-	ROS_INFO("joint states callback done");
 	
 body_pos_.x = 0;
 body_pos_.y = 0;
@@ -433,6 +435,8 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
 		if (attached_object_) {
 			visualizeAttachedObject();
 		}
+
+		colmap_mutex_.unlock();
 	}
 }
 
@@ -563,7 +567,8 @@ bool Sbpl3DNavPlanner::setStart(geometry_msgs::Pose start, geometry_msgs::Pose r
 	printRobotState(rangles_, langles_, body_pos_, "start state");
 	pviz_.visualizeRobotWithTitle(rangles_, langles_, body_pos_, 30, "start", 0, "start");
 	vector<double> temp1(7.0);
-	pviz_.visualizeRobotWithTitle(temp1, temp1, body_pos_, 30, "start1", 0, "start1");
+//	pviz_.visualizeRobotWithTitle(temp1, temp1, body_pos_, 30, "start1", 0, "start1");
+	ROS_INFO("Done visualizing start position.");
 	if ((startid = sbpl_arm_env_.setStartConfiguration(rangles_, langles_, body_pos_, rarm_offset, larm_offset)) == -1) {
 		ROS_ERROR("[node] Environment failed to set start state. Not Planning.");
 		return false;
@@ -1133,7 +1138,8 @@ bool Sbpl3DNavPlanner::makePlan(const geometry_msgs::PoseStamped& start,
 		poseAlongPath.pose.position.y = res.body_trajectory.points[i].positions[1];
 
 		tf::Quaternion temp;
-		temp.setEuler(res.body_trajectory.points[i].positions[3], 0.0, 0.0);
+		temp.setEuler(0.0, 0.0, res.body_trajectory.points[i].positions[3]);
+//		temp.setEuler(res.body_trajectory.points[i].positions[3], 0.0, 0.0);
 		poseAlongPath.pose.orientation.x = temp.x();
 		poseAlongPath.pose.orientation.y = temp.y();
 		poseAlongPath.pose.orientation.z = temp.z();

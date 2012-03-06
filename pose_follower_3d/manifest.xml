@@ -19,7 +19,6 @@
   <depend package="planning_models" />
   <depend package="planning_environment" />
   <depend package="arm_navigation_msgs" />
-  <depend package="arm_navigation_msgs" />
 
   <export>
     <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lpose_follower_3d" />

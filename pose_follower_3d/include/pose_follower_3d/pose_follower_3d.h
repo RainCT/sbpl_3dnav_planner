@@ -53,17 +53,20 @@
 #include <planning_environment/models/model_utils.h>
 
 
-namespace pose_follower_3d {
-  class PoseFollower3D : public nav_core::BaseLocalPlanner {
-    public:
+namespace pose_follower_3d
+{
+  class PoseFollower3D : public nav_core::BaseLocalPlanner
+  {
+  public:
       PoseFollower3D();
       void initialize(std::string name, tf::TransformListener* tf, costmap_2d::Costmap2DROS* costmap_ros);
       bool isGoalReached();
       bool setPlan(const std::vector<geometry_msgs::PoseStamped>& global_plan);
       bool computeVelocityCommands(geometry_msgs::Twist& cmd_vel);
 
-    private:
-      inline double sign(double n){
+  private:
+      inline double sign(double n)
+      {
         return n < 0.0 ? -1.0 : 1.0;
       }
 
@@ -71,21 +74,22 @@ namespace pose_follower_3d {
       geometry_msgs::Twist limitTwist(const geometry_msgs::Twist& twist);
       double headingDiff(double pt_x, double pt_y, double x, double y, double heading);
 
-      bool transformGlobalPlan(const tf::TransformListener& tf, const std::vector<geometry_msgs::PoseStamped>& global_plan, 
-          const costmap_2d::Costmap2DROS& costmap, const std::string& global_frame,
-          std::vector<geometry_msgs::PoseStamped>& transformed_plan);
+      bool transformGlobalPlan(const tf::TransformListener& tf,
+                               const std::vector<geometry_msgs::PoseStamped>& global_plan,
+                               const costmap_2d::Costmap2DROS& costmap, const std::string& global_frame,
+                               std::vector<geometry_msgs::PoseStamped>& transformed_plan);
 
       void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
-      void collisionsCallback(const arm_navigation_msgs::CollisionObjectConstPtr& msg);
-      void attachedCallback(const arm_navigation_msgs::AttachedCollisionObjectConstPtr& msg);
+      //ANDREW void collisionsCallback(const arm_navigation_msgs::CollisionObjectConstPtr& msg);
+      //ANDREW void attachedCallback(const arm_navigation_msgs::AttachedCollisionObjectConstPtr& msg);
       bool stopped();
       void updateRobotPosition(double x, double y, double theta);
-      bool checkTrajectory3D(double x, double y, double theta, double vx, double vy, double vtheta);
+      //ANDREW bool checkTrajectory3D(double x, double y, double theta, double vx, double vy, double vtheta);
 
       /// Check for 3D collision of the robot's kinematic state.
       /// x,y,theta are in continuous costmap coords, will be transformed
       /// into the 3D coll. map coords.
-      bool isIn3DCollision(double x, double y, double theta);
+      //ANDREW bool isIn3DCollision(double x, double y, double theta);
 
       tf::TransformListener* tf_;
       costmap_2d::Costmap2DROS* costmap_ros_;
@@ -99,17 +103,17 @@ namespace pose_follower_3d {
       bool holonomic_;
       boost::mutex odom_lock_, collisions_lock_, attached_lock_;
       ros::Subscriber odom_sub_, collisions_sub_;
-      ros::ServiceClient robot_state_client_;
+//      ros::ServiceClient robot_state_client_;
       nav_msgs::Odometry base_odom_;
       double trans_stopped_velocity_, rot_stopped_velocity_;
       ros::Time goal_reached_time_;
       unsigned int current_waypoint_; 
       std::vector<geometry_msgs::PoseStamped> global_plan_;
-      base_local_planner::TrajectoryPlannerROS collision_planner_;
-      planning_environment::CollisionModels collision_model_3d_;
-      planning_models::KinematicState* kinematic_state_;
+      //ANDREW base_local_planner::TrajectoryPlannerROS collision_planner_;
+      //ANDREW planning_environment::CollisionModels collision_model_3d_;
+      //ANDREW planning_models::KinematicState* kinematic_state_;
       int samples_;
-      bool collisions_received_;
+      //ANDREW bool collisions_received_;
 //      arm_navigation_msgs::CollisionObject collision_object_;
       ros::Time collision_object_time_;
   };
