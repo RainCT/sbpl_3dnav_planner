@@ -34,8 +34,11 @@
 *
 * Author: Armin Hornung, based on the pose_follower
 *********************************************************************/
+#include <cmath>
+
 #include <pose_follower_3d/pose_follower_3d.h>
 #include <pluginlib/class_list_macros.h>
+#include <sbpl_3dnav_planner/FullBodyCollisionCheck.h>
 
 PLUGINLIB_DECLARE_CLASS(pose_follower_3d, PoseFollower3D, pose_follower_3d::PoseFollower3D, nav_core::BaseLocalPlanner)
 
@@ -43,11 +46,39 @@ namespace pose_follower_3d
 {
 PoseFollower3D::PoseFollower3D() :
 	tf_(NULL),
-	costmap_ros_(NULL)
+	costmap_ros_(NULL),
+	leftJointNames_(),
+	rightJointNames_(),
+	leftArmAngles_(),
+	rightArmAngles_(),
+	spinePosition_(0.0)
 	//ANDREW collision_model_3d_("robot_description"),
 	//ANDREW kinematic_state_(NULL),
 	//ANDREW collisions_received_(false)
 {
+	// initilize joint angle names
+	leftJointNames_.resize(7);
+	rightJointNames_.resize(7);
+
+	leftJointNames_[0] = "l_shoulder_pan_joint";
+	leftJointNames_[1] = "l_shoulder_lift_joint";
+	leftJointNames_[2] = "l_upper_arm_roll_joint";
+	leftJointNames_[3] = "l_elbow_flex_joint";
+	leftJointNames_[4] = "l_forearm_roll_joint";
+	leftJointNames_[5] = "l_wrist_flex_joint";
+	leftJointNames_[6] = "l_wrist_roll_joint";
+
+	rightJointNames_[0] = "r_shoulder_pan_joint";
+	rightJointNames_[1] = "r_shoulder_lift_joint";
+	rightJointNames_[2] = "r_upper_arm_roll_joint";
+	rightJointNames_[3] = "r_elbow_flex_joint";
+	rightJointNames_[4] = "r_forearm_roll_joint";
+	rightJointNames_[5] = "r_wrist_flex_joint";
+	rightJointNames_[6] = "r_wrist_roll_joint";
+
+	// initialize all joint angles to 0
+	leftArmAngles_.resize(7, 0.0);
+	rightArmAngles_.resize(7, 0.0);
 }
 
 void PoseFollower3D::initialize(std::string name, tf::TransformListener* tf, costmap_2d::Costmap2DROS* costmap_ros)
@@ -88,9 +119,11 @@ void PoseFollower3D::initialize(std::string name, tf::TransformListener* tf, cos
 
 	ros::NodeHandle node;
 	odom_sub_ = node.subscribe<nav_msgs::Odometry>("odom", 1, boost::bind(&PoseFollower3D::odomCallback, this, _1));
+	joint_states_sub_ = node.subscribe("joint_states", 1, &PoseFollower3D::jointStatesCallback, this);
 	//ANDREW collisions_sub_ = node.subscribe<arm_navigation_msgs::CollisionObject>("octomap_collision_object", 1, boost::bind(&PoseFollower3D::collisionsCallback, this, _1));
 	vel_pub_ = node.advertise<geometry_msgs::Twist>("cmd_vel", 10);
 //	robot_state_client_ = node.serviceClient<arm_navigation_msgs::GetRobotState>("/environment_server/get_robot_state");
+	collision_check_client_ = node.serviceClient<sbpl_3dnav_planner::FullBodyCollisionCheck>("/sbpl_full_body_planning/collision_check");
 
 	ROS_DEBUG("Initialized");
 }
@@ -103,6 +136,58 @@ void PoseFollower3D::odomCallback(const nav_msgs::Odometry::ConstPtr& msg)
 	base_odom_.twist.twist.linear.y = msg->twist.twist.linear.y;
 	base_odom_.twist.twist.angular.z = msg->twist.twist.angular.z;
 	ROS_DEBUG("In the odometry callback with velocity values: (%.2f, %.2f, %.2f)", base_odom_.twist.twist.linear.x, base_odom_.twist.twist.linear.y, base_odom_.twist.twist.angular.z);
+}
+
+void PoseFollower3D::jointStatesCallback(const sensor_msgs::JointStateConstPtr &state)
+{
+	// store the values for the right arm joint angles
+	for (int i = 0; i < (int)rightJointNames_.size(); i++) {
+		int j;
+		for (j = 0; j < state->name.size(); j++) {
+			if (rightJointNames_[i].compare(state->name[j]) == 0) {
+				break;
+			}
+		}
+
+		if (j == state->name.size()) {
+			ROS_WARN("[jointStatesCallback] Missing the value for planning joint (%s)",
+			         rightJointNames_[i].c_str());
+		}
+		else {
+			rightArmAngles_[i] = state->position[j];
+		}
+	}
+
+	// store the values for the left arm joint angles
+	for (int i = 0; i < (int)leftJointNames_.size(); i++) {
+		int j;
+		for (j = 0; j < state->name.size(); j++) {
+			if (leftJointNames_[i].compare(state->name[j]) == 0) {
+				break;
+			}
+		}
+
+		if (j == state->name.size()) {
+			ROS_WARN("[jointStatesCallback] Missing the value for planning joint (%s)",
+			         leftJointNames_[i].c_str());
+		}
+		else {
+			leftArmAngles_[i] = state->position[j];
+		}
+	}
+
+	// store the value for the spine
+	int j;
+	for (j = 0; j < state->name.size(); j++) {
+		if (state->name[j].compare("torso_lift_joint") == 0) break;
+	}
+
+	if (j == state->name.size()) {
+		ROS_WARN("[jointStatesCallback] Missing the value for planning joint torso_lift_joint");
+	}
+	else {
+		spinePosition_ = state->position[j];
+	}
 }
 
 //ANDREW
@@ -173,29 +258,94 @@ double PoseFollower3D::headingDiff(double x, double y, double pt_x, double pt_y,
 	return -1.0 * vector_angle;
 }
 
-//ANDREW
-//bool PoseFollower3D::checkTrajectory3D(double x, double y, double theta, double vx, double vy, double vtheta)
-//{
-//	int num_steps = int(sim_time_ / sim_granularity_ + 0.5);
-//	//we at least want to take one step... even if we won't move, we want to score our current position
-//	if (num_steps == 0) num_steps = 1;
-//
-//	for (int i = 0; i <= num_steps; ++i) {
-//		double dt = sim_time_ / num_steps * i;
-//		double x_i = x + (vx * cos(theta) + vy * cos(M_PI_2 + theta)) * dt;
-//		double y_i = y + (vx * sin(theta) + vy * sin(M_PI_2 + theta)) * dt;
-//		double theta_i = theta + vtheta * dt;
+bool PoseFollower3D::checkTrajectory3D(double x, double y, double theta, double vx, double vy, double vtheta)
+{
+	int num_steps = int(sim_time_ / sim_granularity_ + 0.5);
+	//we at least want to take one step... even if we won't move, we want to score our current position
+	if (num_steps == 0) num_steps = 1;
+
+	for (int i = 0; i <= num_steps; ++i) {
+		double dt = sim_time_ / num_steps * i;
+		double x_i = x + (vx * cos(theta) + vy * cos(M_PI_2 + theta)) * dt;
+		double y_i = y + (vx * sin(theta) + vy * sin(M_PI_2 + theta)) * dt;
+		double theta_i = theta + vtheta * dt;
+
+		if (isIn3DCollision(x_i, y_i, theta_i)) return false;
+	}
+
+	return true;
+}
+
+bool PoseFollower3D::checkTrajectoryToWaypoint(double x, double y, double theta,
+                               double waypointX, double waypointY, double waypointTheta)
+{
+	int num_steps = int(sim_time_ / sim_granularity_ + 0.5);
+
+	if (num_steps == 0) num_steps = 1;
+
+	double vx = waypointX - x;
+	double vy = waypointY - y;
+	double vth = waypointTheta - theta;
+
+//	for (int i = 0; i <= num_steps; i++) {
+//		double dt = double(i) / num_steps;
+//		double x_i = x + dt * vx;
+//		double y_i = y + dt * vy;
+//		double theta_i = theta + dt * vth;
 //
 //		if (isIn3DCollision(x_i, y_i, theta_i)) return false;
 //	}
 //
 //	return true;
-//}
+    ROS_INFO("[checkTrajectoryToWaypoint] x = %f, y = %f, theta = %f", x, y, theta);
+    return !isIn3DCollision(x, y, theta);
+}
 
-/// 3D collision check at x,y,theta in global map coordinates
-//ANDREW
-//bool PoseFollower3D::isIn3DCollision(double x, double y, double theta)
-//{
+// 3D collision check at x,y,theta in global map coordinates
+bool PoseFollower3D::isIn3DCollision(double x, double y, double theta)
+{
+	// construct the robot state message to send to /sbpl_full_body_planning/collision_check service
+	// to handle collision checking
+	arm_navigation_msgs::RobotState robotState;
+	geometry_msgs::Pose basePose;
+	basePose.position.x = x;
+	basePose.position.y = y;
+	tf::Quaternion q = tf::createQuaternionFromYaw(theta);
+	basePose.orientation.w = q.w();
+	basePose.orientation.x = q.x();
+	basePose.orientation.y = q.y();
+	basePose.orientation.z = q.z();
+
+	getRobotStateFromRobotPose(basePose, robotState);
+
+	// collision check state obtained from robot_state service call
+	sbpl_3dnav_planner::FullBodyCollisionCheck::Request req;
+	sbpl_3dnav_planner::FullBodyCollisionCheck::Response res;
+
+	req.robot_states.push_back(robotState);
+
+	ROS_INFO("req.robot_states.size = %u", req.robot_states.size());
+
+	if (!collision_check_client_.call(req, res)) {
+		ROS_ERROR("[PoseFollower3D] Call to collision checking service failed. Returning \"in collision\"");
+		return true;
+	}
+
+	ROS_INFO("res.error_codes.size = %u", res.error_codes.size());
+
+	if (res.error_codes.empty()) {
+		ROS_INFO("service call returned no error codes.");
+	}
+
+	for (int i = 0; i < (int)res.error_codes.size(); i++) {
+		ROS_INFO("Service called returned error code %i", res.error_codes[i].val);
+		if (res.error_codes[i].val == arm_navigation_msgs::ArmNavigationErrorCodes::COLLISION_CONSTRAINTS_VIOLATED) {
+			return true;
+		}
+	}
+
+	return false;
+// ANDREW: old collision checking
 //	ROS_DEBUG("PoseFollower3D: 3D collision check at %f %f %f", x, y, theta);
 //	if (!collisions_received_) {
 //		ROS_ERROR("pose_follower_3d did not receive any 3D CollisionObject, no 3D collision check possible");
@@ -211,7 +361,37 @@ double PoseFollower3D::headingDiff(double x, double y, double pt_x, double pt_y,
 //	// this is the collision check:
 //	boost::mutex::scoped_lock lock(collisions_lock_);
 //	return collision_model_3d_.isKinematicStateInEnvironmentCollision(*kinematic_state_);
-//}
+}
+
+bool PoseFollower3D::getRobotStateFromRobotPose(const geometry_msgs::Pose& bodyPose,
+                                                arm_navigation_msgs::RobotState& robotStateOut)
+{
+	robotStateOut.joint_state.name.clear();
+	robotStateOut.joint_state.position.clear();
+	robotStateOut.multi_dof_joint_state.frame_ids.clear();
+	robotStateOut.multi_dof_joint_state.child_frame_ids.clear();
+	robotStateOut.multi_dof_joint_state.poses.clear();
+
+	for (int i = 0; i < (int)rightJointNames_.size(); i++) {
+		robotStateOut.joint_state.name.push_back(rightJointNames_[i]);
+		robotStateOut.joint_state.position.push_back(rightArmAngles_[i]);
+	}
+
+	for (int i = 0; i < (int)leftJointNames_.size(); i++) {
+		robotStateOut.joint_state.name.push_back(leftJointNames_[i]);
+		robotStateOut.joint_state.position.push_back(leftArmAngles_[i]);
+	}
+
+	robotStateOut.joint_state.name.push_back("torso_lift_link");
+	robotStateOut.joint_state.position.push_back(spinePosition_);
+
+	robotStateOut.multi_dof_joint_state.frame_ids.push_back("map");
+	robotStateOut.multi_dof_joint_state.child_frame_ids.push_back("base_footprint");
+
+	robotStateOut.multi_dof_joint_state.poses.push_back(bodyPose);
+
+	return true;
+}
 
 bool PoseFollower3D::stopped()
 {
@@ -229,11 +409,37 @@ bool PoseFollower3D::stopped()
 
 bool PoseFollower3D::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
 {
+	ROS_INFO("[PoseFollower3D] calling computeVelocityCommands.");
+	const geometry_msgs::Twist empty_twist;
+
+	geometry_msgs::TransformStamped geo_pose;
+
 	//get the current pose of the robot in the fixed frame
 	tf::Stamped<tf::Pose> robot_pose;
-	if (!costmap_ros_->getRobotPose(robot_pose)) {
-		ROS_ERROR("Can't get robot pose");
-		geometry_msgs::Twist empty_twist;
+//	if (!costmap_ros_->getRobotPose(robot_pose)) {
+//		ROS_ERROR("Can't get robot pose");
+//		geometry_msgs::Twist empty_twist;
+//		cmd_vel = empty_twist;
+//		return false;
+//	}
+	try {
+		tf::StampedTransform base_map_transform;
+		tf_->lookupTransform("map", "base_footprint", ros::Time(0), base_map_transform);
+
+//		ROS_INFO("map->base transform quaternion: w= %.3f, x = %.3f, y = %.3f, z = %.3f",
+//		         base_map_transform.getRotation().getW(),
+//		         base_map_transform.getRotation().getX(),
+//		         base_map_transform.getRotation().getY(),
+//		         base_map_transform.getRotation().getZ());
+
+		transformStampedTFToMsg(base_map_transform, geo_pose);
+
+		robot_pose.getOrigin().setX(base_map_transform.getOrigin().x());
+		robot_pose.getOrigin().setY(base_map_transform.getOrigin().y());
+		robot_pose.setRotation(base_map_transform.getRotation());
+	}
+	catch (tf::TransformException& ex) {
+		ROS_ERROR("[PoseFollower3D] Is there a map? The map<->robot transform failed. (%s)", ex.what());
 		cmd_vel = empty_twist;
 		return false;
 	}
@@ -242,30 +448,47 @@ bool PoseFollower3D::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
 	tf::Stamped<tf::Pose> target_pose;
 	tf::poseStampedMsgToTF(global_plan_[current_waypoint_], target_pose);
 
-	ROS_DEBUG("PoseFollower3D: current robot pose %f %f ==> %f", robot_pose.getOrigin().x(), robot_pose.getOrigin().y(), tf::getYaw(robot_pose.getRotation()));
-	ROS_DEBUG("PoseFollower3D: target robot pose %f %f ==> %f", target_pose.getOrigin().x(), target_pose.getOrigin().y(), tf::getYaw(target_pose.getRotation()));
+	ROS_DEBUG("[PoseFollower3D] current robot pose %f %f ==> %f", robot_pose.getOrigin().x(), robot_pose.getOrigin().y(), tf::getYaw(robot_pose.getRotation()));
+	ROS_DEBUG("[PoseFollower3D] target robot pose %f %f ==> %f", target_pose.getOrigin().x(), target_pose.getOrigin().y(), tf::getYaw(target_pose.getRotation()));
 
 	//get the difference between the two poses
 	geometry_msgs::Twist diff = diff2D(target_pose, robot_pose);
 	ROS_DEBUG("PoseFollower3D: diff %f %f ==> %f", diff.linear.x, diff.linear.y, diff.angular.z);
 
 	geometry_msgs::Twist limit_vel = limitTwist(diff);
-
 	geometry_msgs::Twist test_vel = limit_vel;
-	// TODO: fix footprint: update costmap one / own collcheck here?
-	bool legal_traj = true;//ANDREW collision_planner_.checkTrajectory(test_vel.linear.x, test_vel.linear.y, test_vel.angular.z, true);
 
+	// TODO: fix footprint: update costmap one / own collcheck here?
+
+//	bool legal_traj = collision_planner_.checkTrajectory(test_vel.linear.x, test_vel.linear.y, test_vel.angular.z, true);
+
+//	bool legal_traj = checkTrajectory3D(robot_pose.getOrigin().x(), robot_pose.getOrigin().y(),
+//	                                    tf::getYaw(robot_pose.getRotation()),
+//	                                    test_vel.linear.x, test_vel.linear.y, test_vel.angular.z);
+	bool legal_traj = checkTrajectoryToWaypoint(robot_pose.getOrigin().x(), robot_pose.getOrigin().y(),
+	                                            tf::getYaw(robot_pose.getRotation()),
+	                                            target_pose.getOrigin().x(), target_pose.getOrigin().y(),
+	                                            tf::getYaw(target_pose.getRotation()));
+
+	if (!legal_traj) {
+		ROS_INFO("[PoseFollower3D] Local plan is in collision");
+		cmd_vel = empty_twist;
+		return false;
+	}
+
+	// warn that collision objects aren't fresh
 	double collision_age = (ros::Time::now() - collision_object_time_).toSec();
 	if (collision_age > 1.5) {
 		ROS_WARN("Warning: pose_follower_3d's collision objects might be outdated (%f s old)", collision_age);
 	}
 
-	if (!legal_traj) {
-		ROS_DEBUG("Local 2D plan not legal, checking 3D collisions");
-
-		// assuming that costmap frame is the same as collision map frame (=map)
-		//ANDREW legal_traj = checkTrajectory3D(robot_pose.getOrigin().x(), robot_pose.getOrigin().y(), tf::getYaw(robot_pose.getRotation()), test_vel.linear.x, test_vel.linear.y, test_vel.angular.z);
-	}
+// ANDREW: Removed. Only doing 3-D collision checking for sbpl_3dnav_planner
+//	if (!legal_traj) {
+//		ROS_DEBUG("Local 2D plan not legal, checking 3D collisions");
+//
+//		// assuming that costmap frame is the same as collision map frame (=map)
+//		legal_traj = checkTrajectory3D(robot_pose.getOrigin().x(), robot_pose.getOrigin().y(), tf::getYaw(robot_pose.getRotation()), test_vel.linear.x, test_vel.linear.y, test_vel.angular.z);
+//	}
 
 	double scaling_factor = 1.0;
 	double ds = scaling_factor / samples_;
@@ -290,14 +513,14 @@ bool PoseFollower3D::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
 
 	if (!legal_traj) {
 		ROS_ERROR("Local plan not legal (%.2f, %.2f, %.2f)", limit_vel.linear.x, limit_vel.linear.y, limit_vel.angular.z);
-		geometry_msgs::Twist empty_twist;
 		cmd_vel = empty_twist;
 		return false;
 	}
 
-	//if it is legal... we'll pass it on
+	// if it is legal... we'll pass it on
 	cmd_vel = test_vel;
 
+	// advance to the next waypoint that we're not already in reach of
 	bool in_goal_position = false;
 	while (fabs(diff.linear.x) <= tolerance_trans_ &&
 		   fabs(diff.linear.y) <= tolerance_trans_ &&
@@ -320,7 +543,6 @@ bool PoseFollower3D::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
 
 	//check if we've reached our goal for long enough to succeed
 	if (goal_reached_time_ + ros::Duration(tolerance_timeout_) < ros::Time::now()) {
-		geometry_msgs::Twist empty_twist;
 		cmd_vel = empty_twist;
 	}
 

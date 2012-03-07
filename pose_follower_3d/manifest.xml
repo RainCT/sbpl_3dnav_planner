@@ -17,8 +17,9 @@
   <depend package="pluginlib"/>
   <depend package="octomap_server"/>
   <depend package="planning_models" />
-  <depend package="planning_environment" />
-  <depend package="arm_navigation_msgs" />
+  <depend package="planning_environment"/>
+  <depend package="arm_navigation_msgs"/>
+  <depend package="sbpl_3dnav_planner"/>
 
   <export>
     <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lpose_follower_3d" />

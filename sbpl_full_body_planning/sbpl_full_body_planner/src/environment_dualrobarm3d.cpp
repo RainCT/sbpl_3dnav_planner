@@ -590,6 +590,7 @@ void EnvironmentDUALROBARM3D::GetSuccs(int SourceStateID, vector<int>* SuccIDV, 
 
     //collision check
     bool inCollision = false;
+    dist_temp = 100; // padding
     for(unsigned int i=0; i < nav3daction.intermptV.size(); i++){
       sbpl_xy_theta_pt_t pt = nav3daction.intermptV.at(i);
 
@@ -606,11 +607,17 @@ void EnvironmentDUALROBARM3D::GetSuccs(int SourceStateID, vector<int>* SuccIDV, 
         break;
       }
 
-      if(!cspace_->checkBaseMotion(parent->angles1, parent->angles0, body_pose, prms_.verbose_, dist, debug_code_))
+      
+      if(!cspace_->checkBaseMotion(parent->angles1, parent->angles0, body_pose, prms_.verbose_, dist_temp /* padding */, debug_code_))
       {
         ROS_DEBUG_NAMED(prms_.expands_log_, " [env] collision");
         inCollision = true;
         break;
+      }
+
+        // padding
+      if (dist_temp < dist) {
+        dist = dist_temp;
       }
     }
     BodyPose viz_pose;
@@ -670,7 +677,8 @@ void EnvironmentDUALROBARM3D::GetSuccs(int SourceStateID, vector<int>* SuccIDV, 
     ROS_DEBUG_NAMED(prms_.expands_log_,"             object_pose: %d %d %d %d", OutHashEntry->object_pose[0], OutHashEntry->object_pose[1], OutHashEntry->object_pose[2], OutHashEntry->object_pose[3]); 
 
     SuccIDV->push_back(OutHashEntry->stateID);
-    CostV->push_back(nav3daction.cost);
+//    CostV->push_back(nav3daction.cost * max(3 - dist, 1)); // padding
+    CostV->push_back(nav3daction.cost); // padding
     if(ActionV != NULL)
       ActionV->push_back(prms_.mp_.size()+aind);
   }

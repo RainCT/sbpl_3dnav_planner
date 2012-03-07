@@ -80,16 +80,23 @@ namespace pose_follower_3d
                                std::vector<geometry_msgs::PoseStamped>& transformed_plan);
 
       void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
+      void jointStatesCallback(const sensor_msgs::JointStateConstPtr &state);
+
       //ANDREW void collisionsCallback(const arm_navigation_msgs::CollisionObjectConstPtr& msg);
       //ANDREW void attachedCallback(const arm_navigation_msgs::AttachedCollisionObjectConstPtr& msg);
       bool stopped();
       void updateRobotPosition(double x, double y, double theta);
-      //ANDREW bool checkTrajectory3D(double x, double y, double theta, double vx, double vy, double vtheta);
+      bool checkTrajectory3D(double x, double y, double theta, double vx, double vy, double vtheta);
+      bool checkTrajectoryToWaypoint(double x, double y, double theta,
+                                     double waypointX, double waypointY, double waypointTheta);
 
       /// Check for 3D collision of the robot's kinematic state.
       /// x,y,theta are in continuous costmap coords, will be transformed
       /// into the 3D coll. map coords.
-      //ANDREW bool isIn3DCollision(double x, double y, double theta);
+      bool isIn3DCollision(double x, double y, double theta);
+
+      bool getRobotStateFromRobotPose(const geometry_msgs::Pose& basePose,
+                                      arm_navigation_msgs::RobotState& robotStateOut);
 
       tf::TransformListener* tf_;
       costmap_2d::Costmap2DROS* costmap_ros_;
@@ -103,12 +110,14 @@ namespace pose_follower_3d
       bool holonomic_;
       boost::mutex odom_lock_, collisions_lock_, attached_lock_;
       ros::Subscriber odom_sub_, collisions_sub_;
+      ros::Subscriber joint_states_sub_;
 //      ros::ServiceClient robot_state_client_;
       nav_msgs::Odometry base_odom_;
       double trans_stopped_velocity_, rot_stopped_velocity_;
       ros::Time goal_reached_time_;
       unsigned int current_waypoint_; 
       std::vector<geometry_msgs::PoseStamped> global_plan_;
+      ros::ServiceClient collision_check_client_;
       //ANDREW base_local_planner::TrajectoryPlannerROS collision_planner_;
       //ANDREW planning_environment::CollisionModels collision_model_3d_;
       //ANDREW planning_models::KinematicState* kinematic_state_;
@@ -116,6 +125,12 @@ namespace pose_follower_3d
       //ANDREW bool collisions_received_;
 //      arm_navigation_msgs::CollisionObject collision_object_;
       ros::Time collision_object_time_;
+
+      std::vector<std::string> rightJointNames_;
+      std::vector<std::string> leftJointNames_;
+      std::vector<double> leftArmAngles_;
+      std::vector<double> rightArmAngles_;
+      double spinePosition_;
   };
 };
 #endif

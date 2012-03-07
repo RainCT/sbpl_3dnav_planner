@@ -359,19 +359,18 @@ void Sbpl3DNavPlanner::jointStatesCallback(const sensor_msgs::JointStateConstPtr
 
 	//body_pos_.z = state->position[12-3];
 	unsigned int j;
-	for(j=0; j<state->name.size(); j++)
-		if(state->name[j].compare("torso_lift_joint")==0)
-			break;
+	for (j = 0; j < state->name.size(); j++)
+		if (state->name[j].compare("torso_lift_joint") == 0) break;
 	if(j==state->name.size())
 		ROS_WARN("[jointStatesCallback] Missing the value for planning joint torso_lift_joint\n");
 	else
 		body_pos_.z = state->position[j];
 	//head_pan_ = state->position[13-3];
 	//head_tilt_ = state->position[14-3];
-	
-body_pos_.x = 0;
-body_pos_.y = 0;
-body_pos_.theta = 0;
+
+	body_pos_.x = 0;
+	body_pos_.y = 0;
+	body_pos_.theta = 0;
 	pviz_.visualizeRobotWithTitle(rangles_, langles_, body_pos_, 30, "start", 0, "start");
 
 /*
@@ -442,22 +441,43 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
 
 /**************************** Collision Check Service *******************************/
 
-bool Sbpl3DNavPlanner::collisionCheck(sbpl_3dnav_planner::FullBodyCollisionCheck::Request &req, sbpl_3dnav_planner::FullBodyCollisionCheck::Response &res){
+bool Sbpl3DNavPlanner::collisionCheck(sbpl_3dnav_planner::FullBodyCollisionCheck::Request &req,
+                                      sbpl_3dnav_planner::FullBodyCollisionCheck::Response &res)
+{
 	colmap_mutex_.lock();
-	res.error_codes.reserve(req.robot_states.size());
+
+	ROS_INFO("req.robot_states.size = %u", req.robot_states.size());
+
+//	res.error_codes.reserve(req.robot_states.size());
 	for(unsigned int i=0; i<req.robot_states.size(); i++){
 		vector<double> langles;
 		vector<double> rangles;
 		BodyPose pose;
 		getRobotPoseFromRobotState(req.robot_states[i],langles,rangles,pose);
+        ROS_INFO("[collisionCheck] x = %f, y = %f, theta = %f", pose.x, pose.y, pose.theta);
 		//TODO:Adjust for map origin offset
 		unsigned char dist_temp;
 		int debug_code;
-		if(cspace_->checkAllMotion(langles,rangles,pose,true,dist_temp,debug_code))
-			res.error_codes[i].val = arm_navigation_msgs::ArmNavigationErrorCodes::SUCCESS;
-		else
-			res.error_codes[i].val = arm_navigation_msgs::ArmNavigationErrorCodes::COLLISION_CONSTRAINTS_VIOLATED;
+		if(cspace_->checkAllMotion(langles,rangles,pose,true,dist_temp,debug_code)) {
+			arm_navigation_msgs::ArmNavigationErrorCodes errorCode;
+			errorCode.val = arm_navigation_msgs::ArmNavigationErrorCodes::SUCCESS;
+			res.error_codes.push_back(errorCode);
+		}
+		else {
+			arm_navigation_msgs::ArmNavigationErrorCodes errorCode;
+			errorCode.val = arm_navigation_msgs::ArmNavigationErrorCodes::COLLISION_CONSTRAINTS_VIOLATED;
+			res.error_codes.push_back(errorCode);
+		}
+
+		if (res.error_codes[i].val == arm_navigation_msgs::ArmNavigationErrorCodes::SUCCESS) {
+			ROS_INFO("SBPL full body planning collision checking service returned SUCCESS");
+		}
+		else {
+	        pviz_.visualizeRobotWithTitle(rangles, langles, pose, 30, "AAAH", 0, "AAAH");
+		}
 	}
+
+	ROS_INFO("res.error_codes.size = %u", res.error_codes.size());
 	colmap_mutex_.unlock();
 	return true;
 }
@@ -492,6 +512,7 @@ bool Sbpl3DNavPlanner::getRobotPoseFromRobotState(arm_navigation_msgs::RobotStat
 		if(rind == rjoint_names_.size() && lind == ljoint_names_.size())
 			break;
 	}
+
 	if(rind != rjoint_names_.size() || lind != ljoint_names_.size())
 	{
 		ROS_WARN("[exp] Not all of the expected joints were assigned a starting position.");
@@ -565,7 +586,7 @@ bool Sbpl3DNavPlanner::setStart(geometry_msgs::Pose start, geometry_msgs::Pose r
 	int startid = -1;
 	ROS_INFO("[node] Visualizing start position.");
 	printRobotState(rangles_, langles_, body_pos_, "start state");
-	pviz_.visualizeRobotWithTitle(rangles_, langles_, body_pos_, 30, "start", 0, "start");
+	//pviz_.visualizeRobotWithTitle(rangles_, langles_, body_pos_, 30, "start", 0, "start");
 	vector<double> temp1(7.0);
 //	pviz_.visualizeRobotWithTitle(temp1, temp1, body_pos_, 30, "start1", 0, "start1");
 	ROS_INFO("Done visualizing start position.");
@@ -1144,14 +1165,17 @@ bool Sbpl3DNavPlanner::makePlan(const geometry_msgs::PoseStamped& start,
 		poseAlongPath.pose.orientation.y = temp.y();
 		poseAlongPath.pose.orientation.z = temp.z();
 		poseAlongPath.pose.orientation.w = temp.w();
-		ROS_INFO("Adding pose {x: %.3f, y: %.3f, theta: %.3f to nav path.",
-		         poseAlongPath.pose.position.x, poseAlongPath.pose.position.y,
-		         res.body_trajectory.points[i].positions[3]);
+//		ROS_INFO("Adding pose {x: %.3f, y: %.3f, theta: %.3f to nav path.",
+//		         poseAlongPath.pose.position.x, poseAlongPath.pose.position.y,
+//		         res.body_trajectory.points[i].positions[3]);
 		plan.push_back(poseAlongPath);
 	}
 
 	if (plan.empty()) {
 		ROS_INFO("Sbpl3DNavPlanner returned empty path: no move necessary");
+	}
+	else {
+		ROS_INFO("Sbpl3DNavPlanner returned path with %u points.", plan.size());
 	}
 
 	return true;
