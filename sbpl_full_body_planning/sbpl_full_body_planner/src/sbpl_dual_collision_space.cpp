@@ -34,6 +34,11 @@
 
 namespace sbpl_full_body_planner {
 
+double distance(const KDL::Vector& a, const KDL::Vector& b)
+{
+	return sqrt((a.x()-b.x())*(a.x()-b.x()) + (a.y()-b.y())*(a.y()-b.y()) + (a.z()-b.z())*(a.z()-b.z()));
+}
+
 SBPLDualCollisionSpace::SBPLDualCollisionSpace(sbpl_arm_planner::SBPLArmModel* right_arm, sbpl_arm_planner::SBPLArmModel* left_arm, sbpl_arm_planner::OccupancyGrid* grid) : grid_(grid)
 {
   arm_.resize(2);
@@ -969,6 +974,8 @@ void SBPLDualCollisionSpace::getAttachedObjectVoxels(const std::vector<double> &
   f.p.z(pose[2]);
   f.M.RPY(pose[3],pose[4],pose[5]);
 
+  //f = attached_object_in_multi_dof_ * f;
+  f = f * attached_object_in_multi_dof_;
   objectv.resize(attached_object_.size(),std::vector<int>(3,0));
   for(size_t i = 0; i < attached_object_.size(); ++i)
   {
@@ -987,6 +994,8 @@ void SBPLDualCollisionSpace::getAttachedObjectInWorldFrame(const std::vector<dou
   f.p.z(pose[2]);
   f.M.RPY(pose[3],pose[4],pose[5]);
 
+  //f =  attached_object_in_multi_dof_ * f;
+  f =  f * attached_object_in_multi_dof_;
   objectv.resize(attached_object_.size(),std::vector<double>(4,0));
   for(size_t i = 0; i < attached_object_.size(); ++i)
   {
@@ -1022,6 +1031,87 @@ bool SBPLDualCollisionSpace::isValidAttachedObject(const std::vector<double> &po
   return true;
 }
 
+void SBPLDualCollisionSpace::attachSphere(KDL::Frame& pose, std::string frame, double radius)
+{
+	KDL::Vector sphere(0, 0, 0);
+	is_object_attached_ = true;
+	attached_robot_link_ = frame;
+	attached_object_pose_ = pose;
+
+	attached_object_.push_back(sphere);
+	object_radius_w_.push_back(radius);
+	object_radius_.push_back(int(object_radius_w_.back() / grid_->getResolution() + 0.5));
+}
+
+void SBPLDualCollisionSpace::attachCylinder(KDL::Frame& pose, std::string frame, double radius, double length)
+{
+	is_object_attached_ = true;
+	attached_robot_link_ = frame;
+	attached_object_pose_ = pose;
+
+	// compute end points of cylinder
+	KDL::Vector top(0, 0, 0);
+	KDL::Vector bottom(0, 0, 0);
+	std::vector<KDL::Vector> points;
+
+	top.data[2] += length / 2.0;
+	bottom.data[2] -= length / 2.0;
+
+	// get spheres
+	getIntermediatePoints(top, bottom, radius, points);
+	for (size_t i = 0; i < points.size(); i++) {
+		attached_object_.push_back(points[i]);
+		object_radius_w_.push_back(radius);
+		object_radius_.push_back(int(object_radius_w_.back() / grid_->getResolution() + 0.5));
+	}
+
+	ROS_DEBUG("[cspace] Attached cylinder with radius:%0.3fm  legth: %0.3fm", radius, length);
+
+	for (size_t i = 0; i < attached_object_.size(); i++) {
+		ROS_DEBUG("[cspace] [%d] xyz: %0.3f %0.3f %0.3f radius: %0.3fm",
+		          int(i), attached_object_[i].x(), attached_object_[i].y(), attached_object_[i].z(),
+		          object_radius_w_[i]);
+	}
+}
+
+void SBPLDualCollisionSpace::attachCube(KDL::Frame& pose, std::string frame, double x_dim, double y_dim, double z_dim)
+{
+	KDL::Vector v;
+	is_object_attached_ = true;
+	attached_robot_link_ = frame;
+	attached_object_pose_ = pose;
+
+	std::vector<std::vector<double> > spheres;
+	sbpl_geometry_utils::getEnclosingSpheresOfCube(x_dim, y_dim, z_dim, cube_filling_sphere_radius_, spheres);
+
+	for (size_t i = 0; i < spheres.size(); ++i) {
+		v.x(spheres[i][0]);
+		v.y(spheres[i][1]);
+		v.z(spheres[i][2]);
+		attached_object_.push_back(v);
+		object_radius_w_.push_back(spheres[i][3]);
+		object_radius_.push_back(int(object_radius_w_.back() / grid_->getResolution() + 0.5));
+	}
+
+	ROS_DEBUG("[cspace] Attaching cube represented by %d spheres with dimensions: %0.3f %0.3f %0.3f",
+	          int(spheres.size()), x_dim, y_dim, z_dim);
+
+	for (size_t i = 0; i < attached_object_.size(); ++i) {
+		ROS_DEBUG("[cspace] [%d] xyz: %0.3f %0.3f %0.3f radius: %0.3fm", int(i),
+		          attached_object_[i].x(), attached_object_[i].y(), attached_object_[i].z(), object_radius_w_[i]);
+	}
+}
+
+void SBPLDualCollisionSpace::setAttachedRobotLinkToMultiDofTransform(KDL::Frame& transform)
+{
+	attached_robot_link_in_multi_dof_ = transform;
+	if (is_object_attached_) attached_object_in_multi_dof_ = attached_robot_link_in_multi_dof_ * attached_object_pose_;
+	//attached_object_in_multi_dof_ = attached_object_pose_ * attached_robot_link_in_multi_dof_;
+	  // TODO: possibly add these in to sbpl_arm_planner. They're in Ben's version
+//	sbpl_arm_planner::printKDLFrame(attached_object_pose_, "object_in_right_wrist");
+//	sbpl_arm_planner::printKDLFrame(attached_robot_link_in_multi_dof_, "right_wrist_in_multi-dof");
+//	sbpl_arm_planner::printKDLFrame(attached_object_in_multi_dof_, "object_in_multi-dof");
+}
 
 bool SBPLDualCollisionSpace::getCollisionLinks()
 {
@@ -1826,4 +1916,18 @@ bool SBPLDualCollisionSpace::checkAllMotion(std::vector<double> &langles, std::v
   return true;
 }
 
+void SBPLDualCollisionSpace::getIntermediatePoints(KDL::Vector a, KDL::Vector b, double d, std::vector<KDL::Vector>& points)
+{
+	KDL::Vector pt, dir;
+	int interm_points = floor(distance(a, b) / d + 0.5);
+
+	dir = b - a;
+	points.clear();
+	points.push_back(a);
+	for (int i = 1; i <= interm_points; i++) {
+		pt = a + dir * i * d;
+		points.push_back(pt);
+	}
+	points.push_back(b);
+}
 }

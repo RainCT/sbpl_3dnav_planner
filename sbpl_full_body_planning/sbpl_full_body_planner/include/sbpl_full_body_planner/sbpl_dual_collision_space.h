@@ -33,6 +33,7 @@
 #include <sbpl_arm_planner/sbpl_arm_model.h>
 #include <sbpl_arm_planner/sbpl_arm_planning_error_codes.h>
 #include <sbpl_arm_planner/occupancy_grid.h>
+#include <sbpl_arm_planner/sbpl_geometry_utils.h>
 //#include <geometric_shapes/shapes.h>
 //#include <geometric_shapes/bodies.h>
 //#include <geometric_shapes/shape_operations.h>
@@ -158,6 +159,12 @@ class SBPLDualCollisionSpace
     void getAttachedObjectInWorldFrame(const std::vector<double> &pose, std::vector<std::vector<double> > &objectv);
     bool isValidAttachedObject(const std::vector<double> &pose, unsigned char &dist, int &debug_code);
 
+    void attachSphere(KDL::Frame& pose, std::string frame, double radius);
+    void attachCylinder(KDL::Frame& pose, std::string frame, double radius, double length);
+    void attachCube(KDL::Frame& pose, std::string frame, double x_dim, double y_dim, double z_dim);
+
+    void setAttachedRobotLinkToMultiDofTransform(KDL::Frame& transform);
+
     /* kinematics & transformations */
     bool getJointPosesInGrid(const sbpl_arm_planner::SBPLArmModel* arm, std::vector<double> angles, BodyPose &pose, std::vector<std::vector<int> > &jnts, bool verbose);
     bool getJointPosesInGrid(const std::vector<double> angles, BodyPose &pose, char i_arm, std::vector<std::vector<int> > &jnts);
@@ -232,11 +239,19 @@ class SBPLDualCollisionSpace
     std::vector<double> object_radius_w_;
     std::vector<int> object_radius_;
     std::vector<std::vector<int> > attached_voxels_;  //temp
+    std::string attached_robot_link_; ///< Frame name of link the attached_object_pose_ is defined in
+    KDL::Frame attached_object_pose_; ///< Pose of attached object in attached robot link's frame
+    KDL::Frame attached_robot_link_in_multi_dof_; ///< Pose of attached robot link in multi-dof joint frame
+    KDL::Frame attached_object_in_multi_dof_; ///< Pose of attached object in multi-dof joint frame
+
+    double cube_filling_sphere_radius_;
 
      /** @brief get the shortest distance between two 3D line segments */
     double distanceBetween3DLineSegments(std::vector<int> l1a, std::vector<int> l1b,std::vector<int> l2a,std::vector<int> l2b);
     inline bool isValidPoint(double &x, double &y, double &z, short unsigned int &radius, unsigned char &dist);
     inline int getDistanceBetweenPoints(int &x1, int &y1, int &z1, int &x2, int &y2, int &z2);
+
+    void getIntermediatePoints(KDL::Vector a, KDL::Vector b, double d, std::vector<KDL::Vector>& points);
 
     /* full body planning */
     std::vector<CollisionLink> cl_;
