@@ -34,7 +34,8 @@ rosbuild_add_library(sbpl_arm_planner
                      src/sbpl_arm_planner_params.cpp
                      src/pr2/sbpl_math.cpp
                      src/pr2/pr2_workspace.cpp
-                     src/pr2/orientation_solver.cpp)
+                     src/pr2/orientation_solver.cpp
+                     src/sbpl_geometry_utils.cpp)
 
 rosbuild_add_executable(planPath src/test/plan_path.cpp)
 rosbuild_add_executable(planPathTest src/test/plan_path_test.cpp)
