@@ -263,7 +263,6 @@ bool PoseFollower3D::checkTrajectory3D(double x, double y, double theta, double 
 	int num_steps = int(sim_time_ / sim_granularity_ + 0.5);
 	//we at least want to take one step... even if we won't move, we want to score our current position
 	if (num_steps == 0) num_steps = 1;
-
 	for (int i = 0; i <= num_steps; ++i) {
 		double dt = sim_time_ / num_steps * i;
 		double x_i = x + (vx * cos(theta) + vy * cos(M_PI_2 + theta)) * dt;
@@ -304,6 +303,7 @@ bool PoseFollower3D::checkTrajectoryToWaypoint(double x, double y, double theta,
 // 3D collision check at x,y,theta in global map coordinates
 bool PoseFollower3D::isIn3DCollision(double x, double y, double theta)
 {
+return false;
 	// construct the robot state message to send to /sbpl_full_body_planning/collision_check service
 	// to handle collision checking
 	arm_navigation_msgs::RobotState robotState;

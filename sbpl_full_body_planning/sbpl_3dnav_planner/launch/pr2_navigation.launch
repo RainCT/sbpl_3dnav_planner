@@ -24,6 +24,7 @@
         <remap from="cmd_vel" to="base_controller/command"/>
         <remap from="collision_map_occ" to="collision_map_out"/>
         
+        <rosparam file="$(find sbpl_3dnav_planner)/config/sbpl_global_params.yaml" command="load"/>
         <rosparam file="$(find sbpl_3dnav_planner)/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
         <rosparam file="$(find sbpl_3dnav_planner)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
         <rosparam file="$(find sbpl_3dnav_planner)/config/local_costmap_params_close.yaml" command="load" />
