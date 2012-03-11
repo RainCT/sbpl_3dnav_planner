@@ -454,7 +454,7 @@ bool Sbpl3DNavPlanner::collisionCheck(sbpl_3dnav_planner::FullBodyCollisionCheck
 		vector<double> rangles;
 		BodyPose pose;
 		getRobotPoseFromRobotState(req.robot_states[i],langles,rangles,pose);
-        ROS_INFO("[collisionCheck] x = %f, y = %f, theta = %f", pose.x, pose.y, pose.theta);
+		ROS_INFO("[collisionCheck] x = %f, y = %f, theta = %f", pose.x, pose.y, pose.theta);
 		//TODO:Adjust for map origin offset
 		unsigned char dist_temp;
 		int debug_code;
@@ -471,9 +471,10 @@ bool Sbpl3DNavPlanner::collisionCheck(sbpl_3dnav_planner::FullBodyCollisionCheck
 
 		if (res.error_codes[i].val == arm_navigation_msgs::ArmNavigationErrorCodes::SUCCESS) {
 			ROS_INFO("SBPL full body planning collision checking service returned SUCCESS");
+			pviz_.visualizeRobot(rangles, langles, pose, 150, "collision_checking_valid", 30 * i);
 		}
 		else {
-	        pviz_.visualizeRobotWithTitle(rangles, langles, pose, 30, "AAAH", 0, "AAAH");
+			pviz_.visualizeRobot(rangles, langles, pose, 10, "collision_checking_invalid", 30 * i);
 		}
 	}
 
