@@ -382,7 +382,7 @@ bool PoseFollower3D::getRobotStateFromRobotPose(const geometry_msgs::Pose& bodyP
 		robotStateOut.joint_state.position.push_back(leftArmAngles_[i]);
 	}
 
-	robotStateOut.joint_state.name.push_back("torso_lift_link");
+	robotStateOut.joint_state.name.push_back("torso_lift_joint");
 	robotStateOut.joint_state.position.push_back(spinePosition_);
 
 	robotStateOut.multi_dof_joint_state.frame_ids.push_back("map");

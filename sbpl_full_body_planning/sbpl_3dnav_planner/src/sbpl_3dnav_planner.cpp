@@ -523,7 +523,7 @@ bool Sbpl3DNavPlanner::getRobotPoseFromRobotState(arm_navigation_msgs::RobotStat
 	// torso
 	for(size_t i = 0; i < state.joint_state.name.size(); i++)
 	{
-		if(state.joint_state.name[i].compare("torso_lift_link") == 0)
+		if(state.joint_state.name[i].compare("torso_lift_joint") == 0)
 		{
 			body.z = state.joint_state.position[i];
 			break;
