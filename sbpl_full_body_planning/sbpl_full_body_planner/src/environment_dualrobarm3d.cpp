@@ -2458,9 +2458,30 @@ void EnvironmentDUALROBARM3D::convertStateIDPathToJointAnglesPath(const std::vec
   path.clear();
 
   ROS_DEBUG_NAMED(prms_.solution_log_, "[env] idpath has length %d", int(idpath.size()));
-  if(idpath.size() <=1)
+  if(idpath.size()==1){
+    source_entry = EnvROBARM.StateID2CoordTable[idpath[0]];
+    coordToWorldPose(source_entry->coord, source_wcoord);
+
+    base[0] = source_wcoord[8];
+    base[1] = source_wcoord[9];
+    base[2] = source_wcoord[11];
+
+    spine[0] = source_wcoord[10];
+
+    //store
+    path.push_back(source_entry->angles0);
+    path.push_back(source_entry->angles1);
+    path.push_back(spine);
+    path.push_back(base);
+    path.push_back(source_entry->angles0);
+    path.push_back(source_entry->angles1);
+    path.push_back(spine);
+    path.push_back(base);
+    return;
+  }
+  if(idpath.size()==0)
   {
-    ROS_ERROR("[env] idpath has length <= 1. Not returning the joint angles path.");
+    ROS_ERROR("[env] idpath has length = 0. Not returning the joint angles path.");
     return;
   }
 
