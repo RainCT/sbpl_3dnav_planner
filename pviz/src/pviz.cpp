@@ -1032,7 +1032,7 @@ bool PViz::computeFKforVisualizationWithKDL(const std::vector<double> &jnt0_pos,
   return true;
 }
 
-void PViz::visualizeRobotMeshes(double hue, std::string ns, int id, std::vector<geometry_msgs::PoseStamped> &poses)
+void PViz::visualizeRobotMeshes(double hue, std::string ns, int start_id, std::vector<geometry_msgs::PoseStamped> &poses)
 {
   double r,g,b;
   marker_array_.markers.clear();
@@ -1047,10 +1047,10 @@ void PViz::visualizeRobotMeshes(double hue, std::string ns, int id, std::vector<
     marker_array_.markers[i].header.frame_id = reference_frame_;
     marker_array_.markers[i].ns = ns;
     marker_array_.markers[i].type = visualization_msgs::Marker::MESH_RESOURCE;
-    marker_array_.markers[i].id = i;
+    marker_array_.markers[i].id = start_id + i;
     marker_array_.markers[i].action = visualization_msgs::Marker::ADD;
     marker_array_.markers[i].pose = poses.at(i).pose;
-    marker_array_.markers[i].scale.x = 1.0;  
+    marker_array_.markers[i].scale.x = 1.0;
     marker_array_.markers[i].scale.y = 1.0;
     marker_array_.markers[i].scale.z = 1.0;
 
@@ -1076,17 +1076,17 @@ void PViz::getMaptoRobotTransform(double x, double y, double theta, KDL::Frame &
   frame = base_footprint_in_map;
 }
 
-void PViz::visualizeRobot(std::vector<double> &jnt0_pos, std::vector<double> &jnt1_pos, std::vector<double> &base_pos, double torso_pos, double hue, std::string ns, int id)
+void PViz::visualizeRobot(std::vector<double> &jnt0_pos, std::vector<double> &jnt1_pos, std::vector<double> &base_pos, double torso_pos, double hue, std::string ns, int start_id)
 {
   std::vector<geometry_msgs::PoseStamped> poses;
   if(!computeFKforVisualizationWithKDL(jnt0_pos, jnt1_pos, base_pos, torso_pos, poses))
 
     ROS_WARN("Unable to compute forward kinematics.");
   else
-    visualizeRobotMeshes(hue, ns, id, poses);
+    visualizeRobotMeshes(hue, ns, start_id, poses);
 }
 
-void PViz::visualizeRobot(std::vector<double> &jnt0_pos, std::vector<double> &jnt1_pos, BodyPose &body_pos, double hue, std::string ns, int id)
+void PViz::visualizeRobot(std::vector<double> &jnt0_pos, std::vector<double> &jnt1_pos, BodyPose &body_pos, double hue, std::string ns, int start_id)
 {
   double torso_pos;
   std::vector<double> base_pos(3,0);
@@ -1101,7 +1101,7 @@ void PViz::visualizeRobot(std::vector<double> &jnt0_pos, std::vector<double> &jn
 
     ROS_WARN("Unable to compute forward kinematics.");
   else
-    visualizeRobotMeshes(hue, ns, id, poses);
+    visualizeRobotMeshes(hue, ns, start_id, poses);
 }
 
 bool PViz::parseCSVFile(std::string filename, int num_cols, std::vector<std::vector<double> > &data)
@@ -1192,9 +1192,9 @@ bool PViz::visualizeTrajectoryFromFile(std::string filename)
   return true;
 }
 
-void PViz::visualizeRobotWithTitle(std::vector<double> &jnt0_pos, std::vector<double> &jnt1_pos, BodyPose &body_pos, double hue, std::string ns, int id, std::string title)
+void PViz::visualizeRobotWithTitle(std::vector<double> &jnt0_pos, std::vector<double> &jnt1_pos, BodyPose &body_pos, double hue, std::string ns, int start_id, std::string title)
 {
-  visualizeRobot(jnt0_pos, jnt1_pos, body_pos, hue, ns, id);
+  visualizeRobot(jnt0_pos, jnt1_pos, body_pos, hue, ns, start_id);
 
   double r=0,g=0,b=0;
   visualization_msgs::Marker marker;
