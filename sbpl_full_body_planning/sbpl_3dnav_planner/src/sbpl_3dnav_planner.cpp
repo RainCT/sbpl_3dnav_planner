@@ -371,7 +371,6 @@ void Sbpl3DNavPlanner::jointStatesCallback(const sensor_msgs::JointStateConstPtr
 	body_pos_.x = 0;
 	body_pos_.y = 0;
 	body_pos_.theta = 0;
-	pviz_.visualizeRobotWithTitle(rangles_, langles_, body_pos_, 30, "start", 0, "start");
 
 /*
 	// get base position
