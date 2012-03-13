@@ -4,10 +4,10 @@
 #define Z_TORSO_LIFT  -0.802
 #define X_TORSO_LIFT 0.05
 
-static std::string RIGHT_FK_SERVICE_NAME = "pr2_right_arm_kinematics/get_fk";
-static std::string LEFT_FK_SERVICE_NAME = "pr2_left_arm_kinematics/get_fk";
-static std::string RIGHT_IK_SERVICE_NAME = "pr2_right_arm_kinematics/get_ik";
-static std::string LEFT_IK_SERVICE_NAME = "pr2_left_arm_kinematics/get_ik";
+static std::string RIGHT_FK_SERVICE_NAME = "pr2_right_arm_kinematics_sushi/get_fk";
+static std::string LEFT_FK_SERVICE_NAME = "pr2_left_arm_kinematics_sushi/get_fk";
+static std::string RIGHT_IK_SERVICE_NAME = "pr2_right_arm_kinematics_sushi/get_ik";
+static std::string LEFT_IK_SERVICE_NAME = "pr2_left_arm_kinematics_sushi/get_ik";
 
 static std::string RIGHT_CHAIN_RTIP_NAME = "r_gripper_r_finger_tip_link";
 static std::string RIGHT_CHAIN_LTIP_NAME = "r_gripper_l_finger_tip_link";

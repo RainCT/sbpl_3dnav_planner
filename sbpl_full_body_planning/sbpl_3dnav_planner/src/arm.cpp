@@ -7,10 +7,11 @@ Arm::Arm(std::string arm_name)
 
   arm_name_ = arm_name;
 
+  ROS_ERROR("Using PR2 Arm Kinematics for SUSHI.");
   if(arm_name_.compare("left") == 0)
   {
-    ik_service_name_ = "/pr2_left_arm_kinematics/get_ik";
-    fk_service_name_ = "/pr2_left_arm_kinematics/get_fk";
+    ik_service_name_ = "/pr2_left_arm_kinematics_sushi/get_ik";
+    fk_service_name_ = "/pr2_left_arm_kinematics_sushi/get_fk";
     controller_state_name_ = "l_arm_controller/state";
     joint_names_.push_back("l_shoulder_pan_joint");
     joint_names_.push_back("l_shoulder_lift_joint");
@@ -23,8 +24,8 @@ Arm::Arm(std::string arm_name)
   }
   else if (arm_name_.compare("right") == 0)
   {
-    ik_service_name_ = "/pr2_right_arm_kinematics/get_ik";
-    fk_service_name_ = "/pr2_right_arm_kinematics/get_fk";
+    ik_service_name_ = "/pr2_right_arm_kinematics_sushi/get_ik";
+    fk_service_name_ = "/pr2_right_arm_kinematics_sushi/get_fk";
     controller_state_name_ = "r_arm_controller/state";
     joint_names_.push_back("r_shoulder_pan_joint");
     joint_names_.push_back("r_shoulder_lift_joint");

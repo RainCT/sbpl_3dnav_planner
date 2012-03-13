@@ -62,8 +62,10 @@ collision_space:
 
 reference_frame: map
 use_collision_map_from_sensors: true
-left_fk_service_name: pr2_left_arm_kinematics/get_fk
-left_ik_service_name: pr2_left_arm_kinematics/get_ik
-right_fk_service_name: pr2_right_arm_kinematics/get_fk
-right_ik_service_name: pr2_right_arm_kinematics/get_ik
+
+##### FOR SUSHI ONLY
+left_fk_service_name: pr2_left_arm_kinematics_sushi/get_fk
+left_ik_service_name: pr2_left_arm_kinematics_sushi/get_ik
+right_fk_service_name: pr2_right_arm_kinematics_sushi/get_fk
+right_ik_service_name: pr2_right_arm_kinematics_sushi/get_ik
 
