@@ -91,7 +91,7 @@ void PoseFollower3D::initialize(std::string name, tf::TransformListener* tf, cos
 	ros::NodeHandle node_private("~/" + name);
 
 	//ANDREW kinematic_state_ = new planning_models::KinematicState(collision_model_3d_.getKinematicModel());
-	//ANDREW collision_planner_.initialize(name, tf_, costmap_ros_);
+	collision_planner_.initialize(name, tf_, costmap_ros_);
 
 	node_private.param("k_trans", K_trans_, 1.5);
 	node_private.param("k_rot", K_rot_, 1.25);
@@ -460,15 +460,18 @@ bool PoseFollower3D::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
 
 	// TODO: fix footprint: update costmap one / own collcheck here?
 
-//	bool legal_traj = collision_planner_.checkTrajectory(test_vel.linear.x, test_vel.linear.y, test_vel.angular.z, true);
+	bool legal_traj = true;//collision_planner_.checkTrajectory(test_vel.linear.x, test_vel.linear.y, test_vel.angular.z, true);
+  //ROS_INFO("checking (%f %f %f) -> %d\n",test_vel.linear.x, test_vel.linear.y, test_vel.angular.z,legal_traj);
 
 //	bool legal_traj = checkTrajectory3D(robot_pose.getOrigin().x(), robot_pose.getOrigin().y(),
 //	                                    tf::getYaw(robot_pose.getRotation()),
 //	                                    test_vel.linear.x, test_vel.linear.y, test_vel.angular.z);
+/* MIKE: removed 3d collision checking!
 	bool legal_traj = checkTrajectoryToWaypoint(robot_pose.getOrigin().x(), robot_pose.getOrigin().y(),
 	                                            tf::getYaw(robot_pose.getRotation()),
 	                                            target_pose.getOrigin().x(), target_pose.getOrigin().y(),
 	                                            tf::getYaw(target_pose.getRotation()));
+                                              */
 
 	if (!legal_traj) {
 		ROS_INFO("[PoseFollower3D] Local plan is in collision");

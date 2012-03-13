@@ -29,7 +29,7 @@
         <rosparam file="$(find sbpl_3dnav_planner)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
         <rosparam file="$(find sbpl_3dnav_planner)/config/local_costmap_params_close.yaml" command="load" />
         <rosparam file="$(find sbpl_3dnav_planner)/config/global_costmap_params.yaml" command="load" />
-        <rosparam file="$(find sbpl_3dnav_planner)/config/base_local_planner_trajectory.yaml" command="load" /> 
+        <!-- <rosparam file="$(find sbpl_3dnav_planner)/config/base_local_planner_trajectory.yaml" command="load" /> -->
         <rosparam file="$(find sbpl_3dnav_planner)/config/base_local_planner_poses.yaml" command="load" />
     </node>
 
