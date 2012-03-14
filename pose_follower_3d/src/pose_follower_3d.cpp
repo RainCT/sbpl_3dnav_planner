@@ -324,21 +324,21 @@ return false;
 
 	req.robot_states.push_back(robotState);
 
-	ROS_INFO("req.robot_states.size = %u", req.robot_states.size());
+	ROS_INFO("[PoseFollower3D] req.robot_states.size = %u", int(req.robot_states.size()));
 
 	if (!collision_check_client_.call(req, res)) {
 		ROS_ERROR("[PoseFollower3D] Call to collision checking service failed. Returning \"in collision\"");
 		return true;
 	}
 
-	ROS_INFO("res.error_codes.size = %u", res.error_codes.size());
+	ROS_INFO("[PoseFollower3D] res.error_codes.size = %u", int(res.error_codes.size()));
 
 	if (res.error_codes.empty()) {
-		ROS_INFO("service call returned no error codes.");
+		ROS_INFO("[PoseFollower3D] Service call returned no error codes.");
 	}
 
 	for (int i = 0; i < (int)res.error_codes.size(); i++) {
-		ROS_INFO("Service called returned error code %i", res.error_codes[i].val);
+		ROS_INFO("[PoseFollower3D] Service called returned error code %i", res.error_codes[i].val);
 		if (res.error_codes[i].val == arm_navigation_msgs::ArmNavigationErrorCodes::COLLISION_CONSTRAINTS_VIOLATED) {
 			return true;
 		}
@@ -409,7 +409,7 @@ bool PoseFollower3D::stopped()
 
 bool PoseFollower3D::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
 {
-	ROS_INFO("[PoseFollower3D] calling computeVelocityCommands.");
+	ROS_DEBUG("[PoseFollower3D] calling computeVelocityCommands.");
 	const geometry_msgs::Twist empty_twist;
 
 	geometry_msgs::TransformStamped geo_pose;
