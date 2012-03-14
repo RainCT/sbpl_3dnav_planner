@@ -39,6 +39,9 @@ class PViz
 
     /* \brief set reference frame of visualizations */
     void setReferenceFrame(std::string frame) {reference_frame_ = frame;};
+    
+    /* \broef get reference frame used for the visualizations */
+    std::string getReferenceFrame() {return reference_frame_;};
 
     /**************** Kinematics ****************/
 
@@ -71,6 +74,7 @@ class PViz
     void visualizeRobot(std::vector<double> &jnt0_pos, std::vector<double> &jnt1_pos, BodyPose &body_pos, double hue, std::string ns, int start_id);
 
     void visualizeRobotWithTitle(std::vector<double> &jnt0_pos, std::vector<double> &jnt1_pos, BodyPose &body_pos, double hue, std::string ns, int start_id, std::string title);
+    
     /**************** Shapes, Text & Lines ****************/
 
     /* \brief visualize a pose (sphere, arrow, string of text) */
@@ -95,6 +99,8 @@ class PViz
     void visualizeSpheres(const std::vector<std::vector<double> > &pose, int color, std::string text, std::vector<double> &radius);
  
     void visualizeSpheres(const std::vector<std::vector<double> > &pose, int color, std::string text);
+    
+    void visualizeSpheres(const std::vector<std::vector<double> > &pose, const std::vector<int> &hue, std::string text);
 
     void visualizeAttachedObject(const std::vector<double> angles);
 
@@ -119,6 +125,8 @@ class PViz
     bool parseCSVFile(std::string filename, int num_cols, std::vector<std::vector<double> > &data);
   
     bool visualizeTrajectoryFromFile(std::string filename);
+
+    void visualizeTrajectory(std::vector<trajectory_msgs::JointTrajectoryPoint> &rpath, std::vector<trajectory_msgs::JointTrajectoryPoint> &lpath, std::vector<trajectory_msgs::JointTrajectoryPoint> &bpath, int throttle);
 
   private:
 
@@ -167,6 +175,11 @@ class PViz
     double position_tolerance_;
     double orientation_tolerance_;
     bool goal_is_6dof_;
+
+    visualization_msgs::MarkerArray getRobotMeshesMarkerMsg(double hue, std::string ns, int start_id, std::vector<geometry_msgs::PoseStamped> &poses);
+
+    visualization_msgs::MarkerArray getRobotMarkerMsg(std::vector<double> &jnt0_pos, std::vector<double> &jnt1_pos, BodyPose &body_pos, double hue, std::string ns, int start_id);
+
 };
 
 #endif
