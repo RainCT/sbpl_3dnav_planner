@@ -421,15 +421,12 @@ bool Sbpl3DNavPlanner::collisionCheck(sbpl_3dnav_planner::FullBodyCollisionCheck
 {
 	colmap_mutex_.lock();
 
-	ROS_INFO("req.robot_states.size = %u", int(req.robot_states.size()));
-
-//	res.error_codes.reserve(req.robot_states.size());
 	for(unsigned int i=0; i<req.robot_states.size(); i++){
 		vector<double> langles;
 		vector<double> rangles;
 		BodyPose pose;
 		getRobotPoseFromRobotState(req.robot_states[i],langles,rangles,pose);
-		ROS_INFO("[collisionCheck] x = %f, y = %f, theta = %f", pose.x, pose.y, pose.theta);
+		ROS_DEBUG("[collisionCheck] x = %f, y = %f, theta = %f", pose.x, pose.y, pose.theta);
 		//TODO:Adjust for map origin offset
 		unsigned char dist_temp;
 		int debug_code;
@@ -453,7 +450,7 @@ bool Sbpl3DNavPlanner::collisionCheck(sbpl_3dnav_planner::FullBodyCollisionCheck
 		}
 	}
 
-	ROS_INFO("res.error_codes.size = %u", int(res.error_codes.size()));
+	ROS_INFO("[CollisionCheckService] Checked %d robot states for collisions.", int(req.robot_states.size()));
 	colmap_mutex_.unlock();
 	return true;
 }
