@@ -1328,7 +1328,7 @@ void PViz::visualizeTrajectory(std::vector<trajectory_msgs::JointTrajectoryPoint
   }
 
   int color_inc = 240.0 / (length / throttle); // hue: red -> blue
-  ROS_INFO("[pviz] length: %d color_inc: %d throttle: %d)", length, color_inc, throttle);
+  ROS_DEBUG("[pviz] length: %d color_inc: %d throttle: %d)", length, color_inc, throttle);
 
   for (int i = 0; i < length; ++i) {
     for (std::size_t j = 0; j < rangles.size(); ++j) {
@@ -1343,8 +1343,8 @@ void PViz::visualizeTrajectory(std::vector<trajectory_msgs::JointTrajectoryPoint
     if ((i != length - 1) && (i % throttle != 0))
       continue;
 
-    ROS_INFO("[pviz] length: %d color_inc: %d throttle: %d", length, color_inc, throttle);
-    ROS_INFO("[pviz] Visualizing waypoint #%d (i mod color_inc: %d) with color: %d (color_inc: %d, throttle: %d)", i, (i / throttle), (i / throttle) * color_inc, color_inc, throttle);
+    ROS_DEBUG("[pviz] length: %d color_inc: %d throttle: %d", length, color_inc, throttle);
+    ROS_DEBUG("[pviz] Visualizing waypoint #%d (i mod color_inc: %d) with color: %d (color_inc: %d, throttle: %d)", i, (i / throttle), (i / throttle) * color_inc, color_inc, throttle);
 
     ma1 = getRobotMarkerMsg(rangles, langles, body_pos, (i / throttle) * color_inc, "robot_path", (i+1)*30);
     ma.markers.insert(ma.markers.end(), ma1.markers.begin(), ma1.markers.end()); 
