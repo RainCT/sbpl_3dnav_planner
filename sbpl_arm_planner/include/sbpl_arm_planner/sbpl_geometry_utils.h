@@ -1,4 +1,4 @@
-/** /author Andrew Dornbrush */
+/** /author Andrew Dornbush */
 
 #ifndef _SBPL_GEOMETRY_UTILS_
 #define _SBPL_GEOMETRY_UTILS_
