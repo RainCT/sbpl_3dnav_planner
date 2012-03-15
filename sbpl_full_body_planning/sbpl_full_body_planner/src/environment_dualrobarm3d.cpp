@@ -36,7 +36,7 @@
 #define DEBUG_SEARCH 0
 #define DEBUG_HEURISTIC 0
 
-#define DRAW_EXPANDS 1
+#define DRAW_EXPANDS 0
 
 #if DEBUG_SEARCH
   FILE* fSucc = SBPL_FOPEN("/tmp/debug_succs.txt", "w");
@@ -603,6 +603,7 @@ void EnvironmentDUALROBARM3D::GetSuccs(int SourceStateID, vector<int>* SuccIDV, 
 
       //first bounds check the bad boy
       if(!boundsCheckBase(body_pose)){
+ROS_ERROR("bound check fail");
         inCollision = true;
         break;
       }
@@ -610,6 +611,7 @@ void EnvironmentDUALROBARM3D::GetSuccs(int SourceStateID, vector<int>* SuccIDV, 
       
       if(!cspace_->checkBaseMotion(parent->angles1, parent->angles0, body_pose, prms_.verbose_, dist_temp /* padding */, debug_code_))
       {
+	//ROS_ERROR("collision check fail");
         ROS_DEBUG_NAMED(prms_.expands_log_, " [env] collision");
         inCollision = true;
         break;
@@ -764,7 +766,7 @@ bool EnvironmentDUALROBARM3D::boundsCheckBase(BodyPose pose){
     double x = ca*dx[i] - sa*dy[i] + pose.x;
     double y = sa*dx[i] + ca*dy[i] + pose.y;
     //printf("x=%f y=%f\n",x,y);
-    if(x<0 || y<0 || x>=prms_.sizeX_ || y>=prms_.sizeY_)
+    if(x<prms_.originX_ || y<prms_.originY_ || x>=prms_.sizeX_-prms_.originX_ || y>=prms_.sizeY_-prms_.originY_)
       return false;
   }
   return true;
@@ -1518,7 +1520,9 @@ int EnvironmentDUALROBARM3D::setStartConfiguration(const std::vector<double> &an
   coord[7] = fa[1];
 
   BodyCell bc;
+printf("z before %f\n",pose.z);
   worldToDiscBody(pose, &bc);
+printf("z after %d\n",bc.z);
 
   coord[8] = bc.x;
   coord[9] = bc.y;
@@ -1585,10 +1589,13 @@ int EnvironmentDUALROBARM3D::setGoalPosition(const std::vector<std::vector<doubl
   if(!arm_[1]->computeIK(pose, EnvROBARM.startHashEntry->angles1, ik_solution))
     SBPL_WARN("[setGoalPosition] No valid IK solution for the left arm at the goal pose.");
 
+  double dummy_x, dummy_y;
+  discToWorldXYZ(0,0,EnvROBARM.startHashEntry->coord[10],dummy_x,dummy_y,EnvROBARMCfg.goal.xyz[2],true);
+
   // only supports a single goal
   EnvROBARMCfg.goal.xyz[0] = goals[0][0];
   EnvROBARMCfg.goal.xyz[1] = goals[0][1];
-  EnvROBARMCfg.goal.xyz[2] = goals[0][2];
+  //EnvROBARMCfg.goal.xyz[2] = goals[0][2];
   EnvROBARMCfg.goal.rpy[0] = goals[0][3];
   EnvROBARMCfg.goal.rpy[1] = goals[0][4];
   EnvROBARMCfg.goal.rpy[2] = goals[0][5];
@@ -1642,7 +1649,7 @@ int EnvironmentDUALROBARM3D::setGoalPosition(const std::vector<std::vector<doubl
     coord[8] = temp_x;
     coord[9] = temp_y;
     coord[11] = (yaw+2)/4;
-    printf("3dnav goal %d %d %d\n",coord[8],coord[9],coord[11]);
+    printf("3dnav goal x=%d y=%d th=%d z=%d\n",coord[8],coord[9],coord[11],coord[10]);
     EnvDUALROBARM3DHashEntry_t* HashEntry;
     if((HashEntry = getHashEntry(coord, false)) == NULL){
       HashEntry = createHashEntry(coord);
@@ -1651,6 +1658,7 @@ int EnvironmentDUALROBARM3D::setGoalPosition(const std::vector<std::vector<doubl
     }
     EnvROBARM.goalHashEntry = HashEntry;
     unsigned char dist_temp;
+printf("poooooppiie!!!!! %f\n",EnvROBARMCfg.goal.xyz[2]);
     BodyPose bp(EnvROBARMCfg.goal.xyz[0],EnvROBARMCfg.goal.xyz[1],EnvROBARMCfg.goal.xyz[2],EnvROBARMCfg.goal.rpy[2]);
     pviz_.visualizeRobot(HashEntry->angles0, HashEntry->angles1, bp, 0.0, "goal", 0);
     usleep(5000);
@@ -2450,9 +2458,30 @@ void EnvironmentDUALROBARM3D::convertStateIDPathToJointAnglesPath(const std::vec
   path.clear();
 
   ROS_DEBUG_NAMED(prms_.solution_log_, "[env] idpath has length %d", int(idpath.size()));
-  if(idpath.size() <=1)
+  if(idpath.size()==1){
+    source_entry = EnvROBARM.StateID2CoordTable[idpath[0]];
+    coordToWorldPose(source_entry->coord, source_wcoord);
+
+    base[0] = source_wcoord[8];
+    base[1] = source_wcoord[9];
+    base[2] = source_wcoord[11];
+
+    spine[0] = source_wcoord[10];
+
+    //store
+    path.push_back(source_entry->angles0);
+    path.push_back(source_entry->angles1);
+    path.push_back(spine);
+    path.push_back(base);
+    path.push_back(source_entry->angles0);
+    path.push_back(source_entry->angles1);
+    path.push_back(spine);
+    path.push_back(base);
+    return;
+  }
+  if(idpath.size()==0)
   {
-    ROS_ERROR("[env] idpath has length <= 1. Not returning the joint angles path.");
+    ROS_ERROR("[env] idpath has length = 0. Not returning the joint angles path.");
     return;
   }
 

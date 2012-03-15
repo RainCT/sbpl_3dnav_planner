@@ -96,10 +96,7 @@ Sbpl3DNavPlanner::Sbpl3DNavPlanner() :
 	larm_object_offset_.orientation.z = 0.0;
 	larm_object_offset_.orientation.w = 1.0;
 
-	//rarm_ = new Arm(std::string("right"));
-	//larm_ = new Arm(std::string("left"));
-
-	//TODO: These should be moved to be with the enum DebugCodes
+  //TODO: These should be moved to be with the enum DebugCodes
 	debug_code_names_.push_back("valid successor");
 	debug_code_names_.push_back("collision between arms");
 	debug_code_names_.push_back("right arm in collision");
@@ -188,6 +185,7 @@ bool Sbpl3DNavPlanner::init()
 	node_handle_.param("visualizations/trajectory", visualize_trajectory_, false);
 	node_handle_.param("visualizations/end_effector_path", visualize_end_effector_path_, false);
 	node_handle_.param("visualizations/collision_model_trajectory", visualize_collision_model_trajectory_, false);
+	node_handle_.param("visualizations/collision_model", visualize_collision_model_, false);
 	node_handle_.param("visualizations/trajectory_throttle", throttle_, 4);
 	node_handle_.param("visualizations/heuristic_grid", visualize_heuristic_grid_, false);
 
@@ -205,7 +203,7 @@ bool Sbpl3DNavPlanner::init()
 	collision_check_service_ = root_handle_.advertiseService("/sbpl_full_body_planning/collision_check", &Sbpl3DNavPlanner::collisionCheck,this);
 
 	planner_initialized_ = true;
-	ROS_INFO("[node] The SBPL arm planner node initialized succesfully.");
+	ROS_INFO("[3dnav] The SBPL arm planner node initialized succesfully.");
 	return true;
 }
 
@@ -218,14 +216,14 @@ int Sbpl3DNavPlanner::run()
 bool Sbpl3DNavPlanner::initializePlannerAndEnvironment()
 {
 	if (robot_description_.empty()) {
-		ROS_ERROR("[node] Robot description file is empty. Exiting.");
+		ROS_ERROR("[3dnav] Robot description file is empty. Exiting.");
 		return false;
 	}
 
 	// initialize arm planner environment
 	if (!sbpl_arm_env_.initEnvironment(right_arm_description_filename_, left_arm_description_filename_,
 	                                   mprims_filename_, base_mprims_filename_)) {
-		ROS_ERROR("[node] ERROR: initEnvironment failed");
+		ROS_ERROR("[3dnav] ERROR: initEnvironment failed");
 		return false;
 	}
 
@@ -246,7 +244,7 @@ bool Sbpl3DNavPlanner::initializePlannerAndEnvironment()
 	laviz_->setReferenceFrame(reference_frame_);
 	raviz_->setReferenceFrame(reference_frame_);
 
-	ROS_INFO("[node] Initialized sbpl planning environment.");
+	ROS_INFO("[3dnav] Initialized sbpl planning environment.");
 	return true;
 }
 
@@ -318,6 +316,8 @@ void Sbpl3DNavPlanner::collisionObjectCallback(const arm_navigation_msgs::Collis
 void Sbpl3DNavPlanner::jointStatesCallback(const sensor_msgs::JointStateConstPtr &state)
 {
 	ROS_DEBUG("joint states callback");
+
+  // arms
 	for(unsigned int i=0; i<rjoint_names_.size(); i++){
 		unsigned int j;
 		for(j=0; j<state->name.size(); j++)
@@ -339,25 +339,7 @@ void Sbpl3DNavPlanner::jointStatesCallback(const sensor_msgs::JointStateConstPtr
 			langles_[i] = state->position[j];
 	}
 
-/*
-	rangles_[0] = state->position[17-3];
-	rangles_[1] = state->position[18-3];
-	rangles_[2] = state->position[16-3];
-	rangles_[3] = state->position[20-3];
-	rangles_[4] = state->position[19-3];
-	rangles_[5] = state->position[21-3];
-	rangles_[6] = state->position[22-3];
-
-	langles_[0] = state->position[29-3];
-	langles_[1] = state->position[30-3];
-	langles_[2] = state->position[28-3];
-	langles_[3] = state->position[32-3];
-	langles_[4] = state->position[31-3];
-	langles_[5] = state->position[33-3];
-	langles_[6] = state->position[34-3];
-*/
-
-	//body_pos_.z = state->position[12-3];
+  // torso
 	unsigned int j;
 	for (j = 0; j < state->name.size(); j++)
 		if (state->name[j].compare("torso_lift_joint") == 0) break;
@@ -365,30 +347,23 @@ void Sbpl3DNavPlanner::jointStatesCallback(const sensor_msgs::JointStateConstPtr
 		ROS_WARN("[jointStatesCallback] Missing the value for planning joint torso_lift_joint\n");
 	else
 		body_pos_.z = state->position[j];
-	//head_pan_ = state->position[13-3];
-	//head_tilt_ = state->position[14-3];
 
-	body_pos_.x = 0;
-	body_pos_.y = 0;
-	body_pos_.theta = 0;
-	pviz_.visualizeRobotWithTitle(rangles_, langles_, body_pos_, 30, "start", 0, "start");
-
-/*
-	// get base position
+  // base
 	try {
 		tf_.lookupTransform("map", "base_footprint", ros::Time(0), base_map_transform_);
 		body_pos_.x = base_map_transform_.getOrigin().x();
 		body_pos_.y = base_map_transform_.getOrigin().y();
-		//body_pos_.theta = tf::getYaw(base_map_transform_.getRotation().getYaw());
 		body_pos_.theta = 2 * atan2(base_map_transform_.getRotation().getZ(), base_map_transform_.getRotation().getW());
 		ROS_DEBUG("Received transform from base_footprint to map (x: %f y: %f yaw: %f)", body_pos_.x, body_pos_.y, body_pos_.theta);
 	}
 	catch (tf::TransformException& ex) {
 		ROS_ERROR("Is there a map? The map-robot transform failed. (%s)", ex.what());
 	}
-*/
 
-	if (attached_object_) {
+  if(visualize_collision_model_)
+    visualizeCollisionModel(rangles_, langles_, body_pos_, "sbpl_collision_model");
+	
+  if (attached_object_) {
 		visualizeAttachedObject();
 	}
 }
@@ -398,36 +373,36 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
 	if(colmap_mutex_.try_lock()){
 		// remove all objects
 		if (attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::REMOVE) {
-			ROS_INFO("[node] Removing all attached objects.");
+			ROS_INFO("[3dnav] Removing all attached objects.");
 			attached_object_ = false;
 			cspace_->removeAllAttachedObjects();
 		}
 		// add object
 		else if (attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::ADD) {
 			attached_object_ = true;
-			ROS_INFO("[node] Received a message to ADD an object (%s) with %d shapes.", attached_object->object.id.c_str(),
+			ROS_INFO("[3dnav] Received a message to ADD an object (%s) with %d shapes.", attached_object->object.id.c_str(),
 				 int(attached_object->object.shapes.size()));
 			cspace_->addAttachedObject(attached_object->object);
 		}
 		else {
-			ROS_INFO("[node] We don't support this operation.");
+			ROS_INFO("[3dnav] We don't support this operation.");
 		}
 
 		// get object radius
 		if (attached_object->object.poses.size() > 0) {
 			if (!use_inner_circle_) {
 				double objRadius = max(attached_object->object.poses[0].position.x, attached_object->object.poses[0].position.y) / 2.0;
-				ROS_INFO("[node] Setting the object radius to the OUTER radius of %0.3fm", objRadius);
+				ROS_INFO("[3dnav] Setting the object radius to the OUTER radius of %0.3fm", objRadius);
 				sbpl_arm_env_.setObjectRadius(objRadius);
 			}
 			else {
 				double objRadius = min(attached_object->object.poses[0].position.x, attached_object->object.poses[0].position.y) / 2.0;
-				ROS_INFO("[node] Setting the object radius to the INNER radius of %0.3fm", objRadius);
+				ROS_INFO("[3dnav] Setting the object radius to the INNER radius of %0.3fm", objRadius);
 				sbpl_arm_env_.setObjectRadius(objRadius);
 			}
 
 			// temporary hack to get Z inflation of object
-			ROS_INFO("[node] Object should be inflated by %0.3fm above it.", attached_object->object.poses[0].orientation.x);
+			ROS_INFO("[3dnav] Object should be inflated by %0.3fm above it.", attached_object->object.poses[0].orientation.x);
 			sbpl_arm_env_.setObjectZInflation(int(attached_object->object.poses[0].orientation.x / env_resolution_ + 0.5), 0);
 		}
 
@@ -446,7 +421,7 @@ bool Sbpl3DNavPlanner::collisionCheck(sbpl_3dnav_planner::FullBodyCollisionCheck
 {
 	colmap_mutex_.lock();
 
-	ROS_INFO("req.robot_states.size = %u", req.robot_states.size());
+	ROS_INFO("req.robot_states.size = %u", int(req.robot_states.size()));
 
 //	res.error_codes.reserve(req.robot_states.size());
 	for(unsigned int i=0; i<req.robot_states.size(); i++){
@@ -454,7 +429,7 @@ bool Sbpl3DNavPlanner::collisionCheck(sbpl_3dnav_planner::FullBodyCollisionCheck
 		vector<double> rangles;
 		BodyPose pose;
 		getRobotPoseFromRobotState(req.robot_states[i],langles,rangles,pose);
-        ROS_INFO("[collisionCheck] x = %f, y = %f, theta = %f", pose.x, pose.y, pose.theta);
+		ROS_INFO("[collisionCheck] x = %f, y = %f, theta = %f", pose.x, pose.y, pose.theta);
 		//TODO:Adjust for map origin offset
 		unsigned char dist_temp;
 		int debug_code;
@@ -471,13 +446,14 @@ bool Sbpl3DNavPlanner::collisionCheck(sbpl_3dnav_planner::FullBodyCollisionCheck
 
 		if (res.error_codes[i].val == arm_navigation_msgs::ArmNavigationErrorCodes::SUCCESS) {
 			ROS_INFO("SBPL full body planning collision checking service returned SUCCESS");
+			pviz_.visualizeRobot(rangles, langles, pose, 150, "collision_checking_valid", 30 * i);
 		}
 		else {
-	        pviz_.visualizeRobotWithTitle(rangles, langles, pose, 30, "AAAH", 0, "AAAH");
+			pviz_.visualizeRobot(rangles, langles, pose, 10, "collision_checking_invalid", 30 * i);
 		}
 	}
 
-	ROS_INFO("res.error_codes.size = %u", res.error_codes.size());
+	ROS_INFO("res.error_codes.size = %u", int(res.error_codes.size()));
 	colmap_mutex_.unlock();
 	return true;
 }
@@ -522,7 +498,7 @@ bool Sbpl3DNavPlanner::getRobotPoseFromRobotState(arm_navigation_msgs::RobotStat
 	// torso
 	for(size_t i = 0; i < state.joint_state.name.size(); i++)
 	{
-		if(state.joint_state.name[i].compare("torso_lift_link") == 0)
+		if(state.joint_state.name[i].compare("torso_lift_joint") == 0)
 		{
 			body.z = state.joint_state.position[i];
 			break;
@@ -553,9 +529,9 @@ bool Sbpl3DNavPlanner::getRobotPoseFromRobotState(arm_navigation_msgs::RobotStat
 bool Sbpl3DNavPlanner::setStart(geometry_msgs::Pose start, geometry_msgs::Pose rarm_object,
                                 geometry_msgs::Pose larm_object)
 {
-	ROS_INFO("[node] start0: %1.3f %1.3f %1.3f %1.3f %1.3f %1.3f %1.3f", rangles_[0], rangles_[1], rangles_[2],
+	ROS_INFO("[3dnav] start0: %1.3f %1.3f %1.3f %1.3f %1.3f %1.3f %1.3f", rangles_[0], rangles_[1], rangles_[2],
 	         rangles_[3], rangles_[4], rangles_[5], rangles_[6]);
-	ROS_INFO("[node] start1: %1.3f %1.3f %1.3f %1.3f %1.3f %1.3f %1.3f", langles_[0], langles_[1], langles_[2],
+	ROS_INFO("[3dnav] start1: %1.3f %1.3f %1.3f %1.3f %1.3f %1.3f %1.3f", langles_[0], langles_[1], langles_[2],
 	         langles_[3], langles_[4], langles_[5], langles_[6]);
 
 	std::vector<double> vstart(6, 0);
@@ -584,20 +560,18 @@ bool Sbpl3DNavPlanner::setStart(geometry_msgs::Pose start, geometry_msgs::Pose r
 	                                          larm_object.orientation.z, larm_object.orientation.w);
 
 	int startid = -1;
-	ROS_INFO("[node] Visualizing start position.");
 	printRobotState(rangles_, langles_, body_pos_, "start state");
 	//pviz_.visualizeRobotWithTitle(rangles_, langles_, body_pos_, 30, "start", 0, "start");
 	vector<double> temp1(7.0);
 //	pviz_.visualizeRobotWithTitle(temp1, temp1, body_pos_, 30, "start1", 0, "start1");
-	ROS_INFO("Done visualizing start position.");
 	if ((startid = sbpl_arm_env_.setStartConfiguration(rangles_, langles_, body_pos_, rarm_offset, larm_offset)) == -1) {
-		ROS_ERROR("[node] Environment failed to set start state. Not Planning.");
+		ROS_ERROR("[3dnav] Environment failed to set start state. Not Planning.");
 		return false;
 	}
-	ROS_INFO("[node] Start stateid: %d", startid);
+	ROS_INFO("[3dnav] Start stateid: %d", startid);
 
 	if (planner_->set_start(startid) == 0) {
-		ROS_ERROR("[node] Failed to set start state. Not Planning.");
+		ROS_ERROR("[3dnav] Failed to set start state. Not Planning.");
 		return false;
 	}
 
@@ -645,7 +619,7 @@ bool Sbpl3DNavPlanner::setGoalPosition(geometry_msgs::Pose goal, geometry_msgs::
 	//allowable tolerance from goal
 	sbpl_tolerance[0] = goal_tolerance;
 
-	ROS_INFO("[node] goal xyz(%s): %.3f %.3f %.3f (tol: %.3fm) rpy: %.3f %.3f %.3f (tol: %.3frad)", map_frame_.c_str(),
+	ROS_INFO("[3dnav] goal xyz(%s): %.3f %.3f %.3f (tol: %.3fm) rpy: %.3f %.3f %.3f (tol: %.3frad)", map_frame_.c_str(),
 	         sbpl_goal[0][0], sbpl_goal[0][1], sbpl_goal[0][2], sbpl_tolerance[0][0], sbpl_goal[0][3], sbpl_goal[0][4],
 	         sbpl_goal[0][5], sbpl_tolerance[0][1]);
 
@@ -665,17 +639,17 @@ bool Sbpl3DNavPlanner::setGoalPosition(geometry_msgs::Pose goal, geometry_msgs::
 		sbpl_arm_env_.setObjectRadius(object_radius_);
 	}
 
-	ROS_INFO("[node] Setting goal position.");
+	ROS_INFO("[3dnav] Setting goal position.");
 	//set sbpl environment goal
 	if ((goalid = sbpl_arm_env_.setGoalPosition(sbpl_goal, sbpl_tolerance, rarm_offset, larm_offset, object_radius_)) == -1) {
-		ROS_ERROR("[node] Failed to set goal state. Perhaps goal position is out of reach. Exiting.");
+		ROS_ERROR("[3dnav] Failed to set goal state. Perhaps goal position is out of reach. Exiting.");
 		return false;
 	}
-	ROS_INFO("[node] Goal stateID: %d", goalid);
+	ROS_INFO("[3dnav] Goal stateID: %d", goalid);
 
 	//set planner goal
 	if (planner_->set_goal(goalid) == 0) {
-		ROS_ERROR("[node] Failed to set goal state. Exiting.");
+		ROS_ERROR("[3dnav] Failed to set goal state. Exiting.");
 		return false;
 	}
 
@@ -688,7 +662,7 @@ bool Sbpl3DNavPlanner::planToPosition(GetTwoArmPlan::Request &req, GetTwoArmPlan
 
 	starttime = clock();
 
-	ROS_INFO("[node] About to set start configuration");
+	ROS_INFO("[3dnav] About to set start configuration");
 
 	// set start
 	rangles_ = req.rarm_start;
@@ -698,7 +672,7 @@ bool Sbpl3DNavPlanner::planToPosition(GetTwoArmPlan::Request &req, GetTwoArmPlan
 	body_pos_.z = req.body_start[2];
 	body_pos_.theta = req.body_start[3];
 	if (!setStart(req.start.pose, req.rarm_object.pose, req.larm_object.pose)) {
-		ROS_ERROR("[node] Failed to set the starting configuration.");
+		ROS_ERROR("[3dnav] Failed to set the starting configuration.");
 		return false;
 	}
 
@@ -707,18 +681,18 @@ bool Sbpl3DNavPlanner::planToPosition(GetTwoArmPlan::Request &req, GetTwoArmPlan
 
 //	std::vector<double> solution(7, 0);
 //	if (!larm_->computeIK(req.goal, langles_, solution)) {
-//		ROS_WARN("[node] Failed to compute an IK solution for the left arm.");
+//		ROS_WARN("[3dnav] Failed to compute an IK solution for the left arm.");
 //	}
 //
 //	if (!rarm_->computeIK(req.goal, rangles_, solution)) {
-//		ROS_WARN("[node] Failed to compute an IK solution for the right arm.");
+//		ROS_WARN("[3dnav] Failed to compute an IK solution for the right arm.");
 //	}
 
 	totalPlanTime = clock();
 
 	// set goal
 	if (!setGoalPosition(req.goal.pose, req.rarm_object.pose, req.larm_object.pose, req.absolute_xyzrpy_tolerance)) {
-		ROS_ERROR("[node] Failed to set the goal pose.");
+		ROS_ERROR("[3dnav] Failed to set the goal pose.");
 		return false;
 	}
 
@@ -760,7 +734,7 @@ bool Sbpl3DNavPlanner::planToPosition(GetTwoArmPlan::Request &req, GetTwoArmPlan
 			}
 
 			if (i == res.trajectory.points.size() - 1) {
-				ROS_INFO("[node] Adding an additional second for the 'adaptive mprim' waypoint time.");
+				ROS_INFO("[3dnav] Adding an additional second for the 'adaptive mprim' waypoint time.");
 				res.trajectory.points[i].time_from_start += ros::Duration(1.0);
 			}
 		}
@@ -780,27 +754,21 @@ bool Sbpl3DNavPlanner::planToPosition(GetTwoArmPlan::Request &req, GetTwoArmPlan
 			displayShortestPath();
 
 		if (visualize_trajectory_) {
-			ROS_INFO("[node] Visualizing trajectory...");
-			visualizeTrajectory(rpath, lpath, bpath);
-
-//			trajectory_msgs::JointTrajectory traj;
-//			traj.points = rpath;
-//			raviz_->visualizeJointTrajectoryMsg(traj, throttle_);
-//			traj.points.clear();
-//			traj.points = lpath;
-//			laviz_->visualizeJointTrajectoryMsg(traj, throttle_);
-//			visualizeAttachedObjectPath();
+			ROS_INFO("[3dnav] Visualizing trajectory...");
+			//visualizeTrajectory(rpath, lpath, bpath);
+      pviz_.visualizeTrajectory(rpath, lpath, bpath, throttle_);
+      ROS_INFO("[3dnav] Finished visualizing trajectory.");
 		}
 
 		if (visualize_end_effector_path_) {
-			ROS_INFO("[node] Visualizing end effector path...");
+			ROS_INFO("[3dnav] Visualizing end effector path...");
 			visualizeObjectPath();
 			//visualizeEndEffectorPath();
 			//visualizeExpansionsPerHValue();
 		}
 	}
 	else {
-		ROS_ERROR("[node] Failed to plan within alotted time frame (%0.2f seconds).", allocated_time_);
+		ROS_ERROR("[3dnav] Failed to plan within alotted time frame (%0.2f seconds).", allocated_time_);
 
 		res.stats_field_names = stats_field_names_;
 		res.stats = stats_;
@@ -816,7 +784,7 @@ bool Sbpl3DNavPlanner::planToPosition(GetTwoArmPlan::Request &req, GetTwoArmPlan
 		}
 
 //		if (!sbpl_arm_env_.checkExpandedStatesAreValid())
-//			ROS_WARN("[node] Invalid states were found.");
+//			ROS_WARN("[3dnav] Invalid states were found.");
 
 		std::vector<std::vector<double> > arm0, arm1;
 		sbpl_arm_env_.getFinalArmConfigurations(arm0, arm1);
@@ -845,7 +813,8 @@ bool Sbpl3DNavPlanner::plan(std::vector<trajectory_msgs::JointTrajectoryPoint> &
 	lpath.clear();
 	bpath.clear();
 
-	ROS_INFO("\n[node] Calling planner");
+	ROS_INFO(" ");
+	ROS_INFO("[3dnav] Calling planner");
 
 	// reinitialize the search space
 	planner_->force_planning_from_scratch();
@@ -859,16 +828,16 @@ bool Sbpl3DNavPlanner::plan(std::vector<trajectory_msgs::JointTrajectoryPoint> &
 
 	totalPlanTime = clock() - totalPlanTime;
 
-	ROS_INFO("[node] Planning Time: %0.4fsec", (clock() - starttime) / (double)CLOCKS_PER_SEC);
+	ROS_INFO("[3dnav] Planning Time: %0.4fsec", (clock() - starttime) / (double)CLOCKS_PER_SEC);
 
 	sbpl_arm_env_.recordDebugData(false);
 
 	// check if an empty plan was received.
 	if ((b_ret && solution_state_ids_.size() <= 0) || !b_ret) {
-		ROS_WARN("[node] Planning failed.");
+		ROS_WARN("[3dnav] Planning failed.");
 	}
 	else {
-		ROS_INFO("[node] Planning succeeded.");
+		ROS_INFO("[3dnav] Planning succeeded.");
 	}
 
 	// if a path is returned, then pack it into msg form
@@ -877,24 +846,24 @@ bool Sbpl3DNavPlanner::plan(std::vector<trajectory_msgs::JointTrajectoryPoint> &
 		sbpl_arm_env_.convertStateIDPathToJointAnglesPath(solution_state_ids_, angles_path);
 //		sbpl_arm_env_.convertStateIDPathToShortenedJointAnglesPath(solution_state_ids_,shortened_path, solution_state_ids_short_);
 
-		ROS_INFO("[node] A path was returned with %d waypoints. Shortened path has %d waypoints.", int(solution_state_ids_.size()), int(solution_state_ids_short_.size()));
-		ROS_INFO("[node] Initial Epsilon: %0.3f  Final Epsilon: %0.3f Solution Cost: %d", planner_->get_initial_eps(), planner_->get_final_epsilon(), solution_cost);
+		ROS_INFO("[3dnav] A path was returned with %d waypoints. Shortened path has %d waypoints.", int(solution_state_ids_.size()), int(solution_state_ids_short_.size()));
+		ROS_INFO("[3dnav] Initial Epsilon: %0.3f  Final Epsilon: %0.3f Solution Cost: %d", planner_->get_initial_eps(), planner_->get_final_epsilon(), solution_cost);
 
 		if (use_shortened_path_) {
-			ROS_INFO("[node] Using shortened path.");
+			ROS_INFO("[3dnav] Using shortened path.");
 			angles_path = shortened_path;
 		}
 		else {
-			ROS_INFO("[node] Not using shortened path.");
+			ROS_INFO("[3dnav] Not using shortened path.");
 		}
 
 		if (angles_path.size() == 0) {
-			ROS_ERROR("[node] Returned path has at least 1 stateid but is empty after converting to joint angles.");
+			ROS_ERROR("[3dnav] Returned path has at least 1 stateid but is empty after converting to joint angles.");
 			return false;
 		}
 
 		if (angles_path.size() % 4 != 0) {
-			ROS_ERROR("[node] Length of path received from environment is not a multiple of 4. (length: %d)", int(angles_path.size()));
+			ROS_ERROR("[3dnav] Length of path received from environment is not a multiple of 4. (length: %d)", int(angles_path.size()));
 			return false;
 		}
 
@@ -924,7 +893,7 @@ bool Sbpl3DNavPlanner::plan(std::vector<trajectory_msgs::JointTrajectoryPoint> &
 				bpath.push_back(body_point);
 			}
 
-//			  printf("[node] [%d] [stateid: %d] ", int(i), solution_state_ids_[i/4]);
+//			  printf("[3dnav] [%d] [stateid: %d] ", int(i), solution_state_ids_[i/4]);
 //			  for(size_t q = 0; q < angles_path[i].size(); ++q)
 //			  printf("% 1.4f ", angles_path[i][q]);
 //			  printf("\n");
@@ -993,12 +962,12 @@ bool Sbpl3DNavPlanner::isGoalConstraintSatisfied(const std::vector<double> &rang
 	tf::poseTFToMsg(tleft, lgoal);
 
 	if (!computeFK(rangles, "right_arm", rpose)) {
-		ROS_ERROR("[node] Failed to check if goal constraint is satisfied because the right arm FK service failed.");
+		ROS_ERROR("[3dnav] Failed to check if goal constraint is satisfied because the right arm FK service failed.");
 		return false;
 	}
 
 	if (!computeFK(langles, "left_arm", lpose)) {
-		ROS_ERROR("[node] Failed to check if goal constraint is satisfied because the left arm FK service failed.");
+		ROS_ERROR("[3dnav] Failed to check if goal constraint is satisfied because the left arm FK service failed.");
 		return false;
 	}
 
@@ -1019,20 +988,20 @@ bool Sbpl3DNavPlanner::isGoalConstraintSatisfied(const std::vector<double> &rang
 	rerr.orientation.w = fabs(rpose.orientation.w - rgoal.orientation.w);
 
 	ROS_INFO(" ");
-	ROS_INFO("[node] -- Right Gripper --");
-	ROS_INFO("[node]  Pose:  xyz: %0.4f %2.4f %0.4f  quat: %0.4f %0.4f %0.4f %0.4f", rpose.position.x, rpose.position.y, rpose.position.z, rpose.orientation.x, rpose.orientation.y, rpose.orientation.z, rpose.orientation.w);
-	ROS_INFO("[node]  Goal:  xyz: %0.4f %2.4f %0.4f  quat: %0.4f %0.4f %0.4f %0.4f", rgoal.position.x, rgoal.position.y, rgoal.position.z, rgoal.orientation.x, rgoal.orientation.y, rgoal.orientation.z, rgoal.orientation.w);
-	ROS_INFO("[node] Error:  xyz: %0.4f %2.4f %0.4f  quat: %0.4f %0.4f %0.4f %0.4f", rerr.position.x, rerr.position.y, rerr.position.z, rerr.orientation.x, rerr.orientation.y, rerr.orientation.z, rerr.orientation.w);
+	ROS_INFO("[3dnav] -- Right Gripper --");
+	ROS_INFO("[3dnav]  Pose:  xyz: %0.4f %2.4f %0.4f  quat: %0.4f %0.4f %0.4f %0.4f", rpose.position.x, rpose.position.y, rpose.position.z, rpose.orientation.x, rpose.orientation.y, rpose.orientation.z, rpose.orientation.w);
+	ROS_INFO("[3dnav]  Goal:  xyz: %0.4f %2.4f %0.4f  quat: %0.4f %0.4f %0.4f %0.4f", rgoal.position.x, rgoal.position.y, rgoal.position.z, rgoal.orientation.x, rgoal.orientation.y, rgoal.orientation.z, rgoal.orientation.w);
+	ROS_INFO("[3dnav] Error:  xyz: %0.4f %2.4f %0.4f  quat: %0.4f %0.4f %0.4f %0.4f", rerr.position.x, rerr.position.y, rerr.position.z, rerr.orientation.x, rerr.orientation.y, rerr.orientation.z, rerr.orientation.w);
 	ROS_INFO(" ");
-	ROS_INFO("[node] -- Left Gripper --");
-	ROS_INFO("[node]  Pose:  xyz: %0.4f %2.4f %0.4f  quat: %0.4f %0.4f %0.4f %0.4f", lpose.position.x, lpose.position.y, lpose.position.z, lpose.orientation.x, lpose.orientation.y, lpose.orientation.z, lpose.orientation.w);
-	ROS_INFO("[node]  Goal:  xyz: %0.4f %2.4f %0.4f  quat: %0.4f %0.4f %0.4f %0.4f", lgoal.position.x, lgoal.position.y, lgoal.position.z, lgoal.orientation.x, lgoal.orientation.y, lgoal.orientation.z, lgoal.orientation.w);
-	ROS_INFO("[node] Error:  xyz: %0.4f %2.4f %0.4f  quat: %0.4f %0.4f %0.4f %0.4f", lerr.position.x, lerr.position.y, lerr.position.z, lerr.orientation.x, lerr.orientation.y, lerr.orientation.z, lerr.orientation.w);
+	ROS_INFO("[3dnav] -- Left Gripper --");
+	ROS_INFO("[3dnav]  Pose:  xyz: %0.4f %2.4f %0.4f  quat: %0.4f %0.4f %0.4f %0.4f", lpose.position.x, lpose.position.y, lpose.position.z, lpose.orientation.x, lpose.orientation.y, lpose.orientation.z, lpose.orientation.w);
+	ROS_INFO("[3dnav]  Goal:  xyz: %0.4f %2.4f %0.4f  quat: %0.4f %0.4f %0.4f %0.4f", lgoal.position.x, lgoal.position.y, lgoal.position.z, lgoal.orientation.x, lgoal.orientation.y, lgoal.orientation.z, lgoal.orientation.w);
+	ROS_INFO("[3dnav] Error:  xyz: %0.4f %2.4f %0.4f  quat: %0.4f %0.4f %0.4f %0.4f", lerr.position.x, lerr.position.y, lerr.position.z, lerr.orientation.x, lerr.orientation.y, lerr.orientation.z, lerr.orientation.w);
 	ROS_INFO(" ");
 
 //	 if (goal.position_constraints[0].constraint_region_shape.type == arm_navigation_msgs::Shape::BOX) {
 //		if (goal.position_constraints[0].constraint_region_shape.dimensions.size() < 3) {
-//			ROS_WARN("[node] Goal constraint region shape is a BOX but fewer than 3 dimensions are defined.");
+//			ROS_WARN("[3dnav] Goal constraint region shape is a BOX but fewer than 3 dimensions are defined.");
 //			return false;
 //		}
 //		if (err.position.x >= goal.position_constraints[0].constraint_region_shape.dimensions[0]) {
@@ -1135,9 +1104,9 @@ bool Sbpl3DNavPlanner::makePlan(const geometry_msgs::PoseStamped& start,
 
 	// call the full body planner
 	if (planToPosition(req, res)) {
-		ROS_INFO("Planner returned.");
+		ROS_INFO("[3dnav] Planner returned.");
 		if (res.body_trajectory.points.empty()) {
-			ROS_ERROR("Planner returned empty path.");
+			ROS_ERROR("[3dnav] Planner returned empty path.");
 			colmap_mutex_.unlock();
 			return false;
 		}
@@ -1172,10 +1141,10 @@ bool Sbpl3DNavPlanner::makePlan(const geometry_msgs::PoseStamped& start,
 	}
 
 	if (plan.empty()) {
-		ROS_INFO("Sbpl3DNavPlanner returned empty path: no move necessary");
+		ROS_INFO("[3dnav] Sbpl3DNavPlanner returned empty path: no move necessary");
 	}
 	else {
-		ROS_INFO("Sbpl3DNavPlanner returned path with %u points.", plan.size());
+		ROS_INFO("[3dnav] Sbpl3DNavPlanner returned path with %u points.", int(plan.size()));
 	}
 
 	return true;
@@ -1283,12 +1252,12 @@ void Sbpl3DNavPlanner::visualizeExpansions()
 			raviz_->visualizeText(pose, boost::lexical_cast < std::string > (expanded_states[i][11]), "expansions-heuristic", i, color, 0.01);
 			usleep(4000);
 		}
-		ROS_INFO("[node] Displaying %d expanded states", int(expanded_states.size()));
+		ROS_INFO("[3dnav] Displaying %d expanded states", int(expanded_states.size()));
 
 		laviz_->visualizeSphere(expanded_states[0], 250, "expansions-start", 0.015);
 	}
 	else
-		ROS_WARN("[node] No expanded states to display.");
+		ROS_WARN("[3dnav] No expanded states to display.");
 }
 
 void Sbpl3DNavPlanner::visualizeUniqueExpansions()
@@ -1324,12 +1293,12 @@ void Sbpl3DNavPlanner::visualizeUniqueExpansions()
 			raviz_->visualizeText(pose, boost::lexical_cast < std::string > (expanded_states[i][3]), "expansions-heuristic", i, color, size);
 			usleep(4000);
 		}
-		ROS_INFO("[node] Displaying %d expanded states", int(expanded_states.size()));
+		ROS_INFO("[3dnav] Displaying %d expanded states", int(expanded_states.size()));
 
 		//laviz_->visualizeSphere(expanded_states[0], 250, "expansions-start", 0.015);
 	}
 	else
-		ROS_WARN("[node] No expanded states to display.");
+		ROS_WARN("[3dnav] No expanded states to display.");
 }
 
 void Sbpl3DNavPlanner::visualizeGoalPosition(const arm_navigation_msgs::Constraints &goal_pose)
@@ -1338,7 +1307,7 @@ void Sbpl3DNavPlanner::visualizeGoalPosition(const arm_navigation_msgs::Constrai
 	pose.position = goal_pose.position_constraints[0].position;
 	pose.orientation = goal_pose.orientation_constraints[0].orientation;
 	laviz_->visualizePose(pose, "goal_pose");
-	ROS_DEBUG("[node] publishing goal marker visualizations.");
+	ROS_DEBUG("[3dnav] publishing goal marker visualizations.");
 }
 
 void Sbpl3DNavPlanner::displayShortestPath()
@@ -1421,7 +1390,7 @@ void Sbpl3DNavPlanner::visualizeObjectPath()
 		points[i].z = path[i][2];
 	}
 
-	ROS_INFO("[node] path length: %d", int(path.size()));
+	ROS_INFO("[3dnav] path length: %d", int(path.size()));
 	laviz_->visualizeSpheres(path, 0, "object_path", 0.015);
 	usleep(50000);
 	laviz_->visualizeLine(points, "object_path_line", 0, 120, 0.005);
@@ -1446,7 +1415,7 @@ void Sbpl3DNavPlanner::visualizeAttachedObjectPath()
 
 		laviz_->setReferenceFrame("base_footprint");
 		laviz_->visualizeSpheres(spheres, 238, "attached_object_1" + boost::lexical_cast < std::string > (i), radius);
-		ROS_DEBUG("[node] [%d] Publishing %d spheres for the attached object. {pose: %0.2f %0.2f %0.2f %0.2f %0.2f %0.2f}", int(i), int(spheres.size()), pose[0], pose[1], pose[2], pose[3], pose[4], pose[5]);
+		ROS_DEBUG("[3dnav] [%d] Publishing %d spheres for the attached object. {pose: %0.2f %0.2f %0.2f %0.2f %0.2f %0.2f}", int(i), int(spheres.size()), pose[0], pose[1], pose[2], pose[3], pose[4], pose[5]);
 		usleep(300);
 		laviz_->setReferenceFrame("map");
 	}
@@ -1525,7 +1494,7 @@ void Sbpl3DNavPlanner::visualizeHeuristicInfo()
 	sbpl_arm_env_.getHeuristicDebugStats(hvals, num_hvals);
 
 	if (hvals.size() != num_hvals.size())
-		ROS_WARN("[node] Heuristic debugging information doesn't make sense.");
+		ROS_WARN("[3dnav] Heuristic debugging information doesn't make sense.");
 
 	ROS_DEBUG("\b Number of expansions per H-value");
 	for (size_t i = 0; i < hvals.size(); ++i)
@@ -1536,7 +1505,7 @@ void Sbpl3DNavPlanner::visualizeHeuristicInfo()
 
 	//check if the list is empty
 	if (dpath0_.empty()) {
-		ROS_INFO("[node] The heuristic path has a length of 0");
+		ROS_INFO("[3dnav] The heuristic path has a length of 0");
 		return;
 	}
 	else
@@ -1544,7 +1513,7 @@ void Sbpl3DNavPlanner::visualizeHeuristicInfo()
 
 	raviz_->visualizeSpheres(dpath0_, 45, "right_arm_heuristic_path", 0.04);
 
-	ROS_DEBUG("[node] Right Arm Heuristic Visualization:");
+	ROS_DEBUG("[3dnav] Right Arm Heuristic Visualization:");
 	for (size_t i = 0; i < dpath0_.size(); ++i) {
 		dist = sbpl_arm_env_.getDijkstraDistance(dpath0_[i][0], dpath0_[i][1], dpath0_[i][2]);
 		text = "";
@@ -1603,26 +1572,7 @@ void Sbpl3DNavPlanner::visualizeHeuristicInfo()
 
 void Sbpl3DNavPlanner::visualizeGoal(geometry_msgs::Pose goal)
 {
-	/*
-	 tf::Pose tgoal, tright, tleft;
-	 geometry_msgs::Pose mright, mleft;
-
-	 tf::poseMsgToTF(goal,tgoal);
-	 tf::poseMsgToTF(rarm_object_offset_,tright);
-	 tf::poseMsgToTF(larm_object_offset_,tleft);
-
-	 tright = tgoal*tright;
-	 tleft = tgoal*tleft;
-
-	 tf::poseTFToMsg(tright, mright);
-	 tf::poseTFToMsg(tleft, mleft);
-	 laviz_->visualizePose(mright, "right_gripper");
-	 laviz_->visualizePose(mleft, "left_gripper");
-	 */
-
-	laviz_->visualizePose(goal, "goal");
-	goal.position.z += 0.05;
-	laviz_->visualizeText(goal, "goal", "goal-title", 0, 360);
+  pviz_.visualizePose(goal, "3dnav_goal");
 }
 
 void Sbpl3DNavPlanner::visualizeCollisionObjects()
@@ -1642,7 +1592,7 @@ void Sbpl3DNavPlanner::visualizeCollisionObjects()
 		points[i][2] = poses[i].position.z;
 	}
 
-	ROS_DEBUG("[node] Displaying %d known collision object voxels.", int(points.size()));
+	ROS_DEBUG("[3dnav] Displaying %d known collision object voxels.", int(points.size()));
 	laviz_->visualizeBasicStates(points, color, "known_objects", 0.01);
 }
 
@@ -1656,7 +1606,7 @@ void Sbpl3DNavPlanner::visualizeAttachedObject()
 	color[2] = 0;
 
 	if (!computeFK(rangles_, "right_arm", wpose))
-		ROS_ERROR("[node] FK service failed.");
+		ROS_ERROR("[3dnav] FK service failed.");
 
 	tf::poseMsgToTF(wpose, tf_wpose);
 	tf::poseMsgToTF(rarm_object_offset_, tf_opose);
@@ -1669,11 +1619,11 @@ void Sbpl3DNavPlanner::visualizeAttachedObject()
 	pose[2] = owpose.position.z;
 	tf_owpose.getBasis().getRPY(pose[3], pose[4], pose[5]);
 
-	ROS_DEBUG("[node] object pose: %f %f %f %f %f %f", pose[0], pose[1], pose[2], pose[3], pose[4], pose[5]);
+	ROS_DEBUG("[3dnav] object pose: %f %f %f %f %f %f", pose[0], pose[1], pose[2], pose[3], pose[4], pose[5]);
 
 	cspace_->getAttachedObjectInWorldFrame(pose, points);
 
-	ROS_DEBUG("[node] Displaying %d spheres for the attached object.", int(points.size()));
+	ROS_DEBUG("[3dnav] Displaying %d spheres for the attached object.", int(points.size()));
 	radius.resize(points.size());
 	for (size_t i = 0; i < points.size(); ++i)
 		radius[i] = points[i][3];
@@ -1828,11 +1778,11 @@ void Sbpl3DNavPlanner::visualizeCollisionObject(const arm_navigation_msgs::Colli
 			 //alpha shouldn't be divided by 255
 			 color[j] = double(object.shapes[i].triangles[j]);
 			 */
-			ROS_INFO("[node] Visualizing %s", object.id.c_str());
+			ROS_INFO("[3dnav] Visualizing %s", object.id.c_str());
 			raviz_->visualizeCube(pose, color, object.id, int(i), dim);
 		}
 		else
-			ROS_WARN("[node] Collision objects of type %d are not yet supported.", object.shapes[i].type);
+			ROS_WARN("[3dnav] Collision objects of type %d are not yet supported.", object.shapes[i].type);
 	}
 }
 
@@ -1842,7 +1792,7 @@ void Sbpl3DNavPlanner::changeLoggerLevel(std::string name, std::string level)
 
 	std::string logger_name = ROSCONSOLE_DEFAULT_NAME + std::string(".") + name;
 
-	ROS_INFO("[node] Setting %s to %s level", logger_name.c_str(), level.c_str());
+	ROS_INFO("[3dnav] Setting %s to %s level", logger_name.c_str(), level.c_str());
 
 	log4cxx::LoggerPtr my_logger = log4cxx::Logger::getLogger(logger_name);
 
@@ -1893,12 +1843,12 @@ void Sbpl3DNavPlanner::visualizeTrajectory(std::vector<trajectory_msgs::JointTra
 	BodyPose body_pos;
 
 	if (rpath.size() != lpath.size() || rpath.size() != bpath.size()) {
-		ROS_ERROR("[node] The right arm, left arm and body trajectories are of unequal lengths.");
+		ROS_ERROR("[3dnav] The right arm, left arm and body trajectories are of unequal lengths.");
 		return;
 	}
 
 	int color_inc = 240.0 / (length / throttle_); // hue: red -> blue
-	ROS_DEBUG("[node] length: %d color_inc: %d throttle: %d)", length, color_inc, throttle_);
+	ROS_DEBUG("[3dnav] length: %d color_inc: %d throttle: %d)", length, color_inc, throttle_);
 
 	for (int i = 0; i < length; ++i) {
 		for (int j = 0; j < 7; ++j) {
@@ -1916,8 +1866,8 @@ void Sbpl3DNavPlanner::visualizeTrajectory(std::vector<trajectory_msgs::JointTra
 		rangles_ = rangles;
 		visualizeAttachedObject();
 
-		ROS_DEBUG("[node] length: %d color_inc: %d throttle: %d", length, color_inc, throttle_);
-		ROS_DEBUG("[node] Visualizing waypoint #%d (i mod color_inc: %d) with color: %d (color_inc: %d, throttle: %d)", i, (i / throttle_), (i / throttle_) * color_inc, color_inc, throttle_);
+		ROS_DEBUG("[3dnav] length: %d color_inc: %d throttle: %d", length, color_inc, throttle_);
+		ROS_DEBUG("[3dnav] Visualizing waypoint #%d (i mod color_inc: %d) with color: %d (color_inc: %d, throttle: %d)", i, (i / throttle_), (i / throttle_) * color_inc, color_inc, throttle_);
 
 		pviz_.visualizeRobot(rangles, langles, body_pos, (i / throttle_) * color_inc, "waypoint_" + boost::lexical_cast < std::string > (i), i);
 		usleep(3000);
@@ -1931,6 +1881,60 @@ void Sbpl3DNavPlanner::printRobotState(std::vector<double> &rangles, std::vector
 	ROS_INFO(" right: % 0.3f % 0.3f % 0.3f % 0.3f % 0.3f % 0.3f % 0.3f", rangles[0], rangles[1], rangles[2], rangles[3], rangles[4], rangles[5], rangles[6]);
 	ROS_INFO("  left: % 0.3f % 0.3f % 0.3f % 0.3f % 0.3f % 0.3f % 0.3f", langles[0], langles[1], langles[2], langles[3], langles[4], langles[5], langles[6]);
 }
+
+void Sbpl3DNavPlanner::visualizeCollisionModel(std::vector<double> &rangles, std::vector<double> &langles, BodyPose &body_pos, std::string text)
+{
+  std::vector<std::vector<double> > spheres, all_spheres;
+  std::vector<int> hues, all_hues;
+  std::string frame;
+/*
+  frame = pviz_.getReferenceFrame();
+  pviz_.setReferenceFrame("map");
+  cspace_->getCollisionSpheres(langles, rangles, body_pos, "base", spheres);
+  pviz_.visualizeSpheres(spheres, 10, text+"-base");
+  cspace_->getCollisionSpheres(langles, rangles, body_pos, "torso_upper", spheres);
+  pviz_.visualizeSpheres(spheres, 30, text+"-torso_upper");
+  cspace_->getCollisionSpheres(langles, rangles, body_pos, "torso_lower", spheres);
+  pviz_.visualizeSpheres(spheres, 50, text+"-torso_lower");
+  cspace_->getCollisionSpheres(langles, rangles, body_pos, "turrets", spheres);
+  pviz_.visualizeSpheres(spheres, 70, text+"-turrets");
+  cspace_->getCollisionSpheres(langles, rangles, body_pos, "tilt_laser", spheres);
+  pviz_.visualizeSpheres(spheres, 90, text+"-tilt_laser");
+  cspace_->getCollisionSpheres(langles, rangles, body_pos, "head", spheres);
+  pviz_.visualizeSpheres(spheres, 110, text+"-head");
+  cspace_->getCollisionSpheres(langles, rangles, body_pos, "left_gripper", spheres);
+  pviz_.visualizeSpheres(spheres, 130, text+"-left_gripper");
+  cspace_->getCollisionSpheres(langles, rangles, body_pos, "right_gripper", spheres);
+  pviz_.visualizeSpheres(spheres, 150, text+"-right_gripper");
+  cspace_->getCollisionSpheres(langles, rangles, body_pos, "left_forearm", spheres);
+  pviz_.visualizeSpheres(spheres, 170, text+"-left_forearm");
+  cspace_->getCollisionSpheres(langles, rangles, body_pos, "right_forearm", spheres);
+  pviz_.visualizeSpheres(spheres, 190, text+"-right_forearm");
+  pviz_.setReferenceFrame(frame);
+*/
+  std::vector<std::string> sphere_groups(10);
+  sphere_groups[0] = "base"; 
+  sphere_groups[1] = "torso_upper";
+  sphere_groups[2] = "torso_lower";
+  sphere_groups[3] = "turrets";
+  sphere_groups[4] = "tilt_laser";
+  sphere_groups[5] = "head";
+  sphere_groups[6] = "left_gripper";
+  sphere_groups[7] = "right_gripper";
+  sphere_groups[8] = "left_forearm";
+  sphere_groups[9] = "right_forearm";
+
+  for(std::size_t i = 0; i < sphere_groups.size(); ++i)
+  {
+    cspace_->getCollisionSpheres(langles, rangles, body_pos, sphere_groups[i], spheres); 
+    all_spheres.insert(all_spheres.end(), spheres.begin(), spheres.end());
+    hues.clear();
+    hues.resize(spheres.size(), (i+1)*20);
+    all_hues.insert(all_hues.end(), hues.begin(), hues.end());
+  }
+  pviz_.visualizeSpheres(all_spheres, all_hues, text);  
+}
+
 }
 
 /* Node --------------------------------------------------------------------------- */

@@ -27,10 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \author Benjamin Cohen  */
+/** \author Mike Phillips, Benjamin Cohen  */
 
-#ifndef __sbpl_full_body_planner_NODE_H_
-#define __sbpl_full_body_planner_NODE_H_
+#ifndef __SBPL_3DNAV_PLANNER_H_
+#define __SBPL_3DNAV_PLANNER_H_
 
 #include <iostream>
 #include <map>
@@ -50,7 +50,6 @@
 #include <pviz/pviz.h>
 #include <sbpl_arm_planner/body_pose.h>
 #include <sbpl_3dnav_planner/visualize_arm.h>
-//#include <sbpl_full_body_planner_node/arm.h>
 #include <sbpl_3dnav_planner/GetTwoArmPlan.h>
 #include <sbpl_3dnav_planner/FullBodyCollisionCheck.h>
 #include <sbpl_full_body_planner/environment_dualrobarm3d.h>
@@ -100,8 +99,6 @@ public:
     bool planToPosition(sbpl_3dnav_planner::GetTwoArmPlan::Request &req, sbpl_3dnav_planner::GetTwoArmPlan::Response &res);
     bool collisionCheck(sbpl_3dnav_planner::FullBodyCollisionCheck::Request &req, sbpl_3dnav_planner::FullBodyCollisionCheck::Response &res);
     bool getRobotPoseFromRobotState(arm_navigation_msgs::RobotState &state, vector<double>& langles, vector<double>& rangles, BodyPose& body);
-
-//    void sendArmsToStart(geometry_msgs::Pose &object_pose);
 
 private:
     const bool forward_search_;
@@ -171,6 +168,7 @@ private:
     bool visualize_trajectory_;
     bool visualize_end_effector_path_;
     bool visualize_collision_model_trajectory_;
+    bool visualize_collision_model_;
     int throttle_;
     bool visualize_heuristic_grid_;
 
@@ -301,7 +299,11 @@ private:
     void printRobotState(std::vector<double> &rangles, std::vector<double> &langles, BodyPose &body_pos, std::string text);
 
     void visualizeObjectPath();
+
+    void visualizeCollisionModel(std::vector<double> &rangles, std::vector<double> &langles, BodyPose &body_pos, std::string text);
+
 };
+
 }
 
 #endif

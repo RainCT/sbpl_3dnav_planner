@@ -1,0 +1,6 @@
+<launch>
+
+  <include file="$(find octomap_server)/launch/laser+stereo-perception.launch" />
+  <rosparam command="load" ns="robot_description_planning" file="$(find octomap_server)/config/pr2_planning_description.yaml" />
+
+</launch>

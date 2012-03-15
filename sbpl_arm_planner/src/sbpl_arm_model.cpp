@@ -1030,7 +1030,9 @@ bool SBPLArmModel::computeTranslationalIK(const std::vector<double> pose, double
 
   Eigen::Matrix4f g = pr2_arm_kinematics::KDLToEigenMatrix(frame_des);
 
-  pr2_arm_ik_.computeTranslationIKShoulderRoll(g, upperarm_roll, sol);
+ROS_ERROR("We need the modified pr2 arm kinematics!");
+exit(0);
+  //pr2_arm_ik_.computeTranslationIKShoulderRoll(g, upperarm_roll, sol);
 
 /*
   printf("[computeTranslationalIK] Solution for xyz: %0.3f %0.3f %0.3f  upperarm_roll: %0.3f has length %d\n", g(0,3),g(1,3),g(2,3),upperarm_roll, int(sol.size()));

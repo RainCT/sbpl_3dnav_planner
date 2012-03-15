@@ -38,8 +38,8 @@
   <remap from="map" to="map_server_map"/>
   </node>
 
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find sbpl_3dnav_planner)/maps/video.pgm 0.02">
-  	<remap from="map" to="map_server_map"/>
+  <node pkg="map_server" name="sushi_map" type="map_server" args="$(find sushi_executive)/maps/map.yaml" respawn="true" >
+    <remap from="map" to="map_server_map"/>
   </node>
 </launch>
 

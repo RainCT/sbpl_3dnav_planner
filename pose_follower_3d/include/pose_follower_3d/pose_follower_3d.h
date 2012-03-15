@@ -118,7 +118,7 @@ namespace pose_follower_3d
       unsigned int current_waypoint_; 
       std::vector<geometry_msgs::PoseStamped> global_plan_;
       ros::ServiceClient collision_check_client_;
-      //ANDREW base_local_planner::TrajectoryPlannerROS collision_planner_;
+      base_local_planner::TrajectoryPlannerROS collision_planner_;
       //ANDREW planning_environment::CollisionModels collision_model_3d_;
       //ANDREW planning_models::KinematicState* kinematic_state_;
       int samples_;

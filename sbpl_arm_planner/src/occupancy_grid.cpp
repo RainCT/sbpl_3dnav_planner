@@ -146,7 +146,7 @@ void OccupancyGrid::updateFromCollisionMap(const arm_navigation_msgs::CollisionM
 
   if(reference_frame_.compare(collision_map.header.frame_id) != 0)
   { 
-    ROS_ERROR("[grid] Collision map is in frame %s but is expected to be in %s. Using anyway.",collision_map.header.frame_id.c_str(),reference_frame_.c_str());
+    ROS_DEBUG_ONCE("[grid] Collision map is in frame %s but is expected to be in %s. Using anyway.",collision_map.header.frame_id.c_str(),reference_frame_.c_str());
     reference_frame_ = collision_map.header.frame_id;
   }
   

@@ -4,8 +4,10 @@
     <!-- map server (publishing empty map) -->
     <!-- <node pkg="map_server" type="map_server" name="map_server" args="$(find sbpl_3dnav_planner)/maps/nsh1612.pgm 0.05"/> -->
     <!-- load ik -->
+<!--
     <include file="$(find pr2_arm_navigation_kinematics)/launch/pr2_ik_rarm_node.launch"/>
     <include file="$(find pr2_arm_navigation_kinematics)/launch/pr2_ik_larm_node.launch"/>
+-->
 
     <!-- <include file="$(find sbpl_3dnav_planner)/launch/sbpl_planning_both_arms.launch"/> -->
     <node pkg="topic_tools" type="throttle" name="throttle_joint_states" args="messages joint_states 4.0"/>
@@ -29,7 +31,7 @@
         <rosparam file="$(find sbpl_3dnav_planner)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
         <rosparam file="$(find sbpl_3dnav_planner)/config/local_costmap_params_close.yaml" command="load" />
         <rosparam file="$(find sbpl_3dnav_planner)/config/global_costmap_params.yaml" command="load" />
-        <!-- <rosparam file="$(find sbpl_3dnav_planner)/config/base_local_planner_trajectory.yaml" command="load" /> -->
+        <rosparam file="$(find sbpl_3dnav_planner)/config/base_local_planner_trajectory.yaml" command="load" /> 
         <rosparam file="$(find sbpl_3dnav_planner)/config/base_local_planner_poses.yaml" command="load" />
     </node>
 

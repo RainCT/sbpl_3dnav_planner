@@ -42,6 +42,7 @@ collision_space:
     size_z: 1.4
 
 reference_frame: base_footprint
-fk_service_name: pr2_left_arm_kinematics/get_fk
-ik_service_name: pr2_left_arm_kinematics/get_ik
+## FOR SUSHI
+fk_service_name: pr2_left_arm_kinematics_sushi/get_fk
+ik_service_name: pr2_left_arm_kinematics_sushi/get_ik
 

@@ -4,10 +4,10 @@
 #define Z_TORSO_LIFT  -0.802
 #define X_TORSO_LIFT 0.05
 
-static std::string RIGHT_FK_SERVICE_NAME = "pr2_right_arm_kinematics/get_fk";
-static std::string LEFT_FK_SERVICE_NAME = "pr2_left_arm_kinematics/get_fk";
-static std::string RIGHT_IK_SERVICE_NAME = "pr2_right_arm_kinematics/get_ik";
-static std::string LEFT_IK_SERVICE_NAME = "pr2_left_arm_kinematics/get_ik";
+static std::string RIGHT_FK_SERVICE_NAME = "pr2_right_arm_kinematics_sushi/get_fk";
+static std::string LEFT_FK_SERVICE_NAME = "pr2_left_arm_kinematics_sushi/get_fk";
+static std::string RIGHT_IK_SERVICE_NAME = "pr2_right_arm_kinematics_sushi/get_ik";
+static std::string LEFT_IK_SERVICE_NAME = "pr2_left_arm_kinematics_sushi/get_ik";
 
 static std::string RIGHT_CHAIN_RTIP_NAME = "r_gripper_r_finger_tip_link";
 static std::string RIGHT_CHAIN_LTIP_NAME = "r_gripper_l_finger_tip_link";
@@ -401,7 +401,7 @@ void PViz::visualizePoses(const std::vector<std::vector<double> > &poses)
     marker_array_.markers[mind].lifetime = ros::Duration(600.0);
   }
 
-  ROS_INFO("%d markers in the array",(int)marker_array_.markers.size());
+  ROS_DEBUG("[pviz] %d markers in the array",(int)marker_array_.markers.size());
   marker_array_publisher_.publish(marker_array_);
 }
 
@@ -417,7 +417,7 @@ void PViz::visualizePose(const std::vector<double> &pose, std::string text)
   pose_quaternion.setRPY(pose[3],pose[4],pose[5]);
   tf::quaternionTFToMsg(pose_quaternion, pose_msg.orientation);
 
-  ROS_DEBUG("[visualizing: %s] position: %0.3f %0.3f %0.3f quaternion: %0.3f %0.3f %0.3f %0.3f (frame: %s)", text.c_str(), pose[0], pose[1], pose[2], pose_msg.orientation.x, pose_msg.orientation.y, pose_msg.orientation.z, pose_msg.orientation.w, reference_frame_.c_str());
+  ROS_DEBUG("[pviz] [%s] position: %0.3f %0.3f %0.3f quaternion: %0.3f %0.3f %0.3f %0.3f (frame: %s)", text.c_str(), pose[0], pose[1], pose[2], pose_msg.orientation.x, pose_msg.orientation.y, pose_msg.orientation.z, pose_msg.orientation.w, reference_frame_.c_str());
 
   visualizePose(pose_msg, text);
 }
@@ -429,12 +429,12 @@ void PViz::visualizePose(const geometry_msgs::Pose &pose, std::string text)
   marker_array_.markers.resize(3);
   ros::Time time = ros::Time::now();
 
-  ROS_DEBUG("[visualizing: %s] position: %0.3f %0.3f %0.3f quaternion: %0.3f %0.3f %0.3f %0.3f (frame: %s)", text.c_str(), pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w, reference_frame_.c_str());
+  ROS_DEBUG("[pviz] [%s] position: %0.3f %0.3f %0.3f quaternion: %0.3f %0.3f %0.3f %0.3f (frame: %s)", text.c_str(), pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w, reference_frame_.c_str());
   
   mind++;
   marker_array_.markers[mind].header.stamp = time;
   marker_array_.markers[mind].header.frame_id = reference_frame_;
-  marker_array_.markers[mind].ns = text + "_arrow";
+  marker_array_.markers[mind].ns = text;
   marker_array_.markers[mind].type = visualization_msgs::Marker::ARROW;
   marker_array_.markers[mind].id = 0;
   marker_array_.markers[mind].action = visualization_msgs::Marker::ADD;
@@ -451,7 +451,7 @@ void PViz::visualizePose(const geometry_msgs::Pose &pose, std::string text)
   mind++;
   marker_array_.markers[mind].header.stamp = time;
   marker_array_.markers[mind].header.frame_id = reference_frame_;
-  marker_array_.markers[mind].ns = text + "_sphere";
+  marker_array_.markers[mind].ns = text;
   marker_array_.markers[mind].id = 1;
   marker_array_.markers[mind].type = visualization_msgs::Marker::SPHERE;
   marker_array_.markers[mind].action = visualization_msgs::Marker::ADD;
@@ -473,6 +473,7 @@ void PViz::visualizePose(const geometry_msgs::Pose &pose, std::string text)
   marker_array_.markers[mind].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
   marker_array_.markers[mind].action = visualization_msgs::Marker::ADD;
   marker_array_.markers[mind].pose = pose;
+  marker_array_.markers[mind].pose.position.z += 0.05;
   marker_array_.markers[mind].scale.x = 0.03;
   marker_array_.markers[mind].scale.y = 0.03;
   marker_array_.markers[mind].scale.z = 0.03;
@@ -584,7 +585,7 @@ void PViz::visualizeSpheres(const std::vector<std::vector<double> > &pose, int c
 {
   double r=0,g=0,b=0;
   visualization_msgs::Marker marker;
-
+  visualization_msgs::MarkerArray marker_array;
   HSVtoRGB(&r, &g, &b, color, 1.0, 1.0);
 
   for(size_t i = 0; i < pose.size(); ++i)
@@ -608,9 +609,50 @@ void PViz::visualizeSpheres(const std::vector<std::vector<double> > &pose, int c
     marker.pose.position.y = pose[i][1];
     marker.pose.position.z = pose[i][2];
 
+    marker_array.markers.push_back(marker);
+    /*
     marker_publisher_.publish(marker);
     usleep(100);
+    */
   }
+  marker_array_publisher_.publish(marker_array);
+}
+
+void PViz::visualizeSpheres(const std::vector<std::vector<double> > &pose, const std::vector<int> &hue, std::string text)
+{
+  double r=0,g=0,b=0;
+  visualization_msgs::Marker marker;
+  visualization_msgs::MarkerArray marker_array;
+
+  if(pose.size() != hue.size())
+  {
+    ROS_WARN("[pviz] Didn't receive as many colors as I did spheres. Not visualizing. (spheres: %d, colors: %d)", int(pose.size()), int(hue.size()));
+    return;
+  }
+
+  for(std::size_t i = 0; i < pose.size(); ++i)
+  {
+    HSVtoRGB(&r, &g, &b, hue[i], 1.0, 1.0);
+    marker.header.stamp = ros::Time::now();
+    marker.header.frame_id = reference_frame_;
+    marker.ns = text;
+    marker.type = visualization_msgs::Marker::SPHERE;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.scale.x = pose[i][3]*2.0;
+    marker.scale.y = pose[i][3]*2.0;
+    marker.scale.z = pose[i][3]*2.0;
+    marker.color.r = r;
+    marker.color.g = g;
+    marker.color.b = b;
+    marker.color.a = 0.6;
+    marker.lifetime = ros::Duration(500.0);
+    marker.id = i;
+    marker.pose.position.x = pose[i][0];
+    marker.pose.position.y = pose[i][1];
+    marker.pose.position.z = pose[i][2];
+    marker_array.markers.push_back(marker);
+  }
+  marker_array_publisher_.publish(marker_array);
 }
 
 void PViz::deleteVisualizations(std::string ns, int max_id)
@@ -1032,7 +1074,7 @@ bool PViz::computeFKforVisualizationWithKDL(const std::vector<double> &jnt0_pos,
   return true;
 }
 
-void PViz::visualizeRobotMeshes(double hue, std::string ns, int id, std::vector<geometry_msgs::PoseStamped> &poses)
+void PViz::visualizeRobotMeshes(double hue, std::string ns, int start_id, std::vector<geometry_msgs::PoseStamped> &poses)
 {
   double r,g,b;
   marker_array_.markers.clear();
@@ -1047,10 +1089,10 @@ void PViz::visualizeRobotMeshes(double hue, std::string ns, int id, std::vector<
     marker_array_.markers[i].header.frame_id = reference_frame_;
     marker_array_.markers[i].ns = ns;
     marker_array_.markers[i].type = visualization_msgs::Marker::MESH_RESOURCE;
-    marker_array_.markers[i].id = i;
+    marker_array_.markers[i].id = start_id + i;
     marker_array_.markers[i].action = visualization_msgs::Marker::ADD;
     marker_array_.markers[i].pose = poses.at(i).pose;
-    marker_array_.markers[i].scale.x = 1.0;  
+    marker_array_.markers[i].scale.x = 1.0;
     marker_array_.markers[i].scale.y = 1.0;
     marker_array_.markers[i].scale.z = 1.0;
 
@@ -1067,6 +1109,36 @@ void PViz::visualizeRobotMeshes(double hue, std::string ns, int id, std::vector<
   marker_array_publisher_.publish(marker_array_);
 }
 
+visualization_msgs::MarkerArray PViz::getRobotMeshesMarkerMsg(double hue, std::string ns, int start_id, std::vector<geometry_msgs::PoseStamped> &poses)
+{
+  double r,g,b;
+  marker_array_.markers.clear();
+  marker_array_.markers.resize(robot_meshes_.size());
+  ros::Time time = ros::Time();
+  HSVtoRGB(&r, &g, &b, hue, 1.0, 1.0);
+
+  for(int i = 0; i < (int)marker_array_.markers.size(); ++i)
+  {
+    marker_array_.markers[i].header.stamp = time;
+    marker_array_.markers[i].header.frame_id = reference_frame_;
+    marker_array_.markers[i].ns = ns;
+    marker_array_.markers[i].type = visualization_msgs::Marker::MESH_RESOURCE;
+    marker_array_.markers[i].id = start_id + i;
+    marker_array_.markers[i].action = visualization_msgs::Marker::ADD;
+    marker_array_.markers[i].pose = poses.at(i).pose;
+    marker_array_.markers[i].scale.x = 1.0;
+    marker_array_.markers[i].scale.y = 1.0;
+    marker_array_.markers[i].scale.z = 1.0;
+    marker_array_.markers[i].color.r = r;
+    marker_array_.markers[i].color.g = g;
+    marker_array_.markers[i].color.b = b;
+    marker_array_.markers[i].color.a = 0.4;
+    marker_array_.markers[i].lifetime = ros::Duration(120.0);
+    marker_array_.markers[i].mesh_resource = robot_meshes_[i];
+  }
+  return marker_array_;
+}
+
 void PViz::getMaptoRobotTransform(double x, double y, double theta, KDL::Frame &frame)
 {
   KDL::Rotation r1;
@@ -1076,17 +1148,17 @@ void PViz::getMaptoRobotTransform(double x, double y, double theta, KDL::Frame &
   frame = base_footprint_in_map;
 }
 
-void PViz::visualizeRobot(std::vector<double> &jnt0_pos, std::vector<double> &jnt1_pos, std::vector<double> &base_pos, double torso_pos, double hue, std::string ns, int id)
+void PViz::visualizeRobot(std::vector<double> &jnt0_pos, std::vector<double> &jnt1_pos, std::vector<double> &base_pos, double torso_pos, double hue, std::string ns, int start_id)
 {
   std::vector<geometry_msgs::PoseStamped> poses;
   if(!computeFKforVisualizationWithKDL(jnt0_pos, jnt1_pos, base_pos, torso_pos, poses))
 
     ROS_WARN("Unable to compute forward kinematics.");
   else
-    visualizeRobotMeshes(hue, ns, id, poses);
+    visualizeRobotMeshes(hue, ns, start_id, poses);
 }
 
-void PViz::visualizeRobot(std::vector<double> &jnt0_pos, std::vector<double> &jnt1_pos, BodyPose &body_pos, double hue, std::string ns, int id)
+void PViz::visualizeRobot(std::vector<double> &jnt0_pos, std::vector<double> &jnt1_pos, BodyPose &body_pos, double hue, std::string ns, int start_id)
 {
   double torso_pos;
   std::vector<double> base_pos(3,0);
@@ -1101,7 +1173,27 @@ void PViz::visualizeRobot(std::vector<double> &jnt0_pos, std::vector<double> &jn
 
     ROS_WARN("Unable to compute forward kinematics.");
   else
-    visualizeRobotMeshes(hue, ns, id, poses);
+    visualizeRobotMeshes(hue, ns, start_id, poses);
+}
+
+visualization_msgs::MarkerArray PViz::getRobotMarkerMsg(std::vector<double> &jnt0_pos, std::vector<double> &jnt1_pos, BodyPose &body_pos, double hue, std::string ns, int start_id)
+{
+  double torso_pos;
+  std::vector<double> base_pos(3,0);
+
+  base_pos[0] = body_pos.x;
+  base_pos[1] = body_pos.y;
+  base_pos[2] = body_pos.theta;
+  torso_pos = body_pos.z;
+
+  std::vector<geometry_msgs::PoseStamped> poses;
+  if(!computeFKforVisualizationWithKDL(jnt0_pos, jnt1_pos, base_pos, torso_pos, poses))
+  {
+    ROS_WARN("[pviz] Failed to compute forward kinematics. Cannot visualize robot.");
+    return visualization_msgs::MarkerArray();
+  } 
+  else
+    return getRobotMeshesMarkerMsg(hue, ns, start_id, poses);
 }
 
 bool PViz::parseCSVFile(std::string filename, int num_cols, std::vector<std::vector<double> > &data)
@@ -1192,9 +1284,9 @@ bool PViz::visualizeTrajectoryFromFile(std::string filename)
   return true;
 }
 
-void PViz::visualizeRobotWithTitle(std::vector<double> &jnt0_pos, std::vector<double> &jnt1_pos, BodyPose &body_pos, double hue, std::string ns, int id, std::string title)
+void PViz::visualizeRobotWithTitle(std::vector<double> &jnt0_pos, std::vector<double> &jnt1_pos, BodyPose &body_pos, double hue, std::string ns, int start_id, std::string title)
 {
-  visualizeRobot(jnt0_pos, jnt1_pos, body_pos, hue, ns, id);
+  visualizeRobot(jnt0_pos, jnt1_pos, body_pos, hue, ns, start_id);
 
   double r=0,g=0,b=0;
   visualization_msgs::Marker marker;
@@ -1222,5 +1314,44 @@ void PViz::visualizeRobotWithTitle(std::vector<double> &jnt0_pos, std::vector<do
   marker.lifetime = ros::Duration(180.0);
   marker_publisher_.publish(marker);
 }
+
+void PViz::visualizeTrajectory(std::vector<trajectory_msgs::JointTrajectoryPoint> &rpath, std::vector<trajectory_msgs::JointTrajectoryPoint> &lpath, std::vector<trajectory_msgs::JointTrajectoryPoint> &bpath, int throttle)
+{
+  int length = rpath.size();
+  std::vector<double> rangles(7, 0), langles(7, 0);
+  BodyPose body_pos;
+  visualization_msgs::MarkerArray ma, ma1;
+
+  if (rpath.size() != lpath.size() || rpath.size() != bpath.size()) {
+    ROS_ERROR("[pviz] The right arm, left arm and body trajectories are of unequal lengths.");
+    return;
+  }
+
+  int color_inc = 240.0 / (length / throttle); // hue: red -> blue
+  ROS_INFO("[pviz] length: %d color_inc: %d throttle: %d)", length, color_inc, throttle);
+
+  for (int i = 0; i < length; ++i) {
+    for (std::size_t j = 0; j < rangles.size(); ++j) {
+      rangles[j] = rpath[i].positions[j];
+      langles[j] = lpath[i].positions[j];
+    }
+    body_pos.x = bpath[i].positions[0];
+    body_pos.y = bpath[i].positions[1];
+    body_pos.z = bpath[i].positions[2];
+    body_pos.theta = bpath[i].positions[3];
+
+    if ((i != length - 1) && (i % throttle != 0))
+      continue;
+
+    ROS_INFO("[pviz] length: %d color_inc: %d throttle: %d", length, color_inc, throttle);
+    ROS_INFO("[pviz] Visualizing waypoint #%d (i mod color_inc: %d) with color: %d (color_inc: %d, throttle: %d)", i, (i / throttle), (i / throttle) * color_inc, color_inc, throttle);
+
+    ma1 = getRobotMarkerMsg(rangles, langles, body_pos, (i / throttle) * color_inc, "robot_path", (i+1)*30);
+    ma.markers.insert(ma.markers.end(), ma1.markers.begin(), ma1.markers.end()); 
+  }
+  ROS_INFO("[pviz] Visualizing a robot path with %d waypoints. (throttle = %d)", int(rpath.size()), throttle);
+  marker_array_publisher_.publish(ma);
+}
+
 
 

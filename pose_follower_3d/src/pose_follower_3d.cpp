@@ -91,7 +91,7 @@ void PoseFollower3D::initialize(std::string name, tf::TransformListener* tf, cos
 	ros::NodeHandle node_private("~/" + name);
 
 	//ANDREW kinematic_state_ = new planning_models::KinematicState(collision_model_3d_.getKinematicModel());
-	//ANDREW collision_planner_.initialize(name, tf_, costmap_ros_);
+	collision_planner_.initialize(name, tf_, costmap_ros_);
 
 	node_private.param("k_trans", K_trans_, 1.5);
 	node_private.param("k_rot", K_rot_, 1.25);
@@ -263,7 +263,6 @@ bool PoseFollower3D::checkTrajectory3D(double x, double y, double theta, double 
 	int num_steps = int(sim_time_ / sim_granularity_ + 0.5);
 	//we at least want to take one step... even if we won't move, we want to score our current position
 	if (num_steps == 0) num_steps = 1;
-
 	for (int i = 0; i <= num_steps; ++i) {
 		double dt = sim_time_ / num_steps * i;
 		double x_i = x + (vx * cos(theta) + vy * cos(M_PI_2 + theta)) * dt;
@@ -304,6 +303,7 @@ bool PoseFollower3D::checkTrajectoryToWaypoint(double x, double y, double theta,
 // 3D collision check at x,y,theta in global map coordinates
 bool PoseFollower3D::isIn3DCollision(double x, double y, double theta)
 {
+return false;
 	// construct the robot state message to send to /sbpl_full_body_planning/collision_check service
 	// to handle collision checking
 	arm_navigation_msgs::RobotState robotState;
@@ -324,21 +324,21 @@ bool PoseFollower3D::isIn3DCollision(double x, double y, double theta)
 
 	req.robot_states.push_back(robotState);
 
-	ROS_INFO("req.robot_states.size = %u", req.robot_states.size());
+	ROS_INFO("[PoseFollower3D] req.robot_states.size = %u", int(req.robot_states.size()));
 
 	if (!collision_check_client_.call(req, res)) {
 		ROS_ERROR("[PoseFollower3D] Call to collision checking service failed. Returning \"in collision\"");
 		return true;
 	}
 
-	ROS_INFO("res.error_codes.size = %u", res.error_codes.size());
+	ROS_INFO("[PoseFollower3D] res.error_codes.size = %u", int(res.error_codes.size()));
 
 	if (res.error_codes.empty()) {
-		ROS_INFO("service call returned no error codes.");
+		ROS_INFO("[PoseFollower3D] Service call returned no error codes.");
 	}
 
 	for (int i = 0; i < (int)res.error_codes.size(); i++) {
-		ROS_INFO("Service called returned error code %i", res.error_codes[i].val);
+		ROS_INFO("[PoseFollower3D] Service called returned error code %i", res.error_codes[i].val);
 		if (res.error_codes[i].val == arm_navigation_msgs::ArmNavigationErrorCodes::COLLISION_CONSTRAINTS_VIOLATED) {
 			return true;
 		}
@@ -382,7 +382,7 @@ bool PoseFollower3D::getRobotStateFromRobotPose(const geometry_msgs::Pose& bodyP
 		robotStateOut.joint_state.position.push_back(leftArmAngles_[i]);
 	}
 
-	robotStateOut.joint_state.name.push_back("torso_lift_link");
+	robotStateOut.joint_state.name.push_back("torso_lift_joint");
 	robotStateOut.joint_state.position.push_back(spinePosition_);
 
 	robotStateOut.multi_dof_joint_state.frame_ids.push_back("map");
@@ -409,7 +409,7 @@ bool PoseFollower3D::stopped()
 
 bool PoseFollower3D::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
 {
-	ROS_INFO("[PoseFollower3D] calling computeVelocityCommands.");
+	ROS_DEBUG("[PoseFollower3D] calling computeVelocityCommands.");
 	const geometry_msgs::Twist empty_twist;
 
 	geometry_msgs::TransformStamped geo_pose;
@@ -460,15 +460,18 @@ bool PoseFollower3D::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
 
 	// TODO: fix footprint: update costmap one / own collcheck here?
 
-//	bool legal_traj = collision_planner_.checkTrajectory(test_vel.linear.x, test_vel.linear.y, test_vel.angular.z, true);
+	bool legal_traj = true;//collision_planner_.checkTrajectory(test_vel.linear.x, test_vel.linear.y, test_vel.angular.z, true);
+  //ROS_INFO("checking (%f %f %f) -> %d\n",test_vel.linear.x, test_vel.linear.y, test_vel.angular.z,legal_traj);
 
 //	bool legal_traj = checkTrajectory3D(robot_pose.getOrigin().x(), robot_pose.getOrigin().y(),
 //	                                    tf::getYaw(robot_pose.getRotation()),
 //	                                    test_vel.linear.x, test_vel.linear.y, test_vel.angular.z);
+/* MIKE: removed 3d collision checking!
 	bool legal_traj = checkTrajectoryToWaypoint(robot_pose.getOrigin().x(), robot_pose.getOrigin().y(),
 	                                            tf::getYaw(robot_pose.getRotation()),
 	                                            target_pose.getOrigin().x(), target_pose.getOrigin().y(),
 	                                            tf::getYaw(target_pose.getRotation()));
+                                              */
 
 	if (!legal_traj) {
 		ROS_INFO("[PoseFollower3D] Local plan is in collision");
