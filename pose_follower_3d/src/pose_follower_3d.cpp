@@ -482,7 +482,7 @@ bool PoseFollower3D::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
 	// warn that collision objects aren't fresh
 	double collision_age = (ros::Time::now() - collision_object_time_).toSec();
 	if (collision_age > 1.5) {
-		ROS_WARN("Warning: pose_follower_3d's collision objects might be outdated (%f s old)", collision_age);
+		ROS_WARN_ONCE("Warning: pose_follower_3d's collision objects might be outdated (%f s old)", collision_age);
 	}
 
 // ANDREW: Removed. Only doing 3-D collision checking for sbpl_3dnav_planner
@@ -584,6 +584,7 @@ bool PoseFollower3D::setPlan(const std::vector<geometry_msgs::PoseStamped>& glob
 bool PoseFollower3D::isGoalReached()
 {
 	if (goal_reached_time_ + ros::Duration(tolerance_timeout_) < ros::Time::now() && stopped()) {
+    ROS_INFO("[PoseFollower3D] Goal is reached.");
 		return true;
 	}
 	return false;
