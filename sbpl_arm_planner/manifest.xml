@@ -26,6 +26,7 @@
     <depend package="arm_navigation_msgs" /> <!--add_object_to_map-->
     <depend package="geometric_shapes" /> <!--sbpl_collision_space -->
     <depend package="eigen" />
+    <depend package="geometry_msgs"/>
 
     <export>
         <cpp cflags="-I${prefix}/include  -O3 -g" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lsbpl_arm_planner"/>
