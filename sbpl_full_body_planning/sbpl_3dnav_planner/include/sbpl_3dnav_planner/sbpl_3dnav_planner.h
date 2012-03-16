@@ -68,6 +68,7 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <trajectory_msgs/JointTrajectoryPoint.h> 
+#include <sbpl_3dnav_planner/GetBasePoses.h> 
 
 namespace sbpl_3dnav_planner
 {
@@ -100,6 +101,9 @@ public:
     bool collisionCheck(sbpl_3dnav_planner::FullBodyCollisionCheck::Request &req, sbpl_3dnav_planner::FullBodyCollisionCheck::Response &res);
     bool getRobotPoseFromRobotState(arm_navigation_msgs::RobotState &state, vector<double>& langles, vector<double>& rangles, BodyPose& body);
 
+    bool getBasePoses(sbpl_3dnav_planner::GetBasePoses::Request &req,
+		      sbpl_3dnav_planner::GetBasePoses::Response &res);
+
 private:
     const bool forward_search_;
 
@@ -123,6 +127,7 @@ private:
 
     ros::ServiceServer planning_service_;
     ros::ServiceServer collision_check_service_;
+    ros::ServiceServer find_base_poses_service_;
 
     /** Params from parameter server **/
 
@@ -301,6 +306,18 @@ private:
     void visualizeObjectPath();
 
     void visualizeCollisionModel(std::vector<double> &rangles, std::vector<double> &langles, BodyPose &body_pos, std::string text);
+    // base pose computation
+    int yaw_steps_, radii_steps_;
+    double minimum_working_distance_, maximum_working_distance_;
+
+    bool getWorkingDistance(const geometry_msgs::Pose &object_pose,
+			    const geometry_msgs::Pose &shoulder_pose,
+			    double &distance);
+
+    bool getPosesToCollisionCheck(const geometry_msgs::Pose &object_pose,
+				  const double &working_distance,
+				  std::vector<geometry_msgs::Pose> &base_poses);
+
 
 };
 
