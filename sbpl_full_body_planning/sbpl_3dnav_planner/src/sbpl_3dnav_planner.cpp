@@ -820,8 +820,15 @@ bool Sbpl3DNavPlanner::plan(std::vector<trajectory_msgs::JointTrajectoryPoint> &
 
 	clock_t starttime = clock();
 
+  ReplanParams params(15.0);
+  params.initial_eps = sbpl_arm_env_.getEpsilon();
+  params.final_eps = 1.0;
+  params.dec_eps = 0.2;
+  params.return_first_solution = false;
+  params.repair_time = 4.0;
+
 	// plan
-	b_ret = planner_->replan(allocated_time_, &solution_state_ids_, &solution_cost);
+	b_ret = planner_->replan(&solution_state_ids_, params, &solution_cost);
 
 	totalPlanTime = clock() - totalPlanTime;
 

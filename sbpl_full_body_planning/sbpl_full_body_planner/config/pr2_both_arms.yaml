@@ -1,5 +1,5 @@
 planner:
-  epsilon: 10.0
+  epsilon: 30.0
   epsilon2: 2.0
   verbose: false
   search_mode: true

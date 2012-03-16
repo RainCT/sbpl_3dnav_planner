@@ -47,10 +47,10 @@ if UNICYCLE_MPRIM_16DEGS == 1
 
     %multipliers (multiplier is used as costmult*cost)
     forwardcostmult = 1;
-    backwardcostmult = 1;
-    sidestepcostmult = 2;
-    turninplacecostmult = 2;
-    forwarddiagcostmult = 1; %move forward slightly to the left/right without changing heading
+    backwardcostmult = 10;
+    sidestepcostmult = 5;
+    turninplacecostmult = 1;
+    forwarddiagcostmult = 3; %move forward slightly to the left/right without changing heading
 
     %note, what is shown x,y,theta *changes* (that is, dx,dy,dtheta and not absolute numbers)
 
@@ -282,7 +282,7 @@ for angleind = 1:numberofangles
         
     end;
     grid;
-    pause;
+    %pause;
 end;
         
 fclose('all');

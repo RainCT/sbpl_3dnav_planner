@@ -1646,9 +1646,12 @@ int EnvironmentDUALROBARM3D::setGoalPosition(const std::vector<std::vector<doubl
     std::vector<short unsigned int> coord(12,0);
     for(int i=0; i<12; i++)
       coord[i] = EnvROBARM.startHashEntry->coord[i];
-    coord[8] = temp_x;
-    coord[9] = temp_y;
-    coord[11] = (yaw+2)/4;
+    BodyPose bp(EnvROBARMCfg.goal.xyz[0],EnvROBARMCfg.goal.xyz[1],EnvROBARMCfg.goal.xyz[2],EnvROBARMCfg.goal.rpy[2]);
+    BodyCell bc;
+    worldToDiscBody(bp, &bc);
+    coord[8] = bc.x;
+    coord[9] = bc.y;
+    coord[11] = bc.theta;
     printf("3dnav goal x=%d y=%d th=%d z=%d\n",coord[8],coord[9],coord[11],coord[10]);
     EnvDUALROBARM3DHashEntry_t* HashEntry;
     if((HashEntry = getHashEntry(coord, false)) == NULL){
@@ -1659,7 +1662,7 @@ int EnvironmentDUALROBARM3D::setGoalPosition(const std::vector<std::vector<doubl
     EnvROBARM.goalHashEntry = HashEntry;
     unsigned char dist_temp;
 printf("poooooppiie!!!!! %f\n",EnvROBARMCfg.goal.xyz[2]);
-    BodyPose bp(EnvROBARMCfg.goal.xyz[0],EnvROBARMCfg.goal.xyz[1],EnvROBARMCfg.goal.xyz[2],EnvROBARMCfg.goal.rpy[2]);
+    //BodyPose bp(EnvROBARMCfg.goal.xyz[0],EnvROBARMCfg.goal.xyz[1],EnvROBARMCfg.goal.xyz[2],EnvROBARMCfg.goal.rpy[2]);
     pviz_.visualizeRobot(HashEntry->angles0, HashEntry->angles1, bp, 0.0, "goal", 0);
     usleep(5000);
     if(!cspace_->checkAllMotion(HashEntry->angles1,HashEntry->angles0,bp,true,dist_temp,debug_code_)){
