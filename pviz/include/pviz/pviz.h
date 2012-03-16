@@ -75,7 +75,7 @@ class PViz
 
     void visualizeRobotWithTitle(std::vector<double> &jnt0_pos, std::vector<double> &jnt1_pos, BodyPose &body_pos, double hue, std::string ns, int start_id, std::string title);
     
-    /**************** Shapes, Text & Lines ****************/
+    /**************** Meshes, Shapes, Text, & Lines ****************/
 
     /* \brief visualize a pose (sphere, arrow, string of text) */
     void visualizePose(const std::vector<double> &pose, std::string text);
@@ -111,6 +111,14 @@ class PViz
     void visualizeText(geometry_msgs::Pose pose, std::string text, std::string ns, int id, std::vector<double> color, double size);
 
     void visualizeCube(geometry_msgs::PoseStamped pose, int color, std::string ns, int id, std::vector<double> dim);
+
+    // visualize a mesh where $mesh_resource is the path to the mesh using the URI used by resource_retriever package
+    void visualizeMesh(const std::string& mesh_resource, const geometry_msgs::PoseStamped& pose,
+                       int color, std::string ns, int id);
+
+    // visualizes a triangle list; if psychadelic is true then each triangle has one of each red, green, and blue vertices
+    void visualizeMeshTriangles(const std::vector<geometry_msgs::Point>& vertices, const std::vector<int>& triangles,
+                                const geometry_msgs::PoseStamped& pose, int color, std::string ns, int id, bool psychadelic);
 
     /* \brief display a list of states (xyz coordinates) (intended for use with sbpl) */
     void visualizeBasicStates(const std::vector<std::vector<double> > &states, const std::vector<double> &color, std::string name, double size);
