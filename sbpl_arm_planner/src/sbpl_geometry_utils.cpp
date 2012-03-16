@@ -192,7 +192,7 @@ bool intersects(const Triangle tr1, const Triangle& tr2, const double eps = 1.0e
 				else
 				{
 					// ANDREW: bad assumption, they could be the same line
-					printf("Line segments are parallel and won't intersect\n");
+					//printf("Line segments are parallel and won't intersect\n");
 				}
 			}
 		}
