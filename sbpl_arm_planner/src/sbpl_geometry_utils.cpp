@@ -192,7 +192,7 @@ bool intersects(const Triangle tr1, const Triangle& tr2, const double eps = 1.0e
 				else
 				{
 					// ANDREW: bad assumption, they could be the same line
-					printf("Line segments are parallel and won't intersect\n");
+					//printf("Line segments are parallel and won't intersect\n");
 				}
 			}
 		}
@@ -593,6 +593,56 @@ void sbpl_geometry_utils::getEnclosingSpheresOfMesh(const std::vector<geometry_m
 								voxelGrid[i][j][k] = true;
 							}
 						}
+					}
+				}
+			}
+		}
+	}
+
+	// fill the mesh by scanning lines in the voxel outline grid
+	if(fillMesh)
+	{
+		for(int i = 0; i < numVoxelsX; i++)
+		{
+			for(int j = 0; j < numVoxelsY; j++)
+			{
+				const int OUTSIDE = 0, ON_BOUNDARY_FROM_OUTSIDE = 1, INSIDE = 2, ON_BOUNDARY_FROM_INSIDE = 4;
+				int scanState = OUTSIDE;
+
+				for(int k = 0; k < numVoxelsZ; k++)
+				{
+					if(scanState == OUTSIDE && voxelGrid[i][j][k])
+					{
+						scanState = ON_BOUNDARY_FROM_OUTSIDE;
+					}
+					else if(scanState == ON_BOUNDARY_FROM_OUTSIDE && !voxelGrid[i][j][k])
+					{
+						bool allEmpty = true;
+						for(int l = k; l < numVoxelsZ; l++)
+						{
+							allEmpty &= !voxelGrid[i][j][l];
+						}
+						if(allEmpty)
+						{
+							scanState = OUTSIDE;
+						}
+						else
+						{
+							scanState = INSIDE;
+							voxelGrid[i][j][k] = true;
+						}
+					}
+					else if(scanState == INSIDE && !voxelGrid[i][j][k])
+					{
+						voxelGrid[i][j][k] = true;
+					}
+					else if(scanState == INSIDE && voxelGrid[i][j][k])
+					{
+						scanState = ON_BOUNDARY_FROM_INSIDE;
+					}
+					else if(scanState == ON_BOUNDARY_FROM_INSIDE && !voxelGrid[i][j][k])
+					{
+						scanState = OUTSIDE;
 					}
 				}
 			}

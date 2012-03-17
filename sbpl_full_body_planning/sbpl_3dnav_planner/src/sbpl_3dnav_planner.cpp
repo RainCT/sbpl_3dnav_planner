@@ -62,7 +62,12 @@ Sbpl3DNavPlanner::Sbpl3DNavPlanner() :
 	succ_log_name_("succ"),
 	grid_(NULL),
 	laviz_(NULL),
-	raviz_(NULL)
+	raviz_(NULL),
+  maximum_working_distance_(0.7),
+  minimum_working_distance_(0.3),
+  yaw_steps_(16),
+  radii_steps_(16)
+
 {
 	langles_.resize(7, 0);
 	rangles_.resize(7, 0);
@@ -174,6 +179,12 @@ bool Sbpl3DNavPlanner::init()
 	node_handle_.param("left_arm_pose_on_object_y", larm_object_offset_.position.y, 0.15);
 	node_handle_.param("left_arm_pose_on_object_z", larm_object_offset_.position.z, 0.0);
 
+  //base pose determination params
+	node_handle_.param("minimum_working_distance", minimum_working_distance_, 0.3);
+	node_handle_.param("minimum_working_distance", maximum_working_distance_, 0.7);
+	node_handle_.param<int>("yaw_steps", yaw_steps_, 16);
+	node_handle_.param<int>("radii_steps", radii_steps_, 16);
+
 	// collision space params
 	node_handle_.param<std::string>("collision_space/collision_map_topic", collision_map_topic_, "collision_map_occ");
 
@@ -201,6 +212,7 @@ bool Sbpl3DNavPlanner::init()
 	collision_object_subscriber_ = root_handle_.subscribe("collision_object", 5, &Sbpl3DNavPlanner::collisionObjectCallback, this);
 	object_subscriber_ = root_handle_.subscribe("sbpl_attached_collision_object", 3, &Sbpl3DNavPlanner::attachedObjectCallback, this);
 	collision_check_service_ = root_handle_.advertiseService("/sbpl_full_body_planning/collision_check", &Sbpl3DNavPlanner::collisionCheck,this);
+	find_base_poses_service_ = root_handle_.advertiseService("/sbpl_full_body_planning/find_base_poses", &Sbpl3DNavPlanner::getBasePoses,this);
 
 	planner_initialized_ = true;
 	ROS_INFO("[3dnav] The SBPL arm planner node initialized succesfully.");
@@ -414,6 +426,156 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
 	}
 }
 
+
+
+/********************* Get Valid Base Poses Service ********************************/
+
+bool Sbpl3DNavPlanner::getWorkingDistance(const geometry_msgs::Pose &object_pose,
+                                          const geometry_msgs::Pose &shoulder_pose,
+                                          double &distance)
+{
+  double delta_z = object_pose.position.z - shoulder_pose.position.z;
+  if(fabs(delta_z) > maximum_working_distance_)
+  {
+    ROS_ERROR("Location unreachable");
+    return false;
+  }
+  distance = sqrt(maximum_working_distance_*maximum_working_distance_ - delta_z*delta_z);
+  return true;
+}
+
+bool Sbpl3DNavPlanner::getPosesToCollisionCheck(const geometry_msgs::Pose &object_pose,
+                                                const double &working_distance,
+                                                std::vector<geometry_msgs::Pose> &base_poses)
+{
+  std::vector<double> yaws_to_try, radii_to_try;
+  double yaw_delta = 2 * M_PI/ yaw_steps_;
+  for(unsigned int i=0; i < yaw_steps_; i++)
+  {
+   yaws_to_try.push_back(i*yaw_delta);
+  }
+
+  double radius_delta = (working_distance - minimum_working_distance_)/radii_steps_;
+  ROS_DEBUG("Radius delta %f, Working distance: %f",radius_delta,working_distance);
+  for(unsigned int i=0; i < radii_steps_; i++)
+   radii_to_try.push_back(working_distance - i*radius_delta);
+
+  for(unsigned int i=0; i < yaws_to_try.size(); i++)
+  {
+    for(unsigned int j=0; j < radii_to_try.size(); j++)
+    {
+      geometry_msgs::Pose pose;
+      pose.orientation.z = 1.0;
+      pose.position.x = object_pose.position.x + radii_to_try[j] * cos(yaws_to_try[i]);
+      pose.position.y = object_pose.position.y + radii_to_try[j] * sin(yaws_to_try[i]);
+      btQuaternion quat;
+      quat.setRPY(0.0,0.0,yaws_to_try[i] + M_PI);
+      tf::quaternionTFToMsg(quat,pose.orientation);
+      base_poses.push_back(pose);
+    }
+  }
+  return true;
+}
+
+bool Sbpl3DNavPlanner::getBasePoses(sbpl_3dnav_planner::GetBasePoses::Request &req,
+                                    sbpl_3dnav_planner::GetBasePoses::Response &res)
+{
+  ROS_INFO("In Get base poses");
+  std::string link_name;
+    if(req.group_name == "right_arm")
+      link_name = "r_shoulder_pan_link";
+    else if (req.group_name == "left_arm")
+      link_name = "l_shoulder_pan_link";
+    else
+      link_name = "torso_lift_link";
+    
+    // link_name
+    tf::StampedTransform link_map_transform;
+    try 
+    {
+      tf_.lookupTransform("map",link_name,ros::Time(0),link_map_transform);
+    }
+    catch (tf::TransformException& ex) 
+    {
+      ROS_ERROR("***********Is there a map? The map-robot transform failed. (%s)", ex.what());
+      res.error_code.val = res.error_code.FRAME_TRANSFORM_FAILURE;
+      return true;
+    }
+
+    geometry_msgs::PoseStamped my_object_pose = req.object_pose;
+    my_object_pose.header.stamp = ros::Time(0.0);
+    try 
+    {
+      tf_.transformPose("map",my_object_pose,my_object_pose);
+    }
+    catch (tf::TransformException& ex) 
+    {
+      ROS_ERROR("**********Is there a map? The map-robot transform failed. (%s)", ex.what());
+      res.error_code.val = res.error_code.FRAME_TRANSFORM_FAILURE;
+      return true;
+    }
+   
+   geometry_msgs::TransformStamped link_transform;
+   tf::transformStampedTFToMsg(link_map_transform,link_transform);
+   geometry_msgs::Pose link_pose;
+   link_pose.position.x = link_transform.transform.translation.x;
+   link_pose.position.y = link_transform.transform.translation.y;
+   link_pose.position.z = link_transform.transform.translation.z;
+   link_pose.orientation = link_transform.transform.rotation;
+   double working_distance;
+   if(!getWorkingDistance(my_object_pose.pose,link_pose,working_distance))
+   {
+     res.error_code.val = res.error_code.PLANNING_FAILED;
+     return true;
+   }
+
+   std::vector<geometry_msgs::Pose> base_poses;
+   getPosesToCollisionCheck(my_object_pose.pose,working_distance,base_poses);
+   
+   sbpl_3dnav_planner::FullBodyCollisionCheck::Request fb_request;
+   sbpl_3dnav_planner::FullBodyCollisionCheck::Response fb_response;
+
+   fb_request.robot_states.resize(base_poses.size());
+   for(unsigned int i=0; i < base_poses.size(); i++)
+   {
+     fb_request.robot_states[i] = req.robot_state;
+     fb_request.robot_states[i].multi_dof_joint_state.frame_ids.clear();
+     fb_request.robot_states[i].multi_dof_joint_state.child_frame_ids.clear();
+     fb_request.robot_states[i].multi_dof_joint_state.poses.clear();
+     fb_request.robot_states[i].multi_dof_joint_state.frame_ids.push_back("map");
+     fb_request.robot_states[i].multi_dof_joint_state.child_frame_ids.push_back("base_footprint");
+     fb_request.robot_states[i].multi_dof_joint_state.poses.push_back(base_poses[i]);
+     double yaw = tf::getYaw(base_poses[i].orientation);
+     ROS_DEBUG("Trying: %f %f %f",base_poses[i].position.x,base_poses[i].position.y,yaw);
+   }
+
+   ROS_DEBUG("Robot request");
+   for(unsigned int i=0; i < req.robot_state.joint_state.name.size(); i++)
+   {
+     ROS_DEBUG("%d name: %s",i,req.robot_state.joint_state.name[i].c_str());
+   }
+
+   if(!collisionCheck(fb_request,fb_response))
+   {
+     ROS_ERROR("Error in collision checking");
+     return false;
+   }
+
+   for(unsigned int i=0; i < fb_response.error_codes.size(); i++)
+   {
+     if (fb_response.error_codes[i].val == arm_navigation_msgs::ArmNavigationErrorCodes::SUCCESS) 
+       {
+         geometry_msgs::PoseStamped pose_stamped;
+         pose_stamped.header.frame_id = "map";
+         pose_stamped.header.stamp = ros::Time(0.0);
+         pose_stamped.pose = base_poses[i];
+         res.base_poses.push_back(pose_stamped);
+       }
+   }
+   return true; 
+}
+
+
 /**************************** Collision Check Service *******************************/
 
 bool Sbpl3DNavPlanner::collisionCheck(sbpl_3dnav_planner::FullBodyCollisionCheck::Request &req,
@@ -455,6 +617,10 @@ bool Sbpl3DNavPlanner::collisionCheck(sbpl_3dnav_planner::FullBodyCollisionCheck
 	return true;
 }
 
+
+
+
+
 bool Sbpl3DNavPlanner::getRobotPoseFromRobotState(arm_navigation_msgs::RobotState &state, vector<double>& langles, vector<double>& rangles, BodyPose& body)
 {
 	unsigned int lind = 0, rind = 0;
@@ -464,21 +630,22 @@ bool Sbpl3DNavPlanner::getRobotPoseFromRobotState(arm_navigation_msgs::RobotStat
 	// arms
 	for(size_t i = 0; i < state.joint_state.name.size(); i++)
 	{
-		if(rind < rjoint_names_.size())
-		{
-			if(rjoint_names_[rind].compare(state.joint_state.name[i]) == 0)
+    ROS_DEBUG("Joint name: %s",state.joint_state.name[i].c_str());
+    for(unsigned int j=0; j < rjoint_names_.size(); j++)
+    {
+			if(rjoint_names_[j].compare(state.joint_state.name[i]) == 0)
 			{
-				ROS_DEBUG("[exp] [right-start] %-20s: %0.3f", rjoint_names_[rind].c_str(), state.joint_state.position[i]);
-				rangles[rind] = state.joint_state.position[i];
+				ROS_DEBUG("[exp] [right-start] %-20s: %0.3f", rjoint_names_[j].c_str(), state.joint_state.position[i]);
+				rangles[j] = state.joint_state.position[i];
 				rind++;
 			}
-		}
-		if(lind < ljoint_names_.size())
+    }
+    for(unsigned int j=0; j < ljoint_names_.size(); j++)
 		{
-			if(ljoint_names_[lind].compare(state.joint_state.name[i]) == 0)
+			if(ljoint_names_[j].compare(state.joint_state.name[i]) == 0)
 			{
-				ROS_DEBUG("[exp] [left-start] %-20s: %0.3f", ljoint_names_[lind].c_str(), state.joint_state.position[i]);
-				langles[lind] = state.joint_state.position[i];
+				ROS_DEBUG("[exp] [left-start] %-20s: %0.3f", ljoint_names_[j].c_str(), state.joint_state.position[i]);
+				langles[j] = state.joint_state.position[i];
 				lind++;
 			}
 		}
@@ -519,6 +686,7 @@ bool Sbpl3DNavPlanner::getRobotPoseFromRobotState(arm_navigation_msgs::RobotStat
 	}
 	return true;
 }
+
 
 
 /**************************** Planner Interface *******************************/

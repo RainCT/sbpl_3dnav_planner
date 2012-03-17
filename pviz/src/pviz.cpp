@@ -961,6 +961,91 @@ void PViz::visualizeCube(geometry_msgs::PoseStamped pose, int color, std::string
   marker_publisher_.publish(marker);
 }
 
+void PViz::visualizeMesh(const std::string& mesh_resource, const geometry_msgs::PoseStamped& pose, int color,
+                         std::string ns, int id)
+{
+	double r = 0.0, g = 0.0, b = 0.0;
+	HSVtoRGB(&r, &g, &b, color, 1.0, 1.0);
+
+	visualization_msgs::Marker marker;
+	marker.header.frame_id = "map";
+	marker.header.stamp = ros::Time::now();
+	marker.ns = ns;
+	marker.id = id;
+	marker.type = visualization_msgs::Marker::MESH_RESOURCE;
+	marker.action = visualization_msgs::Marker::ADD;
+	marker.pose.position.x = pose.pose.position.x;
+	marker.pose.position.y = pose.pose.position.y;
+	marker.pose.position.z = pose.pose.position.z;
+	marker.pose.orientation.x = pose.pose.orientation.x;
+	marker.pose.orientation.y = pose.pose.orientation.y;
+	marker.pose.orientation.z = pose.pose.orientation.z;
+	marker.pose.orientation.w = pose.pose.orientation.w;
+	marker.scale.x = 1.0;
+	marker.scale.y = 1.0;
+	marker.scale.z = 1.0;
+	marker.color.a = 1.0;
+	marker.color.r = r;
+	marker.color.g = g;
+	marker.color.b = b;
+	marker.mesh_resource = mesh_resource;
+
+	marker_publisher_.publish(marker);
+}
+
+void PViz::visualizeMeshTriangles(const std::vector<geometry_msgs::Point>& vertices, const std::vector<int>& triangles,
+                         const geometry_msgs::PoseStamped& pose, int color, std::string ns, int id, bool psychadelic)
+{
+	double r = 0.0, g = 0.0, b = 0.0;
+	HSVtoRGB(&r, &g, &b, color, 1.0, 1.0);
+
+	std_msgs::ColorRGBA red; red.a = 1.0f; red.r = 1.0f; red.g = 0.0f; red.b = 0.0f;
+	std_msgs::ColorRGBA green; green.a = 1.0f; green.r = 0.0f; green.g = 1.0f; green.b = 0.0f;
+	std_msgs::ColorRGBA blue; blue.a = 1.0f; blue.r = 0.0f; blue.g = 0.0f; blue.b = 1.0f;
+
+	std::vector<std_msgs::ColorRGBA> colors;
+	for (int i = 0; i < (int)vertices.size(); i++) {
+		if (i % 3 == 0) colors.push_back(red);
+		if (i % 3 == 1) colors.push_back(green);
+		if (i % 3 == 2) colors.push_back(blue);
+	}
+
+	visualization_msgs::Marker marker;
+	marker.header.frame_id = "map";
+	marker.header.stamp = ros::Time::now();
+	marker.ns = ns;
+	marker.id = id;
+	marker.type = visualization_msgs::Marker::TRIANGLE_LIST;
+	marker.action = visualization_msgs::Marker::ADD;
+	marker.pose.position.x = pose.pose.position.x;
+	marker.pose.position.y = pose.pose.position.y;
+	marker.pose.position.z = pose.pose.position.z;
+	marker.pose.orientation.x = pose.pose.orientation.x;
+	marker.pose.orientation.y = pose.pose.orientation.y;
+	marker.pose.orientation.z = pose.pose.orientation.z;
+	marker.pose.orientation.w = pose.pose.orientation.w;
+	marker.scale.x = 1.0;
+	marker.scale.y = 1.0;
+	marker.scale.z = 1.0;
+	marker.points = vertices;
+
+	if (psychadelic) {
+		marker.color.a = 1.0;
+		marker.color.r = 1.0;
+		marker.color.g = 1.0;
+		marker.color.b = 1.0;
+		marker.colors = colors;
+	}
+	else {
+		marker.color.a = 1.0;
+		marker.color.r = r;
+		marker.color.g = g;
+		marker.color.b = b;
+	}
+
+	marker_publisher_.publish(marker);
+}
+
 void PViz::printKDLChain(std::string name, KDL::Chain &chain)
 {
   ROS_INFO("chain: %s", name.c_str());
