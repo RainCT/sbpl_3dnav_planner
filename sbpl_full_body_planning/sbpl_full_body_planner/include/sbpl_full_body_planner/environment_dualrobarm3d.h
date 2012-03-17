@@ -230,6 +230,7 @@ class EnvironmentDUALROBARM3D: public DiscreteSpaceInformation
 
     void getHeuristicTime(double* init_time, double* in_search_time){dijkstra_->getHeuristicTime(init_time,in_search_time);};
 
+    sbpl_full_body_planner::SBPLDualArmPlannerParams prms_;
   protected:
     virtual void GetSuccs(int SourceStateID, vector<int>* SuccIDV, vector<int>* CostV, vector<int>* ActionV=NULL );
 
@@ -253,7 +254,6 @@ class EnvironmentDUALROBARM3D: public DiscreteSpaceInformation
     sbpl_arm_planner::BFS3D* dijkstra_;
     sbpl_arm_planner::SBPLArmModel* arm_[2];
     sbpl_full_body_planner::SBPLDualCollisionSpace *cspace_;
-    sbpl_full_body_planner::SBPLDualArmPlannerParams prms_;
 
     std::string params_filename_;
     std::string arm0_filename_;
