@@ -150,11 +150,11 @@ bool PoseFollower3D::pushOutOfCollisionService(pose_follower_3d::PushOutOfCollis
   double robot_x = robot_pose.getOrigin().x();
   double robot_y = robot_pose.getOrigin().y();
   double robot_yaw = tf::getYaw(robot_pose.getRotation());
-  ROS_DEBUG("[PoseFollower3D] Recovery: current robot pose %f %f ==> %f", robot_pose.getOrigin().x(), robot_pose.getOrigin().y(), tf::getYaw(robot_pose.getRotation()));
+  ROS_INFO("[PoseFollower3D] Recovery: current robot pose x: %f y: %f yaw: %f", robot_pose.getOrigin().x(), robot_pose.getOrigin().y(), tf::getYaw(robot_pose.getRotation()));
 
   double dir_x[3] = {-1, 0, 0};
   double dir_y[3] = {0, 1, -1};
-  double dist[4] = {0.05, 0.1, 0.15, 0.2};
+  double dist[4] = {0.15, 0.1, 0.05, 0.2};
   for(int i=0; i<4; i++){
     for(int j=0; j<3; j++){
       //transform the recovery point based on the robot's pose
@@ -165,7 +165,10 @@ bool PoseFollower3D::pushOutOfCollisionService(pose_follower_3d::PushOutOfCollis
       double recovery_x = c*dx -s*dy;
       double recovery_y = s*dx + c*dy;
       double recovery_yaw = robot_yaw;
-      
+
+      recovery_x += robot_x;
+      recovery_y += robot_y;
+
       //collision check the recovery point
       if(!isIn3DCollision(recovery_x,recovery_y,recovery_yaw)){
         ROS_INFO("[PoseFollower3D] Recovery: moving the base to (%f %f) with respect to base_footprint, which is (%f %f) in the map frame",dx,dy,recovery_x,recovery_y);
@@ -185,6 +188,9 @@ bool PoseFollower3D::pushOutOfCollisionService(pose_follower_3d::PushOutOfCollis
         pose.pose.position.x = recovery_x;
         pose.pose.position.y = recovery_y;
         recovery_plan.push_back(pose);
+        ROS_INFO("[PoseFollower3D] Recovery: planned trajectory:");
+        for(size_t i = 0; i < recovery_plan.size(); ++i)
+          ROS_INFO("[PoseFollower3D] [%d] x: %0.3f  y: %0.3f", recovery_plan[i].pose.position.x, recovery_plan[i].pose.position.y);
         setPlan(recovery_plan);
 
         //now run the controller until we reach the recovery point
@@ -379,7 +385,7 @@ bool PoseFollower3D::checkTrajectoryToWaypoint(double x, double y, double theta,
 // 3D collision check at x,y,theta in global map coordinates
 bool PoseFollower3D::isIn3DCollision(double x, double y, double theta)
 {
-return false;
+  return false;
 	// construct the robot state message to send to /sbpl_full_body_planning/collision_check service
 	// to handle collision checking
 	arm_navigation_msgs::RobotState robotState;
