@@ -1585,9 +1585,9 @@ int EnvironmentDUALROBARM3D::setGoalPosition(const std::vector<std::vector<doubl
   std::vector<double> pose(njoints_,0), jnt_angles(njoints_,0), ik_solution(njoints_,0);
   pose = goals[0];
   if(!arm_[0]->computeIK(pose, EnvROBARM.startHashEntry->angles0, ik_solution))
-    SBPL_WARN("[setGoalPosition] No valid IK solution for the right arm at the goal pose.");
+    SBPL_DEBUG("[setGoalPosition] No valid IK solution for the right arm at the goal pose.");
   if(!arm_[1]->computeIK(pose, EnvROBARM.startHashEntry->angles1, ik_solution))
-    SBPL_WARN("[setGoalPosition] No valid IK solution for the left arm at the goal pose.");
+    SBPL_DEBUG("[setGoalPosition] No valid IK solution for the left arm at the goal pose.");
 
   double dummy_x, dummy_y;
   discToWorldXYZ(0,0,EnvROBARM.startHashEntry->coord[10],dummy_x,dummy_y,EnvROBARMCfg.goal.xyz[2],true);
