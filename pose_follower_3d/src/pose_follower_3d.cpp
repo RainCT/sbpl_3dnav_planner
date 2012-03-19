@@ -124,8 +124,84 @@ void PoseFollower3D::initialize(std::string name, tf::TransformListener* tf, cos
 	vel_pub_ = node.advertise<geometry_msgs::Twist>("cmd_vel", 10);
 //	robot_state_client_ = node.serviceClient<arm_navigation_msgs::GetRobotState>("/environment_server/get_robot_state");
 	collision_check_client_ = node.serviceClient<sbpl_3dnav_planner::FullBodyCollisionCheck>("/sbpl_full_body_planning/collision_check");
+  recovery_service_ = node.advertiseService("/pose_follower_3d/push_out_of_collision", &PoseFollower3D::pushOutOfCollisionService,this);
 
 	ROS_DEBUG("Initialized");
+}
+
+bool PoseFollower3D::pushOutOfCollisionService(pose_follower_3d::PushOutOfCollision::Request &req,
+                                               pose_follower_3d::PushOutOfCollision::Response &res){
+  //Get the robot's pose
+  geometry_msgs::TransformStamped geo_pose;
+  tf::Stamped<tf::Pose> robot_pose;
+  try {
+    tf::StampedTransform base_map_transform;
+    tf_->lookupTransform("map", "base_footprint", ros::Time(0), base_map_transform);
+    transformStampedTFToMsg(base_map_transform, geo_pose);
+    robot_pose.getOrigin().setX(base_map_transform.getOrigin().x());
+    robot_pose.getOrigin().setY(base_map_transform.getOrigin().y());
+    robot_pose.setRotation(base_map_transform.getRotation());
+  }
+  catch (tf::TransformException& ex) {
+    ROS_ERROR("[PoseFollower3D] Is there a map? The map<->robot transform failed. (%s)", ex.what());
+    res.recovered = false;
+    return false;
+  }
+  double robot_x = robot_pose.getOrigin().x();
+  double robot_y = robot_pose.getOrigin().y();
+  double robot_yaw = tf::getYaw(robot_pose.getRotation());
+  ROS_DEBUG("[PoseFollower3D] Recovery: current robot pose %f %f ==> %f", robot_pose.getOrigin().x(), robot_pose.getOrigin().y(), tf::getYaw(robot_pose.getRotation()));
+
+  double dir_x[3] = {-1, 0, 0};
+  double dir_y[3] = {0, 1, -1};
+  double dist[4] = {0.05, 0.1, 0.15, 0.2};
+  for(int i=0; i<4; i++){
+    for(int j=0; j<3; j++){
+      //transform the recovery point based on the robot's pose
+      double c = cos(robot_yaw);
+      double s = sin(robot_yaw);
+      double dx = dir_x[j]*dist[i];
+      double dy = dir_y[j]*dist[i];
+      double recovery_x = c*dx -s*dy;
+      double recovery_y = s*dx + c*dy;
+      double recovery_yaw = robot_yaw;
+      
+      //collision check the recovery point
+      if(!isIn3DCollision(recovery_x,recovery_y,recovery_yaw)){
+        ROS_INFO("[PoseFollower3D] Recovery: moving the base to (%f %f) with respect to base_footprint, which is (%f %f) in the map frame",dx,dy,recovery_x,recovery_y);
+        //if the point is safe, then first set the recovery plan
+        std::vector<geometry_msgs::PoseStamped> recovery_plan;
+        geometry_msgs::PoseStamped pose;
+        pose.header.frame_id = "map";
+        pose.header.stamp = ros::Time::now();
+        pose.pose.position.x = robot_x;
+        pose.pose.position.y = robot_y;
+        pose.pose.position.z = 0;
+        pose.pose.orientation.w = robot_pose.getRotation().getW();
+        pose.pose.orientation.x = robot_pose.getRotation().getX();
+        pose.pose.orientation.y = robot_pose.getRotation().getY();
+        pose.pose.orientation.z = robot_pose.getRotation().getZ();
+        recovery_plan.push_back(pose);
+        pose.pose.position.x = recovery_x;
+        pose.pose.position.y = recovery_y;
+        recovery_plan.push_back(pose);
+        setPlan(recovery_plan);
+
+        //now run the controller until we reach the recovery point
+        ros::Rate rate(10.0);
+        while(!isGoalReached()){
+          geometry_msgs::Twist cmd_vel;
+          computeVelocityCommands(cmd_vel);
+          vel_pub_.publish(cmd_vel);
+          rate.sleep();
+        }
+        res.recovered = true;
+        return true;
+      }
+    }
+  }
+  res.recovered = false;
+  return false;
 }
 
 void PoseFollower3D::odomCallback(const nav_msgs::Odometry::ConstPtr& msg)
