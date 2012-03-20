@@ -63,11 +63,10 @@ Sbpl3DNavPlanner::Sbpl3DNavPlanner() :
 	grid_(NULL),
 	laviz_(NULL),
 	raviz_(NULL),
-  maximum_working_distance_(0.7),
-  minimum_working_distance_(0.3),
   yaw_steps_(16),
-  radii_steps_(16)
-
+  radii_steps_(16),
+  minimum_working_distance_(0.3),
+  maximum_working_distance_(0.7)
 {
 	langles_.resize(7, 0);
 	rangles_.resize(7, 0);
@@ -181,7 +180,7 @@ bool Sbpl3DNavPlanner::init()
 
   //base pose determination params
 	node_handle_.param("minimum_working_distance", minimum_working_distance_, 0.3);
-	node_handle_.param("minimum_working_distance", maximum_working_distance_, 0.7);
+	node_handle_.param("maximum_working_distance", maximum_working_distance_, 0.7);
 	node_handle_.param<int>("yaw_steps", yaw_steps_, 16);
 	node_handle_.param<int>("radii_steps", radii_steps_, 16);
 

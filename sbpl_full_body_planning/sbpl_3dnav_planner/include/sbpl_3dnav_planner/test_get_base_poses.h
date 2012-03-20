@@ -56,7 +56,7 @@ public:
   TestSBPLBasePoses();
   ~TestSBPLBasePoses();    
   void jointStatesCallback(const sensor_msgs::JointStateConstPtr &state);
-  void callService();
+  void callService(const std::string &group_name);
     
 private:
   ros::NodeHandle root_handle_;
