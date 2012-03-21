@@ -32,5 +32,7 @@ target_link_libraries(octomap_server_node ${PROJECT_NAME})
 rosbuild_add_executable(octomap_saver src/octomap_saver.cpp)
 target_link_libraries(octomap_saver ${PROJECT_NAME})
 
+rosbuild_add_executable(static_planning_scene_server src/static_planning_scene_server.cpp)
+
 #rosbuild_add_executable(octomap_tracking_server_node src/octomap_tracking_server_node.cpp)
 #target_link_libraries(octomap_tracking_server_node ${PROJECT_NAME})
