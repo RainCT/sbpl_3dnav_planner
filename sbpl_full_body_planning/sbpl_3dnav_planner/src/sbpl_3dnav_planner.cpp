@@ -479,14 +479,20 @@ bool Sbpl3DNavPlanner::getPosesToCollisionCheck(const geometry_msgs::Pose &objec
 bool Sbpl3DNavPlanner::getBasePoses(sbpl_3dnav_planner::GetBasePoses::Request &req,
                                     sbpl_3dnav_planner::GetBasePoses::Response &res)
 {
-  ROS_INFO("In Get base poses");
+  bool look_goal = false;
+  ROS_DEBUG("In Get base poses");
   std::string link_name;
     if(req.group_name == "right_arm")
       link_name = "r_shoulder_pan_link";
     else if (req.group_name == "left_arm")
       link_name = "l_shoulder_pan_link";
-    else
+    else if(req.group_name == "torso")
       link_name = "torso_lift_link";
+    else
+    {
+      look_goal = true;
+      link_name = "torso_lift_link";
+    }
     
     // link_name
     tf::StampedTransform link_map_transform;
@@ -502,6 +508,7 @@ bool Sbpl3DNavPlanner::getBasePoses(sbpl_3dnav_planner::GetBasePoses::Request &r
     }
 
     geometry_msgs::PoseStamped my_object_pose = req.object_pose;
+
     my_object_pose.header.stamp = ros::Time(0.0);
     try 
     {
@@ -512,6 +519,12 @@ bool Sbpl3DNavPlanner::getBasePoses(sbpl_3dnav_planner::GetBasePoses::Request &r
       ROS_ERROR("**********Is there a map? The map-robot transform failed. (%s)", ex.what());
       res.error_code.val = res.error_code.FRAME_TRANSFORM_FAILURE;
       return true;
+    }
+
+    if(look_goal)
+    {
+      // we are trying to look. Set the height to a comfortable height for the robot
+      my_object_pose.pose.position.z = 1.0;
     }
    
    geometry_msgs::TransformStamped link_transform;
