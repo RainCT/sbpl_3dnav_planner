@@ -63,11 +63,10 @@ Sbpl3DNavPlanner::Sbpl3DNavPlanner() :
 	grid_(NULL),
 	laviz_(NULL),
 	raviz_(NULL),
-  maximum_working_distance_(0.7),
-  minimum_working_distance_(0.3),
   yaw_steps_(16),
-  radii_steps_(16)
-
+  radii_steps_(16),
+  minimum_working_distance_(0.3),
+  maximum_working_distance_(0.7)
 {
 	langles_.resize(7, 0);
 	rangles_.resize(7, 0);
@@ -181,7 +180,7 @@ bool Sbpl3DNavPlanner::init()
 
   //base pose determination params
 	node_handle_.param("minimum_working_distance", minimum_working_distance_, 0.3);
-	node_handle_.param("minimum_working_distance", maximum_working_distance_, 0.7);
+	node_handle_.param("maximum_working_distance", maximum_working_distance_, 0.7);
 	node_handle_.param<int>("yaw_steps", yaw_steps_, 16);
 	node_handle_.param<int>("radii_steps", radii_steps_, 16);
 
@@ -480,14 +479,20 @@ bool Sbpl3DNavPlanner::getPosesToCollisionCheck(const geometry_msgs::Pose &objec
 bool Sbpl3DNavPlanner::getBasePoses(sbpl_3dnav_planner::GetBasePoses::Request &req,
                                     sbpl_3dnav_planner::GetBasePoses::Response &res)
 {
-  ROS_INFO("In Get base poses");
+  bool look_goal = false;
+  ROS_DEBUG("In Get base poses");
   std::string link_name;
     if(req.group_name == "right_arm")
       link_name = "r_shoulder_pan_link";
     else if (req.group_name == "left_arm")
       link_name = "l_shoulder_pan_link";
-    else
+    else if(req.group_name == "torso")
       link_name = "torso_lift_link";
+    else
+    {
+      look_goal = true;
+      link_name = "torso_lift_link";
+    }
     
     // link_name
     tf::StampedTransform link_map_transform;
@@ -503,6 +508,7 @@ bool Sbpl3DNavPlanner::getBasePoses(sbpl_3dnav_planner::GetBasePoses::Request &r
     }
 
     geometry_msgs::PoseStamped my_object_pose = req.object_pose;
+
     my_object_pose.header.stamp = ros::Time(0.0);
     try 
     {
@@ -513,6 +519,12 @@ bool Sbpl3DNavPlanner::getBasePoses(sbpl_3dnav_planner::GetBasePoses::Request &r
       ROS_ERROR("**********Is there a map? The map-robot transform failed. (%s)", ex.what());
       res.error_code.val = res.error_code.FRAME_TRANSFORM_FAILURE;
       return true;
+    }
+
+    if(look_goal)
+    {
+      // we are trying to look. Set the height to a comfortable height for the robot
+      my_object_pose.pose.position.z = 1.0;
     }
    
    geometry_msgs::TransformStamped link_transform;

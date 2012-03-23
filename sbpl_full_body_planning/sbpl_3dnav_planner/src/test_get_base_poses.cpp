@@ -64,7 +64,7 @@ TestSBPLBasePoses::~TestSBPLBasePoses()
 
 }
 
-void TestSBPLBasePoses::callService()
+void TestSBPLBasePoses::callService(const std::string &group_name)
 {
   sbpl_3dnav_planner::GetBasePoses::Request request;
   sbpl_3dnav_planner::GetBasePoses::Response response;
@@ -74,10 +74,11 @@ void TestSBPLBasePoses::callService()
   joint_states_lock_.unlock();
   request.object_pose.header.stamp = ros::Time::now();
   request.object_pose.header.frame_id = "map";
-  request.object_pose.pose.position.x = 0.0;
+  request.object_pose.pose.position.x = 1.0;
   request.object_pose.pose.position.y = 0.0;
   request.object_pose.pose.position.z = 1.0;
   request.object_pose.pose.orientation.w = 1.0;
+  request.group_name = group_name;
   test_client_.call(request,response);
 }
 
@@ -119,10 +120,11 @@ int main(int argc, char** argv)
 
   sleep(5.0);
   ROS_INFO("Calling service");
-  test.callService();
+  test.callService("right_arm");
 
   sleep(5.0);
-  test.callService();
+  ROS_INFO("Calling service");
+  test.callService("left_arm");
 
   ros::waitForShutdown();
     

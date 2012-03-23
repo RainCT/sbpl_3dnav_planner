@@ -1,6 +1,6 @@
 geometry_msgs/PoseStamped object_pose
 arm_navigation_msgs/RobotState robot_state
-#optional arm name - RIGHT/LEFT
+#optional arm name - right_arm/left_arm
 string group_name
 ---
 geometry_msgs/PoseStamped[] base_poses
