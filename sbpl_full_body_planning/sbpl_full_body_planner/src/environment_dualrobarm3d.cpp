@@ -1663,7 +1663,7 @@ int EnvironmentDUALROBARM3D::setGoalPosition(const std::vector<std::vector<doubl
     unsigned char dist_temp;
 printf("poooooppiie!!!!! %f\n",EnvROBARMCfg.goal.xyz[2]);
     //BodyPose bp(EnvROBARMCfg.goal.xyz[0],EnvROBARMCfg.goal.xyz[1],EnvROBARMCfg.goal.xyz[2],EnvROBARMCfg.goal.rpy[2]);
-    pviz_.visualizeRobot(HashEntry->angles0, HashEntry->angles1, bp, 0.0, "goal", 0);
+    pviz_.visualizeRobot(HashEntry->angles0, HashEntry->angles1, bp, 150.0, "3dnav_goal", 100);
     usleep(5000);
     if(!cspace_->checkAllMotion(HashEntry->angles1,HashEntry->angles0,bp,true,dist_temp,debug_code_)){
 	SBPL_ERROR("[env] The goal state is in collision!");
