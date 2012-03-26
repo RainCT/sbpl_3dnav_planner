@@ -445,6 +445,40 @@ bool Sbpl3DNavPlanner::getWorkingDistance(const geometry_msgs::Pose &object_pose
 
 bool Sbpl3DNavPlanner::getPosesToCollisionCheck(const geometry_msgs::Pose &object_pose,
                                                 const double &working_distance,
+                                                const geometry_msgs::Point &offset,
+                                                std::vector<geometry_msgs::Pose> &base_poses)
+{
+  std::vector<double> yaws_to_try, radii_to_try;
+  double yaw_delta = 2 * M_PI/ yaw_steps_;
+  for(unsigned int i=0; i < yaw_steps_; i++)
+  {
+   yaws_to_try.push_back(i*yaw_delta);
+  }
+
+  double radius_delta = (working_distance - minimum_working_distance_)/radii_steps_;
+  ROS_DEBUG("Radius delta %f, Working distance: %f",radius_delta,working_distance);
+  for(unsigned int i=0; i < radii_steps_; i++)
+   radii_to_try.push_back(working_distance - i*radius_delta);
+
+  for(unsigned int i=0; i < yaws_to_try.size(); i++)
+  {
+    for(unsigned int j=0; j < radii_to_try.size(); j++)
+    {
+      geometry_msgs::Pose pose;
+      pose.orientation.z = 1.0;
+      pose.position.x = object_pose.position.x + (radii_to_try[j]+offset.x) * cos(yaws_to_try[i]) - offset.y* sin(yaws_to_try[i]);
+      pose.position.y = object_pose.position.y + (radii_to_try[j]+offset.x) * sin(yaws_to_try[i]) + offset.y* cos(yaws_to_try[i]);
+      btQuaternion quat;
+      quat.setRPY(0.0,0.0,yaws_to_try[i] + M_PI);
+      tf::quaternionTFToMsg(quat,pose.orientation);
+      base_poses.push_back(pose);
+    }
+  }
+  return true;
+}
+
+bool Sbpl3DNavPlanner::getPosesToCollisionCheck(const geometry_msgs::Pose &object_pose,
+                                                const double &working_distance,
                                                 std::vector<geometry_msgs::Pose> &base_poses)
 {
   std::vector<double> yaws_to_try, radii_to_try;
@@ -508,7 +542,6 @@ bool Sbpl3DNavPlanner::getBasePoses(sbpl_3dnav_planner::GetBasePoses::Request &r
     }
 
     geometry_msgs::PoseStamped my_object_pose = req.object_pose;
-
     my_object_pose.header.stamp = ros::Time(0.0);
     try 
     {
@@ -517,6 +550,20 @@ bool Sbpl3DNavPlanner::getBasePoses(sbpl_3dnav_planner::GetBasePoses::Request &r
     catch (tf::TransformException& ex) 
     {
       ROS_ERROR("**********Is there a map? The map-robot transform failed. (%s)", ex.what());
+      res.error_code.val = res.error_code.FRAME_TRANSFORM_FAILURE;
+      return true;
+    }
+
+    geometry_msgs::PointStamped offset;
+    offset.header.stamp = ros::Time(0.0);
+    offset.header.frame_id = link_name;
+    try 
+    {
+      tf_.transformPoint("torso_lift_link",offset,offset);
+    }
+    catch (tf::TransformException& ex) 
+    {
+      ROS_ERROR("**********Is there a torso_lift_link? The transform failed. (%s)", ex.what());
       res.error_code.val = res.error_code.FRAME_TRANSFORM_FAILURE;
       return true;
     }
@@ -542,7 +589,7 @@ bool Sbpl3DNavPlanner::getBasePoses(sbpl_3dnav_planner::GetBasePoses::Request &r
    }
 
    std::vector<geometry_msgs::Pose> base_poses;
-   getPosesToCollisionCheck(my_object_pose.pose,working_distance,base_poses);
+   getPosesToCollisionCheck(my_object_pose.pose,working_distance,offset.point,base_poses);
    
    sbpl_3dnav_planner::FullBodyCollisionCheck::Request fb_request;
    sbpl_3dnav_planner::FullBodyCollisionCheck::Response fb_response;

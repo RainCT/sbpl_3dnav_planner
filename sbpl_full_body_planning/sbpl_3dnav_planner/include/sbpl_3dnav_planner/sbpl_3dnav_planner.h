@@ -306,19 +306,23 @@ private:
     void visualizeObjectPath();
 
     void visualizeCollisionModel(std::vector<double> &rangles, std::vector<double> &langles, BodyPose &body_pos, std::string text);
-    // base pose computation
-    int yaw_steps_, radii_steps_;
-    double minimum_working_distance_, maximum_working_distance_;
+  // base pose computation
+  int yaw_steps_, radii_steps_;
+  double minimum_working_distance_, maximum_working_distance_;
 
-    bool getWorkingDistance(const geometry_msgs::Pose &object_pose,
-			    const geometry_msgs::Pose &shoulder_pose,
-			    double &distance);
+  bool getWorkingDistance(const geometry_msgs::Pose &object_pose,
+                          const geometry_msgs::Pose &shoulder_pose,
+                          double &distance);
+  
+  bool getPosesToCollisionCheck(const geometry_msgs::Pose &object_pose,
+                                const double &working_distance,
+                                std::vector<geometry_msgs::Pose> &base_poses);
 
-    bool getPosesToCollisionCheck(const geometry_msgs::Pose &object_pose,
-				  const double &working_distance,
-				  std::vector<geometry_msgs::Pose> &base_poses);
-
-
+  bool getPosesToCollisionCheck(const geometry_msgs::Pose &object_pose,
+                                const double &working_distance,
+                                const geometry_msgs::Point &offset,
+                                std::vector<geometry_msgs::Pose> &base_poses);
+  
 };
 
 }
