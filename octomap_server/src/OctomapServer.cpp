@@ -353,7 +353,7 @@ void OctomapServer::publishAll(const ros::Time& rostime)
 			p.x = it.getX();
 			p.y = it.getY();
 			p.z = it.getZ();
-			pointlist.push_back(p);
+
 
 			double z = it.getZ();
 			if (z > m_occupancyMinZ && z < m_occupancyMaxZ) {
@@ -402,7 +402,7 @@ void OctomapServer::publishAll(const ros::Time& rostime)
 
 				// insert into pointcloud:
 				if (publishPointCloud) pclCloud.push_back(pcl::PointXYZ(x, y, z));
-
+			pointlist.push_back(p);
 			}
 		}
 		else { // node not occupied => mark as free in 2D map if unknown so far
