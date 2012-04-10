@@ -116,6 +116,7 @@ void PoseFollower3D::initialize(std::string name, tf::TransformListener* tf, cos
 	node_private.param("rot_stopped_velocity", rot_stopped_velocity_, 1e-4);
 	node_private.param("sim_time", sim_time_, 1.0);
 	node_private.param("sim_granularity", sim_granularity_, 0.1);
+	node_private.param("trajectory_allowed_start_offset", trajectory_allowed_start_offset_, 0.1);
 
 	ros::NodeHandle node;
 	odom_sub_ = node.subscribe<nav_msgs::Odometry>("odom", 1, boost::bind(&PoseFollower3D::odomCallback, this, _1));
@@ -125,6 +126,7 @@ void PoseFollower3D::initialize(std::string name, tf::TransformListener* tf, cos
 //	robot_state_client_ = node.serviceClient<arm_navigation_msgs::GetRobotState>("/environment_server/get_robot_state");
 	collision_check_client_ = node.serviceClient<sbpl_3dnav_planner::FullBodyCollisionCheck>("/sbpl_full_body_planning/collision_check");
   recovery_service_ = node.advertiseService("/pose_follower_3d/push_out_of_collision", &PoseFollower3D::pushOutOfCollisionService,this);
+  trajectory_follower_service_ = node.advertiseService("/pose_follower_3d/follow_trajectory", &PoseFollower3D::followTrajectory,this);
 
 	ROS_DEBUG("Initialized");
 }
@@ -208,6 +210,80 @@ bool PoseFollower3D::pushOutOfCollisionService(pose_follower_3d::PushOutOfCollis
   }
   res.recovered = false;
   return false;
+}
+
+
+
+bool PoseFollower3D::followTrajectory(pose_follower_3d::FollowTrajectory::Request &req,
+				      pose_follower_3d::FollowTrajectory::Response &res)
+{
+  //Get the robot's pose
+  geometry_msgs::TransformStamped geo_pose;
+  tf::Stamped<tf::Pose> robot_pose;
+  try {
+    tf::StampedTransform base_map_transform;
+    tf_->lookupTransform("map", "base_footprint", ros::Time(0), base_map_transform);
+    transformStampedTFToMsg(base_map_transform, geo_pose);
+    robot_pose.getOrigin().setX(base_map_transform.getOrigin().x());
+    robot_pose.getOrigin().setY(base_map_transform.getOrigin().y());
+    robot_pose.setRotation(base_map_transform.getRotation());
+  }
+  catch (tf::TransformException& ex) {
+    ROS_ERROR("[PoseFollower3D] Is there a map? The map<->robot transform failed. (%s)", ex.what());
+    res.success = false;
+    return true;
+  }
+  double robot_x = robot_pose.getOrigin().x();
+  double robot_y = robot_pose.getOrigin().y();
+  double robot_yaw = tf::getYaw(robot_pose.getRotation());
+  ROS_INFO("[PoseFollower3D] Recovery: current robot pose x: %f y: %f yaw: %f", robot_pose.getOrigin().x(), robot_pose.getOrigin().y(), tf::getYaw(robot_pose.getRotation()));
+
+  geometry_msgs::Pose first_point = req.path.poses[0].pose;
+  double distance = sqrt((robot_x-first_point.position.x)*(robot_x-first_point.position.x) + (robot_y-first_point.position.y)*(robot_y-first_point.position.y));
+  /*  if(distance > trajectory_allowed_start_offset_)
+    {
+      ROS_ERROR("Too far away from beginning of trajectory");
+      res.success = false;
+      return true;
+      }*/
+
+  double first_point_yaw = tf::getYaw(first_point.orientation);
+  double angle_distance = angles::shortest_angular_distance(robot_yaw,first_point_yaw);
+  /*  if(angle_distance > M_PI/16.0)
+    {
+      ROS_ERROR("Too far away from first point in trajectory. Will not follow");
+      res.success = false;
+      return true;
+    }
+  */
+  std::vector<geometry_msgs::PoseStamped> recovery_plan;
+  for(unsigned int i=0; i < req.path.poses.size(); i++)
+    {
+      if(req.path.poses[i].header.frame_id != "map")
+	{
+	  ROS_ERROR("Expected path to be in map frame");
+	  res.success = false;
+	  return true;
+	}
+      //Do 3D collision checks
+      double point_x = req.path.poses[i].pose.position.x;
+      double point_y = req.path.poses[i].pose.position.y;
+      double yaw = tf::getYaw(req.path.poses[i].pose.orientation);
+      recovery_plan.push_back(req.path.poses[i]);
+    }
+  setPlan(recovery_plan);
+  
+  //now run the controller until we reach the recovery point
+  ros::Rate rate(10.0);
+  while(!isGoalReached())
+    {
+      geometry_msgs::Twist cmd_vel;
+      computeVelocityCommands(cmd_vel);
+      vel_pub_.publish(cmd_vel);
+      rate.sleep();
+    }
+  res.success = true;
+  return true;
 }
 
 void PoseFollower3D::odomCallback(const nav_msgs::Odometry::ConstPtr& msg)

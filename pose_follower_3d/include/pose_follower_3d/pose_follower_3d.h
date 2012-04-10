@@ -53,6 +53,8 @@
 #include <planning_environment/models/model_utils.h>
 #include <pose_follower_3d/PushOutOfCollision.h>
 
+#include <pose_follower_3d/FollowTrajectory.h>
+#include <angles/angles.h>
 
 namespace pose_follower_3d
 {
@@ -65,6 +67,8 @@ namespace pose_follower_3d
       bool setPlan(const std::vector<geometry_msgs::PoseStamped>& global_plan);
       bool computeVelocityCommands(geometry_msgs::Twist& cmd_vel);
       bool pushOutOfCollisionService(pose_follower_3d::PushOutOfCollision::Request &req,pose_follower_3d::PushOutOfCollision::Response &res);
+      bool followTrajectory(pose_follower_3d::FollowTrajectory::Request &req,
+			    pose_follower_3d::FollowTrajectory::Response &res);
 
   private:
       inline double sign(double n)
@@ -103,7 +107,7 @@ namespace pose_follower_3d
       tf::TransformListener* tf_;
       costmap_2d::Costmap2DROS* costmap_ros_;
       ros::Publisher vel_pub_;
-      ros::ServiceServer recovery_service_;
+      ros::ServiceServer recovery_service_,trajectory_follower_service_;
       double K_trans_, K_rot_, tolerance_trans_, tolerance_rot_;
       double tolerance_timeout_;
       double max_vel_lin_, max_vel_th_;
@@ -134,6 +138,7 @@ namespace pose_follower_3d
       std::vector<double> leftArmAngles_;
       std::vector<double> rightArmAngles_;
       double spinePosition_;
+      double trajectory_allowed_start_offset_;
   };
 };
 #endif
