@@ -118,6 +118,10 @@ void PoseFollower3D::initialize(std::string name, tf::TransformListener* tf, cos
 	node_private.param("sim_granularity", sim_granularity_, 0.1);
 	node_private.param("trajectory_allowed_start_offset", trajectory_allowed_start_offset_, 0.1);
 
+	ROS_INFO("Tolerance trans: %f",tolerance_trans_);
+	ROS_INFO("Tolerance rot: %f",tolerance_rot_);
+	ROS_INFO("Tolerance time: %f",tolerance_timeout_);
+
 	ros::NodeHandle node;
 	odom_sub_ = node.subscribe<nav_msgs::Odometry>("odom", 1, boost::bind(&PoseFollower3D::odomCallback, this, _1));
 	joint_states_sub_ = node.subscribe("joint_states", 1, &PoseFollower3D::jointStatesCallback, this);
@@ -236,7 +240,7 @@ bool PoseFollower3D::followTrajectory(pose_follower_3d::FollowTrajectory::Reques
   double robot_x = robot_pose.getOrigin().x();
   double robot_y = robot_pose.getOrigin().y();
   double robot_yaw = tf::getYaw(robot_pose.getRotation());
-  ROS_INFO("[PoseFollower3D] Recovery: current robot pose x: %f y: %f yaw: %f", robot_pose.getOrigin().x(), robot_pose.getOrigin().y(), tf::getYaw(robot_pose.getRotation()));
+  ROS_INFO("[PoseFollower3D] Follow Trajectory: current robot pose x: %f y: %f yaw: %f", robot_pose.getOrigin().x(), robot_pose.getOrigin().y(), tf::getYaw(robot_pose.getRotation()));
 
   geometry_msgs::Pose first_point = req.path.poses[0].pose;
   double distance = sqrt((robot_x-first_point.position.x)*(robot_x-first_point.position.x) + (robot_y-first_point.position.y)*(robot_y-first_point.position.y));
@@ -594,6 +598,7 @@ bool PoseFollower3D::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
 
 		robot_pose.getOrigin().setX(base_map_transform.getOrigin().x());
 		robot_pose.getOrigin().setY(base_map_transform.getOrigin().y());
+		robot_pose.getOrigin().setZ(0.0);
 		robot_pose.setRotation(base_map_transform.getRotation());
 	}
 	catch (tf::TransformException& ex) {
@@ -714,6 +719,8 @@ bool PoseFollower3D::setPlan(const std::vector<geometry_msgs::PoseStamped>& glob
 {
 	current_waypoint_ = 0;
 	goal_reached_time_ = ros::Time::now();
+	ROS_INFO("Got global plan with %d waypoints",global_plan.size());
+	ROS_INFO("Global frame id: %s",costmap_ros_->getGlobalFrameID().c_str());
 	if (!transformGlobalPlan(*tf_, global_plan, *costmap_ros_, costmap_ros_->getGlobalFrameID(), global_plan_)) {
 		ROS_ERROR("Could not transform the global plan to the frame of the controller");
 		return false;
@@ -751,12 +758,30 @@ bool PoseFollower3D::isGoalReached()
 geometry_msgs::Twist PoseFollower3D::diff2D(const tf::Pose& pose1, const tf::Pose& pose2)
 {
 	geometry_msgs::Twist res;
+	geometry_msgs::Pose print_pose, pose1_msg, pose2_msg;
+
+	/*	tf::poseTFToMsg(pose1,pose1_msg);
+	tf::poseTFToMsg(pose2,pose2_msg);
+
+	ROS_DEBUG("Pose 1::Position: %f %f %f",pose1_msg.position.x,pose1_msg.position.y,pose1_msg.position.z);
+	ROS_DEBUG("Pose 1::Orientation: %f %f %f %f",pose1_msg.orientation.x,pose1_msg.orientation.y,pose1_msg.orientation.z,pose1_msg.orientation.w);
+	ROS_DEBUG("Pose 2::Position: %f %f %f",pose2_msg.position.x,pose2_msg.position.y,pose2_msg.position.z);
+	ROS_DEBUG("Pose 2::Orientation: %f %f %f %f",pose2_msg.orientation.x,pose2_msg.orientation.y,pose2_msg.orientation.z,pose2_msg.orientation.w);*/
 	tf::Pose diff = pose2.inverse() * pose1;
+
+	/*	tf::poseTFToMsg(diff,print_pose);
+	ROS_DEBUG("New pose::Position: %f %f %f",print_pose.position.x,print_pose.position.y,print_pose.position.z);
+	ROS_DEBUG("New pose::Orientation: %f %f %f %f",print_pose.orientation.x,print_pose.orientation.y,print_pose.orientation.z,print_pose.orientation.w);
+	*/
 	res.linear.x = diff.getOrigin().x();
 	res.linear.y = diff.getOrigin().y();
 	res.angular.z = tf::getYaw(diff.getRotation());
 
-	if (holonomic_ || (fabs(res.linear.x) <= tolerance_trans_ && fabs(res.linear.y) <= tolerance_trans_)) return res;
+	if (holonomic_ || (fabs(res.linear.x) <= tolerance_trans_ && fabs(res.linear.y) <= tolerance_trans_)) 
+	  {
+	    ROS_DEBUG("Holonomic?: Resulting Twist: %f %f %f",res.linear.x,res.linear.y,res.angular.z);
+	    return res;
+	  }
 
 	//in the case that we're not rotating to our goal position and we have a non-holonomic robot
 	//we'll need to command a rotational velocity that will help us reach our desired heading
