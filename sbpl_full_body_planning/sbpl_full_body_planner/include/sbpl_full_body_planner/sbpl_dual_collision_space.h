@@ -29,10 +29,11 @@
 
 #include <ros/ros.h>
 #include <vector>
-#include <sbpl_arm_planner/bresenham.h>
+#include <sbpl_collision_checking/bresenham.h>
 #include <sbpl_arm_planner/sbpl_arm_model.h>
+#include <sbpl_arm_planner/body_pose.h>
 #include <sbpl_arm_planner/sbpl_arm_planning_error_codes.h>
-#include <sbpl_arm_planner/occupancy_grid.h>
+#include <sbpl_collision_checking/occupancy_grid.h>
 #include <sbpl_arm_planner/sbpl_geometry_utils.h>
 //#include <geometric_shapes/shapes.h>
 //#include <geometric_shapes/bodies.h>

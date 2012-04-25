@@ -1953,7 +1953,7 @@ void EnvironmentDUALROBARM3D::updateOccupancyGridFromCollisionMap(const arm_navi
 
 std::vector<std::vector<double> > EnvironmentDUALROBARM3D::getShortestPath()
 {
-  std::vector<short unsigned int> start(3,0);
+  std::vector<int> start(3,0);
   std::vector<double> waypoint(3,0);
   std::vector<std::vector<int> > path;
   std::vector<std::vector<double> > dpath; 

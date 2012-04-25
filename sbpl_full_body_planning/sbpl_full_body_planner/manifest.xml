@@ -16,10 +16,11 @@
   <depend package="tf_conversions" />
   <depend package="geometry_msgs" />
   <depend package="pviz" />
-
-    <export>
-          <cpp cflags="-I${prefix}/include -O3 -g" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lsbpl_full_body_planner"/>
-    </export>
+  <depend package="sbpl_collision_checking"/>
+  
+  <export>
+    <cpp cflags="-I${prefix}/include -O3 -g" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lsbpl_full_body_planner"/>
+  </export>
 
 </package>
 
