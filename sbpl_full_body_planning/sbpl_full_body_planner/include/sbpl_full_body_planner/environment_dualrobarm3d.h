@@ -44,7 +44,7 @@
 #include <angles/angles.h>
 #include <LinearMath/btVector3.h>
 #include <sbpl_arm_planner/bfs_3d.h>
-#include <sbpl_collision_checking/occupancy_grid.h>
+#include <sbpl_arm_planner/occupancy_grid.h>
 #include <sbpl_arm_planner/sbpl_arm_planning_error_codes.h>
 #include <sbpl_full_body_planner/sbpl_dual_collision_space.h>
 #include <sbpl_full_body_planner/sbpl_dual_arm_planner_params.h>
