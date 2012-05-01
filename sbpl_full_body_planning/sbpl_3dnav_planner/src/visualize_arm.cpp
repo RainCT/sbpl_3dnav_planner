@@ -3,13 +3,6 @@
 #include <sbpl_3dnav_planner/visualize_arm.h>
 #include <time.h>
 
-/*
- *
- * BEN THIS VERSION HAS BUG FIXES THAT SHOULD BE APPLIED TO THE OFFICIAL
- * VERSION.
- *
-*/
-
 namespace sbpl_full_body_planner
 {
 
@@ -131,13 +124,6 @@ VisualizeArm::VisualizeArm(std::string arm_name) : ph_("~"), arm_name_(arm_name)
 
   initKDLChain();
 
-  // tell the action client that we want to spin a thread by default
-  traj_client_ = new TrajClient("r_arm_controller/joint_trajectory_action", true);
-/*
-  // wait for action server to come up
-  while(!traj_client_->waitForServer(ros::Duration(5.0)))
-    ROS_INFO("Waiting for the joint_trajectory_action server");
-*/
   marker_array_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("visualization_marker_array", 500);
   marker_publisher_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 1000);
   display_trajectory_publisher_ = nh_.advertise<arm_navigation_msgs::DisplayTrajectory>("arm_viz", 200);
@@ -145,33 +131,9 @@ VisualizeArm::VisualizeArm(std::string arm_name) : ph_("~"), arm_name_(arm_name)
 
 VisualizeArm::~VisualizeArm()
 {
-  delete traj_client_;
   delete fk_solver_;
   delete gripper_l_fk_solver_;
 }
-
-void VisualizeArm::sendArmToConfiguration(const std::vector<double> &angles)
-{
-/*
-  pr2_controllers_msgs::JointTrajectoryGoal goal;
-
-  goal.trajectory.header.stamp = ros::Time::now() + ros::Duration(1.0);
-  goal.trajectory.joint_names = joint_names_;
-
-  goal.trajectory.points.resize(1);
-  goal.trajectory.points[0].positions.resize(angles.size());
-  for(int i = 0; i < int(angles.size()); i++)
-    goal.trajectory.points[0].positions[i] = angles[i];
-
-  goal.trajectory.points[0].velocities.resize(7);
-  for (size_t j = 0; j < 7; ++j)
-    goal.trajectory.points[0].velocities[j] = 0.0;
-
-  goal.trajectory.points[0].time_from_start = ros::Duration(2.0);
-
-  traj_client_->sendGoal(goal);
-*/
-}  
 
 bool VisualizeArm::parsePoseFile(std::string filename, std::vector<std::vector<double> > &poses)
 {
@@ -1010,7 +972,7 @@ void VisualizeArm::visualizeArmConfiguration(double color_num, const std::vector
   visualizeGripperConfiguration(color_num,jnt_pos);
 }
 
-void VisualizeArm::visualizeCollisionModel(const std::vector<std::vector<double> > &path, sbpl_full_body_planner::SBPLDualCollisionSpace &cspace, int throttle)
+void VisualizeArm::visualizeCollisionModel(const std::vector<std::vector<double> > &path, sbpl_full_body_planner::PR2CollisionSpace &cspace, int throttle)
 {
   std::vector<std::vector<double> > cylinders;
   visualization_msgs::MarkerArray marker_array;
@@ -1065,7 +1027,7 @@ void VisualizeArm::visualizeCollisionModel(const std::vector<std::vector<double>
   }
 }
 
-void VisualizeArm::visualizeCollisionModel(const std::vector<std::vector<double> > &path, sbpl_full_body_planner::SBPLDualCollisionSpace &cspace, int throttle, int hue)
+void VisualizeArm::visualizeCollisionModel(const std::vector<std::vector<double> > &path, sbpl_full_body_planner::PR2CollisionSpace &cspace, int throttle, int hue)
 {
   std::vector<std::vector<double> > cylinders;
   visualization_msgs::MarkerArray marker_array;
@@ -1137,7 +1099,7 @@ void VisualizeArm::deleteVisualizations(std::string ns, int max_id)
   marker_array_publisher_.publish(marker_array_);
 }
 
-void VisualizeArm::visualizeCollisionModelFromJointTrajectoryMsg(trajectory_msgs::JointTrajectory &traj_msg, sbpl_full_body_planner::SBPLDualCollisionSpace &cspace, int throttle)
+void VisualizeArm::visualizeCollisionModelFromJointTrajectoryMsg(trajectory_msgs::JointTrajectory &traj_msg, sbpl_full_body_planner::PR2CollisionSpace &cspace, int throttle)
 {
   std::vector<std::vector<double> > traj;
 
@@ -1486,41 +1448,5 @@ void VisualizeArm::visualizeCube(geometry_msgs::PoseStamped pose, std::vector<do
 
   marker_publisher_.publish(marker);
 }
-
-/*
-void VisualizeArm::clearAllVisualizations()
-{
-  int num_arm_meshes = 250;
-  marker_array_.markers.clear();
-  
-  for(int i = 0; i < num_arm_meshes; i++)
-  {
-    marker_array_.markers.resize(pr2_arm_meshes_.size());
-    for(size_t j = 0; j < pr2_arm_meshes_.size(); j++)
-    {
-      marker_array_.markers[j].header.stamp = ros::Time::now();
-      marker_array_.markers[j].header.frame_id = reference_frame_;
-      marker_array_.markers[j].ns = "arm_mesh_" + boost::lexical_cast<std::string>(i);
-      marker_array_.markers[j].action = visualization_msgs::Marker::DELETE;
-      marker_array_.markers[j].id = j;
-    }
-    marker_array_publisher_.publish(marker_array_);
-  }
-
-  for(int i = 0; i < num_arm_meshes; i++)
-  {
-    marker_array_.markers.resize(pr2_gripper_meshes_.size());
-    for(size_t j = 0; j < pr2_gripper_meshes_.size(); j++)
-    {
-      marker_array_.markers[j].header.stamp = ros::Time::now();
-      marker_array_.markers[j].header.frame_id = "torso_lift_link";
-      marker_array_.markers[j].ns = "gripper_mesh_" + boost::lexical_cast<std::string>(i);
-      marker_array_.markers[j].action = visualization_msgs::Marker::DELETE;
-      marker_array_.markers[j].id = j;
-    }
-    marker_array_publisher_.publish(marker_array_);
-  }
-}
-*/
 
 }

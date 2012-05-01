@@ -5,14 +5,12 @@
 #include <stdlib.h>
 #include <ros/ros.h>
 #include <math.h>
-#include <actionlib/client/simple_action_client.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Vector3.h>
 
 #include <tf/tf.h>
 #include <arm_navigation_msgs/MoveArmAction.h>
 #include <arm_navigation_msgs/utils.h>
-#include <pr2_controllers_msgs/JointTrajectoryAction.h>
 #include <actionlib/client/simple_action_client.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
@@ -28,10 +26,8 @@
 #include <kdl/frames.hpp>
 #include <kdl/treefksolverpos_recursive.hpp>
 
-#include <sbpl_full_body_planner/sbpl_dual_collision_space.h>
+#include <sbpl_full_body_planner/pr2_collision_space.h>
 #include <sbpl_arm_planner/robarm3d/environment_robarm3d.h>
-
-typedef actionlib::SimpleActionClient< pr2_controllers_msgs::JointTrajectoryAction > TrajClient;
 
 namespace sbpl_full_body_planner{
   
@@ -45,11 +41,6 @@ class VisualizeArm
 
     /* \brief set reference frame of visualizations */
     void setReferenceFrame(std::string frame){reference_frame_ = frame;};
-
-    /* \brief send a joint configuration to the arm controller */
-    void sendArmToConfiguration(const std::vector<double> &angles);
-
-    //void sendGoalToMoveArm(const std::vector<double> &pose);
 
     /* \brief send a trajectory to the motion planning plugin for rviz */
     void displayArmConfiguration(std::vector<double> angles);
@@ -112,12 +103,12 @@ class VisualizeArm
     void printEnvironmentInfo(FILE *fid);
 
     /* \brief display the spherical collision model of each waypoint in a path */
-    void visualizeCollisionModel(const std::vector<std::vector<double> > &path, sbpl_full_body_planner::SBPLDualCollisionSpace &cspace, int throttle);
+    void visualizeCollisionModel(const std::vector<std::vector<double> > &path, sbpl_full_body_planner::PR2CollisionSpace &cspace, int throttle);
     
-    void visualizeCollisionModel(const std::vector<std::vector<double> > &path, sbpl_full_body_planner::SBPLDualCollisionSpace &cspace, int throttle, int hue);
+    void visualizeCollisionModel(const std::vector<std::vector<double> > &path, sbpl_full_body_planner::PR2CollisionSpace &cspace, int throttle, int hue);
 
     /* \brief display the spherical collision model of each waypoint in a joint trajectory msg */
-    void visualizeCollisionModelFromJointTrajectoryMsg(trajectory_msgs::JointTrajectory &traj_msg, sbpl_full_body_planner::SBPLDualCollisionSpace &cspace, int throttle);
+    void visualizeCollisionModelFromJointTrajectoryMsg(trajectory_msgs::JointTrajectory &traj_msg, sbpl_full_body_planner::PR2CollisionSpace &cspace, int throttle);
    
     /* \brief display a gripper given the arm's joint angles */
     void visualizeGripperConfiguration(double color_num, const std::vector<double> &jnt_pos);
@@ -150,8 +141,6 @@ class VisualizeArm
     void visualizeCube(geometry_msgs::PoseStamped pose, std::vector<double> &color, std::string ns, int id, std::vector<double> dim);
 
     void visualizeSpheres(const std::vector<std::vector<double> > &pose, int color, std::string text, std::vector<double> &radius);
-    /* DOESN'T WORK */
-    //void clearAllVisualizations();
 
     void deleteVisualizations(std::string ns, int max_id);
 
@@ -162,16 +151,11 @@ class VisualizeArm
     ros::Publisher marker_array_publisher_;
     ros::Publisher marker_publisher_;
     ros::Publisher display_trajectory_publisher_;
-
-    std::string reference_frame_;
-
     planning_environment::JointStateMonitor joint_state_monitor_;
 
-    TrajClient* traj_client_;
-
     char i_arm_;
-
     int num_joints_;
+    std::string reference_frame_;
 
     visualization_msgs::MarkerArray marker_array_;
     visualization_msgs::Marker marker_;
