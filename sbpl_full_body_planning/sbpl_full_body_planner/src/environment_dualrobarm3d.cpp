@@ -157,7 +157,7 @@ int EnvironmentDUALROBARM3D::GetGoalHeuristic(int stateID)
 #if DEBUG_HEUR
   if(stateID >= (int)EnvROBARM.StateID2CoordTable.size())
   {
-    SBPL_ERROR("ERROR in EnvROBARM... function: stateID illegal");
+    ROS_ERROR("ERROR in EnvROBARM... function: stateID illegal");
     return -1;
   }
 #endif
@@ -174,7 +174,7 @@ int EnvironmentDUALROBARM3D::GetStartHeuristic(int stateID)
 #if DEBUG_HEUR
   if(stateID >= (int)EnvROBARM.StateID2CoordTable.size())
   {
-    SBPL_ERROR("ERROR in EnvROBARM... function: stateID illegal\n");
+    ROS_ERROR("ERROR in EnvROBARM... function: stateID illegal\n");
     return -1;
   }
 #endif
@@ -192,7 +192,7 @@ void EnvironmentDUALROBARM3D::PrintState(int stateID, bool bVerbose, FILE* fOut 
 #if DEBUG_HEUR
   if(stateID >= (int)EnvROBARM.StateID2CoordTable.size())
   {
-    SBPL_ERROR("ERROR in EnvROBARM... function: stateID illegal (2)\n");
+    ROS_ERROR("ERROR in EnvROBARM... function: stateID illegal (2)\n");
     throw new SBPL_Exception();
   }
 #endif
@@ -212,7 +212,7 @@ void EnvironmentDUALROBARM3D::PrintState(int stateID, bool bVerbose, FILE* fOut 
 void EnvironmentDUALROBARM3D::PrintEnv_Config(FILE* fOut)
 {
   //implement this function if the planner needs to print out the EnvROBARM. configuration
-  SBPL_ERROR("ERROR in EnvROBARM... function: PrintEnv_Config is undefined\n");
+  ROS_ERROR("ERROR in EnvROBARM... function: PrintEnv_Config is undefined\n");
   throw new SBPL_Exception();
 }
 
@@ -1001,8 +1001,8 @@ bool EnvironmentDUALROBARM3D::computeOrbitMotion(int dir, EnvDUALROBARM3DHashEnt
   action->intermptV.push_back(intermpt);
   
   //compute the cost (max of translation time and rotation time)
-  double translation_time = fabs(angle)*radius/prms_.nominalvel_mpersecs_;
-  double rotation_time = fabs(angle)/((PI_CONST/4.0)/prms_.timetoturn45degsinplace_secs_);
+  //double translation_time = fabs(angle)*radius/prms_.nominalvel_mpersecs_;
+  //double rotation_time = fabs(angle)/((PI_CONST/4.0)/prms_.timetoturn45degsinplace_secs_);
   action->cost = 50;//(int)(ceil(NAVXYTHETALAT_COSTMULT_MTOMM/10*max(translation_time, rotation_time)));
 
   //printf("using adaptive base motion %d %d %d\n",action->dX,action->dY,action->endtheta);
@@ -1012,26 +1012,26 @@ bool EnvironmentDUALROBARM3D::computeOrbitMotion(int dir, EnvDUALROBARM3DHashEnt
 
 void EnvironmentDUALROBARM3D::GetPreds(int TargetStateID, vector<int>* PredIDV, vector<int>* CostV)
 {
-  SBPL_ERROR("ERROR in EnvROBARM... function: GetPreds is undefined\n");
+  ROS_ERROR("ERROR in EnvROBARM... function: GetPreds is undefined\n");
   throw new SBPL_Exception();
 }
 
 bool EnvironmentDUALROBARM3D::AreEquivalent(int StateID1, int StateID2)
 {
-  SBPL_ERROR("Error: AreEquivalent() is undefined.");
+  ROS_ERROR("Error: AreEquivalent() is undefined.");
   return false;
 }
 
 void EnvironmentDUALROBARM3D::SetAllActionsandAllOutcomes(CMDPSTATE* state)
 {
-  SBPL_ERROR("Error: SetAllActionsandOutcomes is undefined.");
+  ROS_ERROR("Error: SetAllActionsandOutcomes is undefined.");
   throw new SBPL_Exception();
 }
 
 void EnvironmentDUALROBARM3D::SetAllPreds(CMDPSTATE* state)
 {
   //implement this if the planner needs access to predecessors
-  SBPL_ERROR("Error: SetAllPreds is undefined.");
+  ROS_ERROR("Error: SetAllPreds is undefined.");
   throw new SBPL_Exception();
 }
 
@@ -1060,7 +1060,7 @@ void EnvironmentDUALROBARM3D::printHashTableHist()
     else
       slarge++;
   }
-  SBPL_DEBUG("hash table histogram: 0:%d, <50:%d, <100:%d, <200:%d, <300:%d, <400:%d >400:%d",
+  ROS_DEBUG("hash table histogram: 0:%d, <50:%d, <100:%d, <200:%d, <300:%d, <400:%d >400:%d",
       s0,s1, s50, s100, s200,s300,slarge);
 }
 
@@ -1139,7 +1139,7 @@ EnvDUALROBARM3DHashEntry_t* EnvironmentDUALROBARM3D::createHashEntry(const std::
 
   if(HashEntry->stateID != (int)StateID2IndexMapping.size()-1)
   {
-    SBPL_ERROR("ERROR in Env... function: last state has incorrect stateID");
+    ROS_ERROR("ERROR in Env... function: last state has incorrect stateID");
     throw new SBPL_Exception();
   }
 
@@ -1168,7 +1168,7 @@ void EnvironmentDUALROBARM3D::initDijkstra()
     grid2Dsearchfromgoal->setOPENdatastructure(SBPL_2DGRIDSEARCH_OPENTYPE_SLIDINGBUCKETS);
   }
 
-  SBPL_DEBUG("[initDijkstra] BFS is initialized.");
+  ROS_DEBUG("[initDijkstra] BFS is initialized.");
 }
 
 int EnvironmentDUALROBARM3D::cost(EnvDUALROBARM3DHashEntry_t* HashEntry1, EnvDUALROBARM3DHashEntry_t* HashEntry2, bool bState2IsGoal)
@@ -1280,12 +1280,12 @@ bool EnvironmentDUALROBARM3D::initEnvironment(std::string arm0_filename, std::st
   //parse motion primitives file
   if((mprims_fp=fopen(mprims_filename.c_str(),"r")) == NULL)
   {
-    SBPL_ERROR("Failed to open motion primitive file. (%s)", mprims_filename.c_str());
+    ROS_ERROR("Failed to open motion primitive file. (%s)", mprims_filename.c_str());
     return false;
   }
   if(!prms_.initLongMotionPrimsFromFile(mprims_fp))
   {
-    SBPL_ERROR("Failed to parse motion primitive file.");
+    ROS_ERROR("Failed to parse motion primitive file.");
     fclose(mprims_fp);
     return false;
   }
@@ -1294,13 +1294,13 @@ bool EnvironmentDUALROBARM3D::initEnvironment(std::string arm0_filename, std::st
   //parse base motion primitive file
   if((base_mprim_fp=fopen(base_mprim_filename.c_str(),"r")) == NULL)
   {
-    SBPL_ERROR("Failed to open base motion primitive file. (%s)", base_mprim_filename.c_str());
+    ROS_ERROR("Failed to open base motion primitive file. (%s)", base_mprim_filename.c_str());
     return false;
   }
   //TODO: implement this function
   if(!prms_.initBaseMotionPrimsFromFile(base_mprim_fp))
   {
-    SBPL_ERROR("Failed to parse base motion primitive file.");
+    ROS_ERROR("Failed to parse base motion primitive file.");
     fclose(base_mprim_fp);
     return false;
   }
@@ -1309,18 +1309,18 @@ bool EnvironmentDUALROBARM3D::initEnvironment(std::string arm0_filename, std::st
   //initialize the arm model
   if((arm0_fp=fopen(arm0_filename.c_str(),"r")) == NULL)
   {
-    SBPL_ERROR("Failed to open right arm description file.");
+    ROS_ERROR("Failed to open right arm description file.");
     return false;
   }
   if((arm1_fp=fopen(arm1_filename.c_str(),"r")) == NULL)
   {
-    SBPL_ERROR("Failed to open left arm description file.");
+    ROS_ERROR("Failed to open left arm description file.");
     return false;
   }
   std::string ros_param("ROS_PARAM");
   if(!initArmModel(arm0_fp,arm1_fp,ros_param))
   {
-    SBPL_ERROR("Failed to initialize one or both arm models.");
+    ROS_ERROR("Failed to initialize one or both arm models.");
     fclose(arm0_fp);
     fclose(arm1_fp);
     return false;
@@ -1333,7 +1333,7 @@ bool EnvironmentDUALROBARM3D::initEnvironment(std::string arm0_filename, std::st
   //initialize the environment & planning variables  
   if(!initGeneral())
   {
-    SBPL_ERROR("[env] Failed to initialize environment.");
+    ROS_ERROR("[env] Failed to initialize environment.");
     return false;
   }
 
@@ -1452,7 +1452,7 @@ bool EnvironmentDUALROBARM3D::isGoalPosition(int x, int y, int z, int yaw)
 
 int EnvironmentDUALROBARM3D::getActionCost(const std::vector<double> &from_config, const std::vector<double> &to_config, int dist)
 {
-  SBPL_ERROR("getActionCost() is not yet implemented.");
+  ROS_ERROR("getActionCost() is not yet implemented.");
   return 1;
 }
 
@@ -1462,12 +1462,12 @@ int EnvironmentDUALROBARM3D::getEdgeCost(int FromStateID, int ToStateID)
   if(FromStateID >= (int)EnvROBARM.StateID2CoordTable.size() 
       || ToStateID >= (int)EnvROBARM.StateID2CoordTable.size())
   {
-    SBPL_ERROR("ERROR in EnvROBARM... function: stateID illegal\n");
+    ROS_ERROR("ERROR in EnvROBARM... function: stateID illegal\n");
     throw new SBPL_Exception();
   }
 #endif
   //this is sketchy.....it will return a cost of 1 cell regardless of the two states....
-  printf("sketchy edge cost...\n");
+  ROS_ERROR("[env] sketchy edge cost...");
   exit(0);
 
   //get X, Y for the state
@@ -1520,9 +1520,9 @@ int EnvironmentDUALROBARM3D::setStartConfiguration(const std::vector<double> &an
   coord[7] = fa[1];
 
   BodyCell bc;
-printf("z before %f\n",pose.z);
+  //printf("z before %f\n",pose.z);
   worldToDiscBody(pose, &bc);
-printf("z after %d\n",bc.z);
+  //printf("z after %d\n",bc.z);
 
   coord[8] = bc.x;
   coord[9] = bc.y;
@@ -1556,7 +1556,7 @@ printf("z after %d\n",bc.z);
   BodyPose bp(pose.x,pose.y,pose.z,pose.theta);
   unsigned char dist_temp;
   if(!cspace_->checkAllMotion(HashEntry->angles1,HashEntry->angles0,bp,true,dist_temp,debug_code_)){
-    SBPL_ERROR("[env] The start state is in collision!");
+    ROS_ERROR("[env] The start state is in collision!");
     return -1;
   }
 
@@ -1570,13 +1570,13 @@ int EnvironmentDUALROBARM3D::setGoalPosition(const std::vector<std::vector<doubl
 
   if(!EnvROBARMCfg.bInitialized)
   {
-    SBPL_ERROR("Cannot set goal position because environment is not initialized.");
+    ROS_ERROR("Cannot set goal position because environment is not initialized.");
     return -1;
   }
 
   if(goals.empty())
   {
-    SBPL_ERROR("[setGoalPosition] No goal constraint set.");
+    ROS_ERROR("[setGoalPosition] No goal constraint set.");
     return -1;
   }
 
@@ -1585,9 +1585,9 @@ int EnvironmentDUALROBARM3D::setGoalPosition(const std::vector<std::vector<doubl
   std::vector<double> pose(njoints_,0), jnt_angles(njoints_,0), ik_solution(njoints_,0);
   pose = goals[0];
   if(!arm_[0]->computeIK(pose, EnvROBARM.startHashEntry->angles0, ik_solution))
-    SBPL_DEBUG("[setGoalPosition] No valid IK solution for the right arm at the goal pose.");
+    ROS_DEBUG("[setGoalPosition] No valid IK solution for the right arm at the goal pose.");
   if(!arm_[1]->computeIK(pose, EnvROBARM.startHashEntry->angles1, ik_solution))
-    SBPL_DEBUG("[setGoalPosition] No valid IK solution for the left arm at the goal pose.");
+    ROS_DEBUG("[setGoalPosition] No valid IK solution for the left arm at the goal pose.");
 
   double dummy_x, dummy_y;
   discToWorldXYZ(0,0,EnvROBARM.startHashEntry->coord[10],dummy_x,dummy_y,EnvROBARMCfg.goal.xyz[2],true);
@@ -1652,7 +1652,7 @@ int EnvironmentDUALROBARM3D::setGoalPosition(const std::vector<std::vector<doubl
     coord[8] = bc.x;
     coord[9] = bc.y;
     coord[11] = bc.theta;
-    printf("3dnav goal x=%d y=%d th=%d z=%d\n",coord[8],coord[9],coord[11],coord[10]);
+    ROS_INFO("[env] goal x=%d y=%d th=%d z=%d",coord[8],coord[9],coord[11],coord[10]);
     EnvDUALROBARM3DHashEntry_t* HashEntry;
     if((HashEntry = getHashEntry(coord, false)) == NULL){
       HashEntry = createHashEntry(coord);
@@ -1661,18 +1661,18 @@ int EnvironmentDUALROBARM3D::setGoalPosition(const std::vector<std::vector<doubl
     }
     EnvROBARM.goalHashEntry = HashEntry;
     unsigned char dist_temp;
-printf("poooooppiie!!!!! %f\n",EnvROBARMCfg.goal.xyz[2]);
+    
     //BodyPose bp(EnvROBARMCfg.goal.xyz[0],EnvROBARMCfg.goal.xyz[1],EnvROBARMCfg.goal.xyz[2],EnvROBARMCfg.goal.rpy[2]);
     pviz_.visualizeRobot(HashEntry->angles0, HashEntry->angles1, bp, 150.0, "3dnav_goal", 100);
     usleep(5000);
     if(!cspace_->checkAllMotion(HashEntry->angles1,HashEntry->angles0,bp,true,dist_temp,debug_code_)){
-	SBPL_ERROR("[env] The goal state is in collision!");
+	ROS_ERROR("[env] The goal state is in collision!");
         return -1;
     }
   }
 
   if(!prms_.use_6d_pose_goal_)
-    SBPL_DEBUG("[setGoalPosition] Goal position constraint set. No goal orientation constraint requested.\n");
+    ROS_DEBUG("[setGoalPosition] Goal position constraint set. No goal orientation constraint requested.\n");
 
   SBPL_INFO("[env] [goal]");
   SBPL_INFO("[env]   xyz: %.2f %.2f %.2f (meters) (tol: %.3fm)", EnvROBARMCfg.goal.xyz[0],EnvROBARMCfg.goal.xyz[1],EnvROBARMCfg.goal.xyz[2],EnvROBARMCfg.goal.xyz_tol);
@@ -1690,7 +1690,7 @@ printf("poooooppiie!!!!! %f\n",EnvROBARMCfg.goal.xyz[2]);
   if(computeNormalHeuristic){
     if(!precomputeHeuristics())
     {
-      SBPL_ERROR("[env] Precomputing heuristics failed. Exiting.");
+      ROS_ERROR("[env] Precomputing heuristics failed. Exiting.");
       return -1;
     }
   }
@@ -1732,7 +1732,7 @@ bool EnvironmentDUALROBARM3D::precomputeHeuristics()
                                  EnvROBARM.startHashEntry->coord[8], EnvROBARM.startHashEntry->coord[9],
                                  SBPL_2DGRIDSEARCH_TERM_CONDITION_TWOTIMESOPTPATH))
         return false;
-    printf("2dsolcost_infullunits=%d\n", (int)(grid2Dsearchfromgoal->getlowerboundoncostfromstart_inmm(EnvROBARM.startHashEntry->coord[8], EnvROBARM.startHashEntry->coord[9])/prms_.nominalvel_mpersecs_));
+    ROS_INFO("[env] 2dsolcost_infullunits=%d", (int)(grid2Dsearchfromgoal->getlowerboundoncostfromstart_inmm(EnvROBARM.startHashEntry->coord[8], EnvROBARM.startHashEntry->coord[9])/prms_.nominalvel_mpersecs_));
   }
   else{
     std::vector<int> pose0(6,0), pose1(6,0);
@@ -1758,13 +1758,13 @@ bool EnvironmentDUALROBARM3D::precomputeHeuristics()
 
     if(!dijkstra_->setGoal(EnvROBARM.goalHashEntry->object_pose[0], EnvROBARM.goalHashEntry->object_pose[1], EnvROBARM.goalHashEntry->object_pose[2]))
     {
-      SBPL_ERROR("[env] Failed to set goal for object bfs. (%d %d %d)", EnvROBARM.goalHashEntry->object_pose[0], EnvROBARM.goalHashEntry->object_pose[1], EnvROBARM.goalHashEntry->object_pose[2]);
+      ROS_ERROR("[env] Failed to set goal for object bfs. (%d %d %d)", EnvROBARM.goalHashEntry->object_pose[0], EnvROBARM.goalHashEntry->object_pose[1], EnvROBARM.goalHashEntry->object_pose[2]);
       return false;
     }
 
     if(!dijkstra_->runBFS())
     {
-      SBPL_ERROR("[env] Precomputing the BFS for the object heuristic failed. Exiting.");
+      ROS_ERROR("[env] Precomputing the BFS for the object heuristic failed. Exiting.");
       return false;
     }
 
@@ -1809,7 +1809,7 @@ void EnvironmentDUALROBARM3D::stateIDToPose(int stateID, short unsigned int *xyz
     rpy[0] = EnvROBARM.goalHashEntry->coord[3];
     rpy[1] = EnvROBARM.goalHashEntry->coord[4];
     rpy[2] = EnvROBARM.goalHashEntry->coord[5];
-    printf("HEY HEY HEY! THIS SHOULDN'T HAPPEN!!!!\n\n\n\n");
+    ROS_ERROR("[env] HEY HEY HEY! THIS SHOULDN'T HAPPEN!!!!\n\n\n\n");
     exit(0);
     //fangle[0] = EnvROBARM.goalHashEntry->coord[6];
     //fangle[1] = EnvROBARM.goalHashEntry->coord[7];
@@ -1875,7 +1875,7 @@ void EnvironmentDUALROBARM3D::worldPoseToState(double *wxyz, double *wrpy, doubl
 
   worldPoseToCoord(wxyz,wrpy,wfangle,pose,coord);
 
-  printf("Watch out! this function doesn't set the object pose!!!\n\n\n");
+  ROS_WARN("[env] Watch out! this function doesn't set the object pose!!!\n");
   if((state = getHashEntry(coord,is_goal)) == NULL)
     state = createHashEntry(coord);
   else
@@ -1891,7 +1891,7 @@ void EnvironmentDUALROBARM3D::printJointArray(FILE* fOut, EnvDUALROBARM3DHashEnt
     coordToAngles(HashEntry->coord, angles);
 */
 
-  SBPL_DEBUG_NAMED(fOut, "xyz: %-2d %-2d %-2d  rpy: %-2d %-2d %-2d  fangle0: %-2d fangle1: %-2d body %d %d %d %d", HashEntry->coord[0], HashEntry->coord[1], HashEntry->coord[2], HashEntry->coord[3], HashEntry->coord[4], HashEntry->coord[5], HashEntry->coord[6], HashEntry->coord[7], HashEntry->coord[8], HashEntry->coord[9], HashEntry->coord[10], HashEntry->coord[11]);
+  fprintf(fOut, "xyz: %-2d %-2d %-2d  rpy: %-2d %-2d %-2d  fangle0: %-2d fangle1: %-2d body %d %d %d %d", HashEntry->coord[0], HashEntry->coord[1], HashEntry->coord[2], HashEntry->coord[3], HashEntry->coord[4], HashEntry->coord[5], HashEntry->coord[6], HashEntry->coord[7], HashEntry->coord[8], HashEntry->coord[9], HashEntry->coord[10], HashEntry->coord[11]);
 }
 
 void EnvironmentDUALROBARM3D::computeCostPerCell()
@@ -1942,11 +1942,11 @@ void EnvironmentDUALROBARM3D::updateOccupancyGridFromCollisionMap(const arm_navi
 {
   if(collision_map.boxes.empty())
   {
-    SBPL_ERROR("[updateOccupancyGridFromCollisionMap] collision map received is empty.");
+    ROS_ERROR("[updateOccupancyGridFromCollisionMap] collision map received is empty.");
     return;
   }
   else
-    SBPL_DEBUG("[updateOccupancyGridFromCollisionMap] updating distance field with collision map with %d boxes.", int(collision_map.boxes.size()));
+    ROS_DEBUG("[updateOccupancyGridFromCollisionMap] updating distance field with collision map with %d boxes.", int(collision_map.boxes.size()));
 
   grid_->updateFromCollisionMap(collision_map);
 }
@@ -2041,7 +2041,7 @@ void EnvironmentDUALROBARM3D::getBresenhamPath(const short unsigned int a[],cons
     path->push_back(nXYZ);
   } while (get_next_point3d(&params));
 
-  SBPL_DEBUG("[getBresenhamPath] Path has %d waypoints.",int(path->size()));
+  ROS_DEBUG("[getBresenhamPath] Path has %d waypoints.",int(path->size()));
 }
 
 void EnvironmentDUALROBARM3D::visualizeOccupancyGrid()
@@ -2448,7 +2448,7 @@ bool EnvironmentDUALROBARM3D::computeIntermPoints(EnvDUALROBARM3DHashEntry_t* en
 
 void EnvironmentDUALROBARM3D::convertStateIDPathToJointAnglesPath(const std::vector<int> &idpath, std::vector<std::vector<double> > &path)
 {
-  printf("\n\nTimes: GetSuccs=%f Arms=%f Base=%f Torso=%f\n IK=%f FK=%f Hash=%f\n",double(succ_time)/CLOCKS_PER_SEC,double(arms_time)/CLOCKS_PER_SEC,double(base_time)/CLOCKS_PER_SEC,double(torso_time)/CLOCKS_PER_SEC,double(ik_time)/CLOCKS_PER_SEC,double(fk_time)/CLOCKS_PER_SEC,double(hash_time)/CLOCKS_PER_SEC);
+  ROS_INFO("\n[env] Times: GetSuccs=%f Arms=%f Base=%f Torso=%f\n IK=%f FK=%f Hash=%f\n",double(succ_time)/CLOCKS_PER_SEC,double(arms_time)/CLOCKS_PER_SEC,double(base_time)/CLOCKS_PER_SEC,double(torso_time)/CLOCKS_PER_SEC,double(ik_time)/CLOCKS_PER_SEC,double(fk_time)/CLOCKS_PER_SEC,double(hash_time)/CLOCKS_PER_SEC);
 
   int sourceid, targetid, bestcost, bestsucc;
   std::vector<int> cost, succid, action;
@@ -2509,7 +2509,7 @@ void EnvironmentDUALROBARM3D::convertStateIDPathToJointAnglesPath(const std::vec
     }
 
     if(bestsucc == -2){
-      SBPL_ERROR("[%i] Successor not found for transition.", int(p));
+      ROS_ERROR("[%i] Successor not found for transition.", int(p));
       source_entry = EnvROBARM.StateID2CoordTable[sourceid];
       EnvDUALROBARM3DHashEntry_t* target_entry = EnvROBARM.StateID2CoordTable[targetid];
       if(source_entry->coord[8]==target_entry->coord[8] &&
@@ -2720,7 +2720,7 @@ void EnvironmentDUALROBARM3D::convertStateIDPathToShortenedJointAnglesPath(const
 
     if(bestsucc == -1)
     {
-      SBPL_ERROR("[%i] When retrieving the path, successor not found for transition.", int(p));
+      ROS_ERROR("[%i] When retrieving the path, successor not found for transition.", int(p));
       return;
     }
     mp_path.push_back(bestsucc);
@@ -3089,13 +3089,12 @@ bool EnvironmentDUALROBARM3D::computeObjectPose(BodyPose pose, std::vector<doubl
     if(!arm_[0]->computeArmFK(angles0,10,&to_wrist))
       return false;
   }
-  //printf("base theta %f\n",pose.theta);
 
   double roll1,pitch1,yaw1;
   to_wrist.M.GetRPY(roll1,pitch1,yaw1);
   
   if(draw)
-    printf("wrist=%0.3f %0.3f %0.3f\n",roll1,pitch1,yaw1);
+    ROS_INFO("[env] wrist=%0.3f %0.3f %0.3f",roll1,pitch1,yaw1);
 
   /*
   std::vector<double>s(6,0);
