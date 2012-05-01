@@ -4,7 +4,7 @@
      sbpl_full_body_planner
 
   </description>
-  <author>Benjamin Cohen</author>
+  <author>Mike Phillips, Benjamin Cohen, Andrew Dornbush</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/sbpl_full_body_planner</url>
@@ -17,9 +17,9 @@
   <depend package="geometry_msgs" />
   <depend package="pviz" />
 
-    <export>
-          <cpp cflags="-I${prefix}/include -O3 -g" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lsbpl_full_body_planner"/>
-    </export>
+  <export>
+    <cpp cflags="-I${prefix}/include -O3 -g" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lsbpl_full_body_planner"/>
+  </export>
 
 </package>
 
