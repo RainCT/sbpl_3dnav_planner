@@ -31,16 +31,11 @@ rosbuild_add_library(aviz src/visualize_arm.cpp)
 #target_link_libraries(testDualCollisionSpace aviz)
 #target_link_libraries(testDualCollisionSpace sbpl_two_arm_planner)
 
-#rosbuild_add_executable(sbplTwoArmPlannerNode src/sbpl_two_arm_planner_node.cpp)
-#rosbuild_add_library(sbplTwoArmPlannerNode src/sbpl_two_arm_planner_node.cpp src/arm.cpp)
-#target_link_libraries(sbplTwoArmPlannerNode sbpl_two_arm_planner aviz pviz)
-
-#rosbuild_add_executable(runPlanner src/run_planner_node.cpp)
-#target_link_libraries(runPlanner sbplTwoArmPlannerNode)
-
-#rosbuild_add_executable(requestPlan src/request_plan.cpp src/arm.cpp src/torso.cpp)
-
 rosbuild_add_library(${PROJECT_NAME} src/sbpl_3dnav_planner.cpp)
-#rosbuild_add_executable(${PROJECT_NAME} src/sbpl_3dnav_planner.cpp)
 target_link_libraries(${PROJECT_NAME} sbpl_full_body_planner aviz pviz)
+
 rosbuild_add_executable(test_get_base_poses src/test_get_base_poses.cpp)
+
+rosbuild_add_executable(attachObject src/attach_object_to_right_gripper.cpp)
+
+rosbuild_add_executable(raiseTorso src/raise_torso.cpp)
