@@ -487,6 +487,71 @@ void PViz::visualizePose(const geometry_msgs::Pose &pose, std::string text)
   marker_array_publisher_.publish(marker_array_);
 }
 
+void PViz::visualizePose(const geometry_msgs::Pose &pose, std::string text, std::string frame_id)
+{
+  int mind = -1;
+  marker_array_.markers.clear();
+  marker_array_.markers.resize(3);
+  ros::Time time = ros::Time::now();
+
+  ROS_DEBUG("[pviz] [%s] position: %0.3f %0.3f %0.3f quaternion: %0.3f %0.3f %0.3f %0.3f (frame: %s)", text.c_str(), pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w, frame_id.c_str());
+  
+  mind++;
+  marker_array_.markers[mind].header.stamp = time;
+  marker_array_.markers[mind].header.frame_id = frame_id;
+  marker_array_.markers[mind].ns = text;
+  marker_array_.markers[mind].type = visualization_msgs::Marker::ARROW;
+  marker_array_.markers[mind].id = 0;
+  marker_array_.markers[mind].action = visualization_msgs::Marker::ADD;
+  marker_array_.markers[mind].pose = pose;
+  marker_array_.markers[mind].scale.x = 0.125;
+  marker_array_.markers[mind].scale.y = 0.125;
+  marker_array_.markers[mind].scale.z = 0.125;
+  marker_array_.markers[mind].color.r = 0.0;
+  marker_array_.markers[mind].color.g = 0.7;
+  marker_array_.markers[mind].color.b = 0.6;
+  marker_array_.markers[mind].color.a = 0.7;
+  marker_array_.markers[mind].lifetime = ros::Duration(500.0);
+
+  mind++;
+  marker_array_.markers[mind].header.stamp = time;
+  marker_array_.markers[mind].header.frame_id = frame_id;
+  marker_array_.markers[mind].ns = text;
+  marker_array_.markers[mind].id = 1;
+  marker_array_.markers[mind].type = visualization_msgs::Marker::SPHERE;
+  marker_array_.markers[mind].action = visualization_msgs::Marker::ADD;
+  marker_array_.markers[mind].pose = pose;
+  marker_array_.markers[mind].scale.x = 0.10;
+  marker_array_.markers[mind].scale.y = 0.10;
+  marker_array_.markers[mind].scale.z = 0.10;
+  marker_array_.markers[mind].color.r = 1.0;
+  marker_array_.markers[mind].color.g = 0.0;
+  marker_array_.markers[mind].color.b = 0.6;
+  marker_array_.markers[mind].color.a = 0.6;
+  marker_array_.markers[mind].lifetime = ros::Duration(500.0);
+
+  mind++;
+  marker_array_.markers[mind].header.stamp = time;
+  marker_array_.markers[mind].header.frame_id = frame_id;
+  marker_array_.markers[mind].ns = text;
+  marker_array_.markers[mind].id = 2;
+  marker_array_.markers[mind].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+  marker_array_.markers[mind].action = visualization_msgs::Marker::ADD;
+  marker_array_.markers[mind].pose = pose;
+  marker_array_.markers[mind].pose.position.z += 0.05;
+  marker_array_.markers[mind].scale.x = 0.03;
+  marker_array_.markers[mind].scale.y = 0.03;
+  marker_array_.markers[mind].scale.z = 0.03;
+  marker_array_.markers[mind].color.r = 1.0;
+  marker_array_.markers[mind].color.g = 1.0;
+  marker_array_.markers[mind].color.b = 1.0;
+  marker_array_.markers[mind].color.a = 0.9;
+  marker_array_.markers[mind].text = text;
+  marker_array_.markers[mind].lifetime = ros::Duration(500.0);
+
+  marker_array_publisher_.publish(marker_array_);
+}
+
 void PViz::visualizeSphere(std::vector<double> pose, int color, std::string text, double radius)
 {
   double r=0,g=0,b=0;

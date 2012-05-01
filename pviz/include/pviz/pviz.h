@@ -82,6 +82,8 @@ class PViz
 
     void visualizePose(const geometry_msgs::Pose &pose, std::string text);
 
+    void visualizePose(const geometry_msgs::Pose &pose, std::string text, std::string frame_id);
+
     /* \brief visualize a list of poses (sphere, arrow, pose index number) */
     void visualizePoses(const std::vector<std::vector<double> > &poses);
  
