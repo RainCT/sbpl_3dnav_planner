@@ -7,7 +7,7 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 #  Release        : w/o debug symbols, w/ optimization
 #  RelWithDebInfo : w/ debug symbols, w/ optimization
 #  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-set(ROS_BUILD_TYPE Release)
+set(ROS_BUILD_TYPE Debug)
 
 rosbuild_init()
 
@@ -21,7 +21,4 @@ rosbuild_add_library(sbpl_full_body_planner
                      src/sbpl_dual_arm_planner_params.cpp 
                      src/environment_dualrobarm3d.cpp)
 target_link_libraries(sbpl_full_body_planner sbpl_arm_planner)
-
-rosbuild_add_executable(planPath src/plan_path.cpp)
-target_link_libraries(planPath sbpl_full_body_planner)
 
