@@ -34,13 +34,10 @@
 
 #include <iostream>
 #include <map>
-
 #include <boost/thread/mutex.hpp>
 #include <log4cxx/logger.h>
-
 #include <ros/ros.h>
 #include <ros/console.h>
-
 #include <angles/angles.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <kdl/chain.hpp>
@@ -53,7 +50,7 @@
 #include <sbpl_3dnav_planner/GetTwoArmPlan.h>
 #include <sbpl_3dnav_planner/FullBodyCollisionCheck.h>
 #include <sbpl_full_body_planner/environment_dualrobarm3d.h>
-#include <sbpl_full_body_planner/sbpl_dual_collision_space.h>
+#include <sbpl_full_body_planner/pr2_collision_space.h>
 #include <tf/tf.h>
 #include <tf/transform_listener.h>
 #include <tf/message_filter.h>
@@ -216,7 +213,7 @@ private:
     sbpl_full_body_planner::EnvironmentDUALROBARM3D sbpl_arm_env_;
 
     SBPLPlanner* planner_;
-    sbpl_full_body_planner::SBPLDualCollisionSpace* cspace_;
+    sbpl_full_body_planner::PR2CollisionSpace* cspace_;
     sbpl_arm_planner::OccupancyGrid* grid_;
     sbpl_full_body_planner::VisualizeArm* laviz_;
     sbpl_full_body_planner::VisualizeArm* raviz_;
