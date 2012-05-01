@@ -27,9 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SBPL_DUAL_COLLISION_SPACE_
-#define _SBPL_DUAL_COLLISION_SPACE_
+/* /author Benjamin Cohen */
 
+#ifndef _PR2_COLLISION_SPACE_
+#define _PR2_COLLISION_SPACE_
 
 #include <ros/ros.h>
 #include <vector>
@@ -118,17 +119,16 @@ typedef struct
   std::string link;
   KDL::Frame pose;  // pose in link frame
   KDL::Frame f;     // temp variable
-  //std::vector<KDL::Frame> points;
   std::vector<Sphere> spheres;
 } AttachedObject;
 
-class SBPLDualCollisionSpace
+class PR2CollisionSpace
 {
   public:
     /* constructors */
-    SBPLDualCollisionSpace(sbpl_arm_planner::SBPLArmModel* right_arm, sbpl_arm_planner::SBPLArmModel* left_arm, sbpl_arm_planner::OccupancyGrid* grid);
+    PR2CollisionSpace(sbpl_arm_planner::SBPLArmModel* right_arm, sbpl_arm_planner::SBPLArmModel* left_arm, sbpl_arm_planner::OccupancyGrid* grid);
 
-    ~SBPLDualCollisionSpace(){};
+    ~PR2CollisionSpace(){};
 
     /* collision checking */
     bool checkCollision(const std::vector<double> &angles, BodyPose &pose, char i_arm, bool verbose, unsigned char &dist);
@@ -314,14 +314,14 @@ class SBPLDualCollisionSpace
     std::vector<AttachedObject> objects_;
 };
 
-inline bool SBPLDualCollisionSpace::isValidCell(const int x, const int y, const int z, const int radius)
+inline bool PR2CollisionSpace::isValidCell(const int x, const int y, const int z, const int radius)
 {
   if(grid_->getCell(x,y,z) <= radius)
     return false;
   return true;
 }
 
-inline bool SBPLDualCollisionSpace::isValidPoint(double &x, double &y, double &z, short unsigned int &radius, unsigned char &dist)
+inline bool PR2CollisionSpace::isValidPoint(double &x, double &y, double &z, short unsigned int &radius, unsigned char &dist)
 {
   int xyz_c[3]={0};
   grid_->worldToGrid(x,y,z,xyz_c[0], xyz_c[1], xyz_c[2]);
@@ -331,7 +331,7 @@ inline bool SBPLDualCollisionSpace::isValidPoint(double &x, double &y, double &z
   return true;
 }
 
-inline int SBPLDualCollisionSpace::getDistanceBetweenPoints(int &x1, int &y1, int &z1, int &x2, int &y2, int &z2)
+inline int PR2CollisionSpace::getDistanceBetweenPoints(int &x1, int &y1, int &z1, int &x2, int &y2, int &z2)
 {
   return int(sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2))+0.5);
 }

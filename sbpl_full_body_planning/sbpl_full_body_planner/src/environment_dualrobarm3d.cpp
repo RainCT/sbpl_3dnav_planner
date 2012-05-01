@@ -1356,7 +1356,7 @@ bool EnvironmentDUALROBARM3D::initGeneral()
   grid_->setReferenceFrame(prms_.reference_frame_);
 
   //create the collision space
-  cspace_ = new sbpl_full_body_planner::SBPLDualCollisionSpace(arm_[0], arm_[1], grid_);
+  cspace_ = new sbpl_full_body_planner::PR2CollisionSpace(arm_[0], arm_[1], grid_);
 
   cspace_->setDebugLogName(prms_.cspace_log_);
 

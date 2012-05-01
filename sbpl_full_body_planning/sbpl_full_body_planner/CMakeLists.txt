@@ -17,8 +17,8 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 rosbuild_add_library(sbpl_full_body_planner
-                     src/sbpl_dual_collision_space.cpp 
-                     src/sbpl_dual_arm_planner_params.cpp 
+                     src/pr2_collision_space.cpp 
+                     src/sbpl_full_body_params.cpp 
                      src/environment_dualrobarm3d.cpp)
 target_link_libraries(sbpl_full_body_planner sbpl_arm_planner)
 

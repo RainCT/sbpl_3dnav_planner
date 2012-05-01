@@ -28,7 +28,7 @@
  */
  /** \author Benjamin Cohen */
 
-#include <sbpl_full_body_planner/sbpl_dual_collision_space.h>
+#include <sbpl_full_body_planner/pr2_collision_space.h>
 
 #define SMALL_NUM  0.00000001     // to avoid division overflow
 
@@ -39,7 +39,7 @@ double distance(const KDL::Vector& a, const KDL::Vector& b)
 	return sqrt((a.x()-b.x())*(a.x()-b.x()) + (a.y()-b.y())*(a.y()-b.y()) + (a.z()-b.z())*(a.z()-b.z()));
 }
 
-SBPLDualCollisionSpace::SBPLDualCollisionSpace(sbpl_arm_planner::SBPLArmModel* right_arm, sbpl_arm_planner::SBPLArmModel* left_arm, sbpl_arm_planner::OccupancyGrid* grid) : grid_(grid)
+PR2CollisionSpace::PR2CollisionSpace(sbpl_arm_planner::SBPLArmModel* right_arm, sbpl_arm_planner::SBPLArmModel* left_arm, sbpl_arm_planner::OccupancyGrid* grid) : grid_(grid)
 {
   arm_.resize(2);
   arm_[0] = right_arm;
@@ -55,13 +55,13 @@ SBPLDualCollisionSpace::SBPLDualCollisionSpace(sbpl_arm_planner::SBPLArmModel* r
   inc_[6] = M_PI; //rolling the wrist doesn't change the arm's shape
 }
 
-bool SBPLDualCollisionSpace::checkCollisionArms(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist)
+bool PR2CollisionSpace::checkCollisionArms(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist)
 {
   int code;
   return checkCollisionArms(langles,rangles,pose,verbose,dist,code);
 }
 
-bool SBPLDualCollisionSpace::checkCollisionArms(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
+bool PR2CollisionSpace::checkCollisionArms(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
 {
   unsigned char dist_temp = 100;
   //dist = 100; NOTE: We are assuming dist comes in with some value that matters
@@ -108,7 +108,7 @@ bool SBPLDualCollisionSpace::checkCollisionArms(const std::vector<double> &langl
   return true;
 }
 
-bool SBPLDualCollisionSpace::checkCollision(const std::vector<double> &angles, BodyPose &pose, char i_arm, bool verbose, unsigned char &dist)
+bool PR2CollisionSpace::checkCollision(const std::vector<double> &angles, BodyPose &pose, char i_arm, bool verbose, unsigned char &dist)
 {
   unsigned char dist_temp=100;
   std::vector<std::vector<int> > jnts;
@@ -157,7 +157,7 @@ bool SBPLDualCollisionSpace::checkCollision(const std::vector<double> &angles, B
   return true;
 }
 
-bool SBPLDualCollisionSpace::checkCollision(std::vector<double> &langles, std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
+bool PR2CollisionSpace::checkCollision(std::vector<double> &langles, std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
 {
   if(!checkCollisionArms(langles, rangles, pose, verbose, dist, debug_code))
   {
@@ -177,13 +177,13 @@ bool SBPLDualCollisionSpace::checkCollision(std::vector<double> &langles, std::v
   return true;
 }
 
-bool SBPLDualCollisionSpace::checkLinkForCollision(const std::vector<double> &angles, BodyPose &pose, char i_arm, int link_num, bool verbose, unsigned char &dist)
+bool PR2CollisionSpace::checkLinkForCollision(const std::vector<double> &angles, BodyPose &pose, char i_arm, int link_num, bool verbose, unsigned char &dist)
 {
   std::vector<std::vector<int> > jnts;
 
   if(link_num >= arm_[i_arm]->num_links_)
   {
-    SBPL_WARN("[checkLinkInCollision] %d is not a valid link index. There are %d links.", link_num, arm_[i_arm]->num_links_);
+    ROS_WARN("[checkLinkInCollision] %d is not a valid link index. There are %d links.", link_num, arm_[i_arm]->num_links_);
     return false;
   }
   
@@ -213,7 +213,7 @@ bool SBPLDualCollisionSpace::checkLinkForCollision(const std::vector<double> &an
   return true;
 }
 
-bool SBPLDualCollisionSpace::checkPathForCollision(const std::vector<double> &start, const std::vector<double> &end, BodyPose &pose, char i_arm, bool verbose, unsigned char &dist)
+bool PR2CollisionSpace::checkPathForCollision(const std::vector<double> &start, const std::vector<double> &end, BodyPose &pose, char i_arm, bool verbose, unsigned char &dist)
 {
   int inc_cc = 10;
   unsigned char dist_temp = 0;
@@ -284,13 +284,13 @@ bool SBPLDualCollisionSpace::checkPathForCollision(const std::vector<double> &st
   return true;
 }
 
-bool SBPLDualCollisionSpace::checkPathForCollision(const std::vector<double> &start0, const std::vector<double> &end0, const std::vector<double> &start1, const std::vector<double> &end1, BodyPose &pose, bool verbose, unsigned char &dist)
+bool PR2CollisionSpace::checkPathForCollision(const std::vector<double> &start0, const std::vector<double> &end0, const std::vector<double> &start1, const std::vector<double> &end1, BodyPose &pose, bool verbose, unsigned char &dist)
 {
   int debug_code;
   return checkPathForCollision(start0,end0,start1,end1,pose,verbose,dist,debug_code);
 }
 
-bool SBPLDualCollisionSpace::checkPathForCollision(const std::vector<double> &start0, const std::vector<double> &end0, const std::vector<double> &start1, const std::vector<double> &end1, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
+bool PR2CollisionSpace::checkPathForCollision(const std::vector<double> &start0, const std::vector<double> &end0, const std::vector<double> &start1, const std::vector<double> &end1, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
 {
   int inc_cc = 10;
   unsigned char dist_temp = 0;
@@ -356,7 +356,7 @@ bool SBPLDualCollisionSpace::checkPathForCollision(const std::vector<double> &st
   return true;
 }
 
-bool SBPLDualCollisionSpace::checkLinkPathForCollision(const std::vector<double> &start, const std::vector<double> &end, BodyPose &pose, char i_arm, int link_num, bool verbose, unsigned char &dist)
+bool PR2CollisionSpace::checkLinkPathForCollision(const std::vector<double> &start, const std::vector<double> &end, BodyPose &pose, char i_arm, int link_num, bool verbose, unsigned char &dist)
 {
   int inc_cc = 10;
   unsigned char dist_temp = 0;
@@ -428,7 +428,7 @@ bool SBPLDualCollisionSpace::checkLinkPathForCollision(const std::vector<double>
   return true;
 }
 
-bool SBPLDualCollisionSpace::getJointPosesInGrid(const std::vector<double> angles, BodyPose &pose, char i_arm, std::vector<std::vector<int> > &jnts)
+bool PR2CollisionSpace::getJointPosesInGrid(const std::vector<double> angles, BodyPose &pose, char i_arm, std::vector<std::vector<int> > &jnts)
 {
   std::vector<std::vector<double> > jnts_m;
 
@@ -456,7 +456,7 @@ bool SBPLDualCollisionSpace::getJointPosesInGrid(const std::vector<double> angle
   return true;
 }
 
-unsigned char SBPLDualCollisionSpace::isValidLineSegment(const std::vector<int> a, const std::vector<int> b, const short unsigned int radius)
+unsigned char PR2CollisionSpace::isValidLineSegment(const std::vector<int> a, const std::vector<int> b, const short unsigned int radius)
 {
   bresenham3d_param_t params;
   int nXYZ[3], retvalue = 1;
@@ -504,7 +504,7 @@ unsigned char SBPLDualCollisionSpace::isValidLineSegment(const std::vector<int> 
     return 0;
 }
 
-double SBPLDualCollisionSpace::distanceBetween3DLineSegments(std::vector<int> l1a, std::vector<int> l1b,std::vector<int> l2a, std::vector<int> l2b)
+double PR2CollisionSpace::distanceBetween3DLineSegments(std::vector<int> l1a, std::vector<int> l1b,std::vector<int> l2a, std::vector<int> l2b)
 {
   // Copyright 2001, softSurfer (www.softsurfer.com)
   // This code may be freely used and modified for any purpose
@@ -600,11 +600,11 @@ double SBPLDualCollisionSpace::distanceBetween3DLineSegments(std::vector<int> l1
   return  sqrt(dP[0]*dP[0] + dP[1]*dP[1] + dP[2]*dP[2]);   // return the closest distance
 }
 
-void SBPLDualCollisionSpace::addArmCuboidsToGrid(char i_arm)
+void PR2CollisionSpace::addArmCuboidsToGrid(char i_arm)
 {
   std::vector<std::vector<double> > cuboids = arm_[i_arm]->getCollisionCuboids();
 
-  ROS_DEBUG("[SBPLDualCollisionSpace] received %d cuboids\n",int(cuboids.size()));
+  ROS_DEBUG("[PR2CollisionSpace] received %d cuboids\n",int(cuboids.size()));
 
   for(unsigned int i = 0; i < cuboids.size(); i++)
   {
@@ -615,7 +615,7 @@ void SBPLDualCollisionSpace::addArmCuboidsToGrid(char i_arm)
   }
 }
 
-bool SBPLDualCollisionSpace::getCollisionCylinders(const std::vector<double> &angles, BodyPose &pose, char i_arm, std::vector<std::vector<double> > &cylinders)
+bool PR2CollisionSpace::getCollisionCylinders(const std::vector<double> &angles, BodyPose &pose, char i_arm, std::vector<std::vector<double> > &cylinders)
 {
   int num_arm_spheres = 0;
   std::vector<double> xyzr(4,0);
@@ -643,7 +643,7 @@ bool SBPLDualCollisionSpace::getCollisionCylinders(const std::vector<double> &an
   return true;
 }
 
-void SBPLDualCollisionSpace::getLineSegment(const std::vector<int> a,const std::vector<int> b,std::vector<std::vector<int> > &points){
+void PR2CollisionSpace::getLineSegment(const std::vector<int> a,const std::vector<int> b,std::vector<std::vector<int> > &points){
   bresenham3d_param_t params;
   std::vector<int> nXYZ(3,0);
 
@@ -657,7 +657,7 @@ void SBPLDualCollisionSpace::getLineSegment(const std::vector<int> a,const std::
   } while (get_next_point3d(&params));
 }
 
-bool SBPLDualCollisionSpace::checkCollisionBetweenArms(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist)
+bool PR2CollisionSpace::checkCollisionBetweenArms(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist)
 {
   double d = 100, d_min = 100;
   std::vector<std::vector<int> > ljnts, rjnts;
@@ -702,7 +702,7 @@ bool SBPLDualCollisionSpace::checkCollisionBetweenArms(const std::vector<double>
   return true;
 }
 
-void SBPLDualCollisionSpace::getInterpolatedPath(const std::vector<double> &start, const std::vector<double> &end, double inc, std::vector<std::vector<double> > &path)
+void PR2CollisionSpace::getInterpolatedPath(const std::vector<double> &start, const std::vector<double> &end, double inc, std::vector<std::vector<double> > &path)
 {
   bool changed = true; 
   std::vector<double> next(start);
@@ -710,7 +710,7 @@ void SBPLDualCollisionSpace::getInterpolatedPath(const std::vector<double> &star
   //check if both input configurations have same size
   if(start.size() != end.size())
   {
-    SBPL_WARN("[getInterpolatedPath] The start and end configurations have different sizes.\n");
+    ROS_WARN("[getInterpolatedPath] The start and end configurations have different sizes.\n");
     return;
   }
 
@@ -736,7 +736,7 @@ void SBPLDualCollisionSpace::getInterpolatedPath(const std::vector<double> &star
   }
 }
 
-void SBPLDualCollisionSpace::getInterpolatedPath(const std::vector<double> &start, const std::vector<double> &end, std::vector<double> &inc, std::vector<std::vector<double> > &path)
+void PR2CollisionSpace::getInterpolatedPath(const std::vector<double> &start, const std::vector<double> &end, std::vector<double> &inc, std::vector<std::vector<double> > &path)
 {
   bool changed = true; 
   std::vector<double> next(start);
@@ -744,7 +744,7 @@ void SBPLDualCollisionSpace::getInterpolatedPath(const std::vector<double> &star
   //check if both input configurations have same size
   if(start.size() != end.size())
   {
-    SBPL_WARN("[getInterpolatedPath] The start and end configurations have different sizes.\n");
+    ROS_WARN("[getInterpolatedPath] The start and end configurations have different sizes.\n");
     return;
   }
 
@@ -770,7 +770,7 @@ void SBPLDualCollisionSpace::getInterpolatedPath(const std::vector<double> &star
   }
 }
 
-void SBPLDualCollisionSpace::getFixedLengthInterpolatedPath(const std::vector<double> &start, const std::vector<double> &end, int path_length, std::vector<std::vector<double> > &path)
+void PR2CollisionSpace::getFixedLengthInterpolatedPath(const std::vector<double> &start, const std::vector<double> &end, int path_length, std::vector<std::vector<double> > &path)
 {
   std::vector<double> next(start), inc(start.size(),0);
   path.clear();
@@ -778,7 +778,7 @@ void SBPLDualCollisionSpace::getFixedLengthInterpolatedPath(const std::vector<do
   //check if both input configurations have same size
   if(start.size() != end.size())
   {
-    SBPL_WARN("[getInterpolatedPath] The start and end configurations have different sizes.\n");
+    ROS_WARN("[getInterpolatedPath] The start and end configurations have different sizes.\n");
     return;
   }
 
@@ -802,7 +802,7 @@ void SBPLDualCollisionSpace::getFixedLengthInterpolatedPath(const std::vector<do
   path.push_back(end);
 }
 
-void SBPLDualCollisionSpace::processCollisionObjectMsg(const arm_navigation_msgs::CollisionObject &object)
+void PR2CollisionSpace::processCollisionObjectMsg(const arm_navigation_msgs::CollisionObject &object)
 {
   if(object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::ADD)
   {
@@ -830,7 +830,7 @@ void SBPLDualCollisionSpace::processCollisionObjectMsg(const arm_navigation_msgs
     ROS_WARN("*** Operation isn't supported. ***\n\n");
 }
 
-void SBPLDualCollisionSpace::addCollisionObject(const arm_navigation_msgs::CollisionObject &object)
+void PR2CollisionSpace::addCollisionObject(const arm_navigation_msgs::CollisionObject &object)
 {
   geometry_msgs::Pose pose;
 
@@ -865,7 +865,7 @@ void SBPLDualCollisionSpace::addCollisionObject(const arm_navigation_msgs::Colli
   ROS_INFO("[cspace] Just added %s to the distance field.", object.id.c_str());
 }
 
-void SBPLDualCollisionSpace::getCollisionObjectVoxelPoses(std::vector<geometry_msgs::Pose> &points)
+void PR2CollisionSpace::getCollisionObjectVoxelPoses(std::vector<geometry_msgs::Pose> &points)
 {
   geometry_msgs::Pose pose;
 
@@ -886,7 +886,7 @@ void SBPLDualCollisionSpace::getCollisionObjectVoxelPoses(std::vector<geometry_m
   }
 }
 
-void SBPLDualCollisionSpace::removeCollisionObject(const arm_navigation_msgs::CollisionObject &object)
+void PR2CollisionSpace::removeCollisionObject(const arm_navigation_msgs::CollisionObject &object)
 {
   for(size_t i = 0; i < known_objects_.size(); ++i)
   {
@@ -899,12 +899,12 @@ void SBPLDualCollisionSpace::removeCollisionObject(const arm_navigation_msgs::Co
   }
 }
 
-void SBPLDualCollisionSpace::removeAllCollisionObjects()
+void PR2CollisionSpace::removeAllCollisionObjects()
 {
   known_objects_.clear();
 }
 
-void SBPLDualCollisionSpace::putCollisionObjectsInGrid()
+void PR2CollisionSpace::putCollisionObjectsInGrid()
 {
   ROS_DEBUG("[putCollisionObjectsInGrid] Should we reset first?");
 
@@ -915,7 +915,7 @@ void SBPLDualCollisionSpace::putCollisionObjectsInGrid()
   }
 }
 
-void SBPLDualCollisionSpace::transformPose(const std::string &current_frame, const std::string &desired_frame, const geometry_msgs::Pose &pose_in, geometry_msgs::Pose &pose_out)
+void PR2CollisionSpace::transformPose(const std::string &current_frame, const std::string &desired_frame, const geometry_msgs::Pose &pose_in, geometry_msgs::Pose &pose_out)
 {
   geometry_msgs::PoseStamped stpose_in, stpose_out;
   stpose_in.header.frame_id = current_frame;
@@ -925,7 +925,7 @@ void SBPLDualCollisionSpace::transformPose(const std::string &current_frame, con
   pose_out = stpose_out.pose;
 }
 /*
-void SBPLDualCollisionSpace::removeAllAttachedObjects()
+void PR2CollisionSpace::removeAllAttachedObjects()
 {
   attached_object_.clear();
   object_radius_.clear();
@@ -933,7 +933,7 @@ void SBPLDualCollisionSpace::removeAllAttachedObjects()
   is_object_attached_ = false;
 }
 
-void SBPLDualCollisionSpace::addAttachedObject(const arm_navigation_msgs::CollisionObject &object)
+void PR2CollisionSpace::addAttachedObject(const arm_navigation_msgs::CollisionObject &object)
 {
   KDL::Vector point;
 
@@ -965,7 +965,7 @@ void SBPLDualCollisionSpace::addAttachedObject(const arm_navigation_msgs::Collis
   
 }
 
-void SBPLDualCollisionSpace::getAttachedObjectVoxels(const std::vector<double> &pose, std::vector<std::vector<int> > &objectv)
+void PR2CollisionSpace::getAttachedObjectVoxels(const std::vector<double> &pose, std::vector<std::vector<int> > &objectv)
 {
   KDL::Frame f;
   KDL::Vector v;
@@ -985,7 +985,7 @@ void SBPLDualCollisionSpace::getAttachedObjectVoxels(const std::vector<double> &
   }
 }
 
-void SBPLDualCollisionSpace::getAttachedObjectInWorldFrame(const std::vector<double> &pose, std::vector<std::vector<double> > &objectv)
+void PR2CollisionSpace::getAttachedObjectInWorldFrame(const std::vector<double> &pose, std::vector<std::vector<double> > &objectv)
 {
   KDL::Frame f;
   KDL::Vector v;
@@ -1008,7 +1008,7 @@ void SBPLDualCollisionSpace::getAttachedObjectInWorldFrame(const std::vector<dou
   }
 }
 
-bool SBPLDualCollisionSpace::isValidAttachedObject(const std::vector<double> &pose, unsigned char &dist, int &debug_code)
+bool PR2CollisionSpace::isValidAttachedObject(const std::vector<double> &pose, unsigned char &dist, int &debug_code)
 {
   if(!is_object_attached_)
     return true;
@@ -1032,7 +1032,7 @@ bool SBPLDualCollisionSpace::isValidAttachedObject(const std::vector<double> &po
   return true;
 }
 
-void SBPLDualCollisionSpace::attachSphere(KDL::Frame& pose, std::string frame, double radius)
+void PR2CollisionSpace::attachSphere(KDL::Frame& pose, std::string frame, double radius)
 {
 	KDL::Vector sphere(0, 0, 0);
 	is_object_attached_ = true;
@@ -1044,7 +1044,7 @@ void SBPLDualCollisionSpace::attachSphere(KDL::Frame& pose, std::string frame, d
 	object_radius_.push_back(int(object_radius_w_.back() / grid_->getResolution() + 0.5));
 }
 
-void SBPLDualCollisionSpace::attachCylinder(KDL::Frame& pose, std::string frame, double radius, double length)
+void PR2CollisionSpace::attachCylinder(KDL::Frame& pose, std::string frame, double radius, double length)
 {
 	is_object_attached_ = true;
 	attached_robot_link_ = frame;
@@ -1075,7 +1075,7 @@ void SBPLDualCollisionSpace::attachCylinder(KDL::Frame& pose, std::string frame,
 	}
 }
 
-void SBPLDualCollisionSpace::attachCube(KDL::Frame& pose, std::string frame, double x_dim, double y_dim, double z_dim)
+void PR2CollisionSpace::attachCube(KDL::Frame& pose, std::string frame, double x_dim, double y_dim, double z_dim)
 {
 	KDL::Vector v;
 	is_object_attached_ = true;
@@ -1103,7 +1103,7 @@ void SBPLDualCollisionSpace::attachCube(KDL::Frame& pose, std::string frame, dou
 	}
 }
 
-void SBPLDualCollisionSpace::setAttachedRobotLinkToMultiDofTransform(KDL::Frame& transform)
+void PR2CollisionSpace::setAttachedRobotLinkToMultiDofTransform(KDL::Frame& transform)
 {
 	attached_robot_link_in_multi_dof_ = transform;
 	if (is_object_attached_) attached_object_in_multi_dof_ = attached_robot_link_in_multi_dof_ * attached_object_pose_;
@@ -1114,7 +1114,7 @@ void SBPLDualCollisionSpace::setAttachedRobotLinkToMultiDofTransform(KDL::Frame&
 //	sbpl_arm_planner::printKDLFrame(attached_object_in_multi_dof_, "object_in_multi-dof");
 }
 */
-bool SBPLDualCollisionSpace::getCollisionLinks()
+bool PR2CollisionSpace::getCollisionLinks()
 {
   XmlRpc::XmlRpcValue xml_links;
   CollisionLink cl;
@@ -1211,7 +1211,7 @@ bool SBPLDualCollisionSpace::getCollisionLinks()
   return true;
 }
 
-void SBPLDualCollisionSpace::printCollisionLinks()
+void PR2CollisionSpace::printCollisionLinks()
 {
   for(size_t i = 0; i < cl_.size(); ++i)
   {
@@ -1227,7 +1227,7 @@ void SBPLDualCollisionSpace::printCollisionLinks()
   }
 }
 
-bool SBPLDualCollisionSpace::getSphereGroups()
+bool PR2CollisionSpace::getSphereGroups()
 {
   XmlRpc::XmlRpcValue all_groups;
   Sphere s;
@@ -1357,7 +1357,7 @@ bool SBPLDualCollisionSpace::getSphereGroups()
   return true;
 }
 
-void SBPLDualCollisionSpace::printSphereGroups()
+void PR2CollisionSpace::printSphereGroups()
 {
   for(size_t i = 0; i < all_g_.size(); ++i)
   {
@@ -1375,7 +1375,7 @@ void SBPLDualCollisionSpace::printSphereGroups()
   }
 }
 
-bool SBPLDualCollisionSpace::initFullBodyKinematics()
+bool PR2CollisionSpace::initFullBodyKinematics()
 {
   ros::NodeHandle nh("~");
   std::string robot_description;
@@ -1386,19 +1386,19 @@ bool SBPLDualCollisionSpace::initFullBodyKinematics()
 
   if(robot_description.empty())
   {
-    SBPL_ERROR("[cspace] Unable to get robot_description from param server.");
+    ROS_ERROR("[cspace] Unable to get robot_description from param server.");
     return false;
   }
 
   if(!kdl_parser::treeFromString(robot_description, full_body_tree_))
   {
-    SBPL_ERROR("[cspace] Failed to parse tree from robot_description on param server.");
+    ROS_ERROR("[cspace] Failed to parse tree from robot_description on param server.");
     return false;;
   }
 
   if(!full_body_tree_.getChain(full_body_chain_root_name_, full_body_chain_tip_name_, full_body_chain_))
   {
-    SBPL_ERROR("[cspace] Failed to fetch the KDL chain for the desired robot frames. Exiting.");
+    ROS_ERROR("[cspace] Failed to fetch the KDL chain for the desired robot frames. Exiting.");
     return false;
   }
 
@@ -1412,7 +1412,7 @@ bool SBPLDualCollisionSpace::initFullBodyKinematics()
   return true;
 }
 
-void SBPLDualCollisionSpace::printKDLChain(std::string name, KDL::Chain &chain)
+void PR2CollisionSpace::printKDLChain(std::string name, KDL::Chain &chain)
 {
   ROS_INFO("chain: %s", name.c_str());
   for(unsigned int j = 0; j < chain.getNrOfSegments(); ++j)
@@ -1430,7 +1430,7 @@ void SBPLDualCollisionSpace::printKDLChain(std::string name, KDL::Chain &chain)
   ROS_INFO(" ");
 }
 
-void SBPLDualCollisionSpace::setNonPlanningJointPosition(std::string name, double value)
+void PR2CollisionSpace::setNonPlanningJointPosition(std::string name, double value)
 {
   if(name.compare("head_tilt_joint") == 0)
     head_tilt_angle_ = value;
@@ -1440,7 +1440,7 @@ void SBPLDualCollisionSpace::setNonPlanningJointPosition(std::string name, doubl
     ROS_ERROR("[cspace] The %s is not a known non-planning joint.", name.c_str());
 }
 
-bool SBPLDualCollisionSpace::computeFullBodyKinematics(double x, double y, double theta, double torso, int frame_num, KDL::Frame &fk_out)
+bool PR2CollisionSpace::computeFullBodyKinematics(double x, double y, double theta, double torso, int frame_num, KDL::Frame &fk_out)
 {
   jnt_array_(0) = torso; // fill in torso height
   //TODO: Fill in head pan and tilt angles to be extra fancy
@@ -1458,7 +1458,7 @@ bool SBPLDualCollisionSpace::computeFullBodyKinematics(double x, double y, doubl
   return true;
 }
 
-void SBPLDualCollisionSpace::getMaptoRobotTransform(double x, double y, double theta, KDL::Frame &frame)
+void PR2CollisionSpace::getMaptoRobotTransform(double x, double y, double theta, KDL::Frame &frame)
 {
   KDL::Rotation r1;
   r1.DoRotZ(theta);
@@ -1467,7 +1467,7 @@ void SBPLDualCollisionSpace::getMaptoRobotTransform(double x, double y, double t
   frame = base_footprint_in_map;
 }
 
-void SBPLDualCollisionSpace::getVoxelsInGroup(KDL::Frame &frame, Group &group)
+void PR2CollisionSpace::getVoxelsInGroup(KDL::Frame &frame, Group &group)
 {
   KDL::Vector v;
   for(size_t i = 0; i < group.spheres.size(); ++i)
@@ -1477,7 +1477,7 @@ void SBPLDualCollisionSpace::getVoxelsInGroup(KDL::Frame &frame, Group &group)
   }
 }
 
-void SBPLDualCollisionSpace::getPointsInGroup(KDL::Frame &frame, Group &group, std::vector<std::vector<double> > &points)
+void PR2CollisionSpace::getPointsInGroup(KDL::Frame &frame, Group &group, std::vector<std::vector<double> > &points)
 {
   KDL::Vector v;
   points.resize(group.spheres.size(), std::vector<double>(4,0));
@@ -1491,7 +1491,7 @@ void SBPLDualCollisionSpace::getPointsInGroup(KDL::Frame &frame, Group &group, s
   }
 }
 
-bool SBPLDualCollisionSpace::isBaseValid(double x, double y, double theta, unsigned char &dist)
+bool PR2CollisionSpace::isBaseValid(double x, double y, double theta, unsigned char &dist)
 {
   unsigned char dist_temp;
 
@@ -1528,7 +1528,7 @@ bool SBPLDualCollisionSpace::isBaseValid(double x, double y, double theta, unsig
   return true;
 }
 
-bool SBPLDualCollisionSpace::isTorsoValid(double x, double y, double theta, double torso, unsigned char &dist)
+bool PR2CollisionSpace::isTorsoValid(double x, double y, double theta, double torso, unsigned char &dist)
 {
   unsigned char dist_temp;
 
@@ -1584,7 +1584,7 @@ bool SBPLDualCollisionSpace::isTorsoValid(double x, double y, double theta, doub
   return true;
 }
 
-bool SBPLDualCollisionSpace::isHeadValid(double x, double y, double theta, double torso, unsigned char &dist)
+bool PR2CollisionSpace::isHeadValid(double x, double y, double theta, double torso, unsigned char &dist)
 {
   unsigned char dist_temp;
 
@@ -1611,14 +1611,14 @@ bool SBPLDualCollisionSpace::isHeadValid(double x, double y, double theta, doubl
   return true;
 }
 
-bool SBPLDualCollisionSpace::isBodyValid(double x, double y, double theta, double torso, unsigned char &dist)
+bool PR2CollisionSpace::isBodyValid(double x, double y, double theta, double torso, unsigned char &dist)
 {
   return isBaseValid(x,y,theta,dist) &
          isTorsoValid(x,y,theta,torso,dist) &
          isHeadValid(x,y,theta,torso,dist);
 }
 
-bool SBPLDualCollisionSpace::checkCollisionArmsToGroup(Group &group, unsigned char &dist)
+bool PR2CollisionSpace::checkCollisionArmsToGroup(Group &group, unsigned char &dist)
 {
   //NOTE: Assumes you computed the kinematics for all the joints already.
   int d;
@@ -1688,7 +1688,7 @@ bool SBPLDualCollisionSpace::checkCollisionArmsToGroup(Group &group, unsigned ch
   return true;
 }
 
-bool SBPLDualCollisionSpace::checkCollisionArmsToBody(std::vector<double> &langles, std::vector<double> &rangles, BodyPose &pose, unsigned char &dist)
+bool PR2CollisionSpace::checkCollisionArmsToBody(std::vector<double> &langles, std::vector<double> &rangles, BodyPose &pose, unsigned char &dist)
 {
   // compute arm kinematics
   arm_[0]->computeFK(rangles, pose, 10, &(rgripper_g_.f)); // right gripper
@@ -1734,7 +1734,7 @@ bool SBPLDualCollisionSpace::checkCollisionArmsToBody(std::vector<double> &langl
   return true;
 }
 
-void SBPLDualCollisionSpace::getCollisionSpheres(std::vector<double> &langles, std::vector<double> &rangles, BodyPose &pose, std::string group_name, std::vector<std::vector<double> > &spheres)
+void PR2CollisionSpace::getCollisionSpheres(std::vector<double> &langles, std::vector<double> &rangles, BodyPose &pose, std::string group_name, std::vector<std::vector<double> > &spheres)
 {
   Group g;
   if(group_name.compare("base") == 0)
@@ -1816,7 +1816,7 @@ void SBPLDualCollisionSpace::getCollisionSpheres(std::vector<double> &langles, s
   ROS_DEBUG("[cspace] Returning %d spheres for %s group", int(spheres.size()), group_name.c_str());
 }
 
-void SBPLDualCollisionSpace::printGroupVoxels(Group &g, std::string text)
+void PR2CollisionSpace::printGroupVoxels(Group &g, std::string text)
 {
   ROS_INFO("[cspace] voxels: %s", text.c_str());
   for(size_t i = 0; i < g.spheres.size(); ++i)
@@ -1825,7 +1825,7 @@ void SBPLDualCollisionSpace::printGroupVoxels(Group &g, std::string text)
   }
 }
 
-bool SBPLDualCollisionSpace::checkSpineMotion(std::vector<double> &langles, std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
+bool PR2CollisionSpace::checkSpineMotion(std::vector<double> &langles, std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
 {
   // arm-base
   getMaptoRobotTransform(pose.x,pose.y,pose.theta,base_g_.f);
@@ -1856,7 +1856,7 @@ bool SBPLDualCollisionSpace::checkSpineMotion(std::vector<double> &langles, std:
   return true;
 }
 
-bool SBPLDualCollisionSpace::checkBaseMotion(std::vector<double> &langles, std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
+bool PR2CollisionSpace::checkBaseMotion(std::vector<double> &langles, std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
 {
   // base-world
   if(!isBaseValid(pose.x, pose.y, pose.theta, dist))
@@ -1888,7 +1888,7 @@ bool SBPLDualCollisionSpace::checkBaseMotion(std::vector<double> &langles, std::
   return true;
 }
 
-bool SBPLDualCollisionSpace::checkArmsMotion(std::vector<double> &langles, std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
+bool PR2CollisionSpace::checkArmsMotion(std::vector<double> &langles, std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
 {
   // arms-world, arms-arms
   if(!checkCollisionArms(langles, rangles, pose, verbose, dist, debug_code))
@@ -1901,7 +1901,7 @@ bool SBPLDualCollisionSpace::checkArmsMotion(std::vector<double> &langles, std::
   return true;
 }
 
-bool SBPLDualCollisionSpace::checkAllMotion(std::vector<double> &langles, std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
+bool PR2CollisionSpace::checkAllMotion(std::vector<double> &langles, std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
 {
   // arms-world, arms-arms
   if(!checkCollisionArms(langles, rangles, pose, verbose, dist, debug_code))
@@ -1918,7 +1918,7 @@ bool SBPLDualCollisionSpace::checkAllMotion(std::vector<double> &langles, std::v
   return true;
 }
 
-void SBPLDualCollisionSpace::getIntermediatePoints(KDL::Vector a, KDL::Vector b, double d, std::vector<KDL::Vector>& points)
+void PR2CollisionSpace::getIntermediatePoints(KDL::Vector a, KDL::Vector b, double d, std::vector<KDL::Vector>& points)
 {
 	KDL::Vector pt, dir;
 	int interm_points = floor(distance(a, b) / d + 0.5);
@@ -1934,14 +1934,14 @@ void SBPLDualCollisionSpace::getIntermediatePoints(KDL::Vector a, KDL::Vector b,
 }
 
 /* ******************  Attached Object **************** */
-void SBPLDualCollisionSpace::removeAllAttachedObjects()
+void PR2CollisionSpace::removeAllAttachedObjects()
 {
   is_object_attached_ = false;
   objects_.clear();
   ROS_INFO("[cspace] Removed all attached objects.");
 }
 
-void SBPLDualCollisionSpace::removeAttachedObject(std::string name)
+void PR2CollisionSpace::removeAttachedObject(std::string name)
 {
   bool removed = false;
   for(size_t i = 0; i < objects_.size(); ++i)
@@ -1958,7 +1958,7 @@ void SBPLDualCollisionSpace::removeAttachedObject(std::string name)
     ROS_WARN("[cspace] Was asked to remove %s attached object but it wasn't attached.", name.c_str());
 }
 
-void SBPLDualCollisionSpace::attachSphere(std::string name, std::string link, geometry_msgs::Pose pose, double radius)
+void PR2CollisionSpace::attachSphere(std::string name, std::string link, geometry_msgs::Pose pose, double radius)
 {
   is_object_attached_ = true;
   AttachedObject obj;
@@ -1985,7 +1985,7 @@ void SBPLDualCollisionSpace::attachSphere(std::string name, std::string link, ge
   ROS_INFO("[cspace] [attached_object] Attached '%s' sphere to the %s arm.  pose: %0.3f %0.3f %0.3f radius: %0.3fm (%d cells)", name.c_str(), arm_side_names[obj.side].c_str(), pose.position.x,pose.position.y,pose.position.z, obj.spheres[0].radius, obj.spheres[0].radius_c);
 }
 
-void SBPLDualCollisionSpace::attachCylinder(std::string name, std::string link, geometry_msgs::Pose pose, double radius, double length)
+void PR2CollisionSpace::attachCylinder(std::string name, std::string link, geometry_msgs::Pose pose, double radius, double length)
 {
   std::vector<KDL::Vector> points;
   
@@ -2032,7 +2032,7 @@ void SBPLDualCollisionSpace::attachCylinder(std::string name, std::string link, 
   ROS_INFO("[cspace] [attached_object] bottom: xyz: %0.3f %0.3f %0.3f  radius: %0.3fm (%d cells)", bottom.x(), bottom.y(), bottom.z(), radius, obj.spheres[0].radius_c);
 }
 
-void SBPLDualCollisionSpace::attachCube(std::string name, std::string link, geometry_msgs::Pose pose, double x_dim, double y_dim, double z_dim)
+void PR2CollisionSpace::attachCube(std::string name, std::string link, geometry_msgs::Pose pose, double x_dim, double y_dim, double z_dim)
 {
   std::vector<std::vector<double> > spheres;
   is_object_attached_ = true;
@@ -2068,7 +2068,7 @@ void SBPLDualCollisionSpace::attachCube(std::string name, std::string link, geom
 }
 
 
-void SBPLDualCollisionSpace::getAttachedObjectSpheres(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, std::vector<std::vector<double> > &spheres)
+void PR2CollisionSpace::getAttachedObjectSpheres(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, std::vector<std::vector<double> > &spheres)
 {
   KDL::Frame f;
   KDL::Vector v;
@@ -2119,7 +2119,7 @@ void SBPLDualCollisionSpace::getAttachedObjectSpheres(const std::vector<double> 
   ROS_DEBUG_NAMED(cspace_log_, "[cspace] Fetched %d spheres.", int(spheres.size()));
 }
 
-void SBPLDualCollisionSpace::getAttachedObjectVoxels(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, std::vector<std::vector<int> > &voxels)
+void PR2CollisionSpace::getAttachedObjectVoxels(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, std::vector<std::vector<int> > &voxels)
 {
   std::vector<std::vector<double> > spheres;
   getAttachedObjectSpheres(langles, rangles, pose, spheres);
@@ -2134,7 +2134,7 @@ void SBPLDualCollisionSpace::getAttachedObjectVoxels(const std::vector<double> &
   ROS_INFO("[cspace] Fetched %d voxels.", int(voxels.size()));
 }
 
-bool SBPLDualCollisionSpace::isAttachedObjectValid(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
+bool PR2CollisionSpace::isAttachedObjectValid(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
 {
   if(!is_object_attached_)
     return true;

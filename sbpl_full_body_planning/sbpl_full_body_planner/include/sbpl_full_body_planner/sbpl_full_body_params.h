@@ -27,8 +27,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __SBPL_DUAL_ARM_PLANNER_PARAMS_H_
-#define __SBPL_DUAL_ARM_PLANNER_PARAMS_H_
+#ifndef __SBPL_FULL_BODY_PARAMS_H_
+#define __SBPL_FULL_BODY_PARAMS_H_
 
 #include <iostream>
 #include <string>
@@ -63,15 +63,15 @@ typedef struct
   Coords coord;
 } MotionPrimitive;
 
-class SBPLDualArmPlannerParams
+class SBPLFullBodyParams
 {
   public:
 
     /** \brief default constructor (just assigns default values) */
-    SBPLDualArmPlannerParams();
+    SBPLFullBodyParams();
 
     /** \brief destructor */
-    ~SBPLDualArmPlannerParams(){};
+    ~SBPLFullBodyParams(){};
 
     /** \brief grab parameters from the ROS param server */
     void initFromParamServer();

@@ -28,12 +28,12 @@
  */
  /** \author Benjamin Cohen */
 
-#include <sbpl_full_body_planner/sbpl_dual_arm_planner_params.h>
+#include <sbpl_full_body_planner/sbpl_full_body_params.h>
 
  
 namespace sbpl_full_body_planner {
 
-SBPLDualArmPlannerParams::SBPLDualArmPlannerParams()
+SBPLFullBodyParams::SBPLFullBodyParams()
 {
   epsilon_ = 10;
   epsilon2_ = 2;
@@ -118,7 +118,7 @@ SBPLDualArmPlannerParams::SBPLDualArmPlannerParams()
   ROS_INFO("[params] Compute Time Per Cell: %0.3f (temporarily hard coded)", time_per_cell_);
 }
 
-void SBPLDualArmPlannerParams::initFromParamServer()
+void SBPLFullBodyParams::initFromParamServer()
 {
   ros::NodeHandle nh("~");
 
@@ -179,7 +179,7 @@ void SBPLDualArmPlannerParams::initFromParamServer()
   changeLoggerLevel(ROSCONSOLE_DEFAULT_NAME + std::string(".") + solution_log_, solution_log_level_);
 }
 
-bool SBPLDualArmPlannerParams::initFromParamFile(std::string param_file)
+bool SBPLFullBodyParams::initFromParamFile(std::string param_file)
 {
   char* filename = new char[param_file.length()+1];
   param_file.copy(filename, param_file.length(),0);
@@ -202,7 +202,7 @@ bool SBPLDualArmPlannerParams::initFromParamFile(std::string param_file)
   }
 }
 
-bool SBPLDualArmPlannerParams::initMotionPrimsFromFile(FILE* fCfg)
+bool SBPLFullBodyParams::initMotionPrimsFromFile(FILE* fCfg)
 {
   char sTemp[1024];
   int nrows=0,ncols=0, short_mprims=0;
@@ -279,7 +279,7 @@ bool SBPLDualArmPlannerParams::initMotionPrimsFromFile(FILE* fCfg)
   return true;
 }
 
-bool SBPLDualArmPlannerParams::initLongMotionPrimsFromFile(FILE* fCfg)
+bool SBPLFullBodyParams::initLongMotionPrimsFromFile(FILE* fCfg)
 {
   char sTemp[1024];
   int ndof=0;
@@ -455,7 +455,7 @@ bool SBPLDualArmPlannerParams::initLongMotionPrimsFromFile(FILE* fCfg)
   return true;
 }
 
-bool SBPLDualArmPlannerParams::initBaseMotionPrimsFromFile(FILE* fMotPrims){
+bool SBPLFullBodyParams::initBaseMotionPrimsFromFile(FILE* fMotPrims){
   char sTemp[1024], sExpected[1024];
   float fTemp;
   int dTemp;
@@ -526,7 +526,7 @@ bool SBPLDualArmPlannerParams::initBaseMotionPrimsFromFile(FILE* fMotPrims){
   return true;
 }
 
-bool SBPLDualArmPlannerParams::ReadinMotionPrimitive(SBPL_xytheta_mprimitive* pMotPrim, FILE* fIn){
+bool SBPLFullBodyParams::ReadinMotionPrimitive(SBPL_xytheta_mprimitive* pMotPrim, FILE* fIn){
   char sTemp[1024];
   int dTemp;
   char sExpected[1024];
@@ -629,7 +629,7 @@ bool SBPLDualArmPlannerParams::ReadinMotionPrimitive(SBPL_xytheta_mprimitive* pM
   return true;
 }
 
-bool SBPLDualArmPlannerParams::ReadinCell(sbpl_xy_theta_cell_t* cell, FILE* fIn){
+bool SBPLFullBodyParams::ReadinCell(sbpl_xy_theta_cell_t* cell, FILE* fIn){
   char sTemp[60];
 
   if(fscanf(fIn, "%s", sTemp) == 0)
@@ -648,7 +648,7 @@ bool SBPLDualArmPlannerParams::ReadinCell(sbpl_xy_theta_cell_t* cell, FILE* fIn)
   return true;
 }
 
-bool SBPLDualArmPlannerParams::ReadinPose(sbpl_xy_theta_pt_t* pose, FILE* fIn){
+bool SBPLFullBodyParams::ReadinPose(sbpl_xy_theta_pt_t* pose, FILE* fIn){
   char sTemp[60];
 
   if(fscanf(fIn, "%s", sTemp) == 0)
@@ -666,7 +666,7 @@ bool SBPLDualArmPlannerParams::ReadinPose(sbpl_xy_theta_pt_t* pose, FILE* fIn){
   return true;
 }
 
-void SBPLDualArmPlannerParams::PrecomputeActionswithCompleteMotionPrimitive(vector<SBPL_xytheta_mprimitive>* motionprimitiveV){
+void SBPLFullBodyParams::PrecomputeActionswithCompleteMotionPrimitive(vector<SBPL_xytheta_mprimitive>* motionprimitiveV){
 
   SBPL_PRINTF("Pre-computing action data using motion primitives for every angle...\n");
   base_actions_ = new EnvNAVXYTHETALATAction_t* [num_base_dirs_];
@@ -770,7 +770,7 @@ void SBPLDualArmPlannerParams::PrecomputeActionswithCompleteMotionPrimitive(vect
 }
 
 
-bool SBPLDualArmPlannerParams::initFromParamFile(FILE* fCfg)
+bool SBPLFullBodyParams::initFromParamFile(FILE* fCfg)
 { 
   char sTemp[1024];
   //int nrows=0,ncols=0, short_mprims=0;
@@ -921,14 +921,14 @@ bool SBPLDualArmPlannerParams::initFromParamFile(FILE* fCfg)
   return true;
 }
 
-void SBPLDualArmPlannerParams::setCellCost(int cost_per_cell)
+void SBPLFullBodyParams::setCellCost(int cost_per_cell)
 {
   cost_per_cell_ = cost_per_cell;
   solve_for_ik_thresh_ = (solve_for_ik_thresh_m_ / resolution_) * cost_per_cell_;
   short_dist_mprims_thresh_c_ = short_dist_mprims_thresh_m_/resolution_ * cost_per_cell;
 }
 
-void SBPLDualArmPlannerParams::addMotionPrim(std::vector<double> mprim, bool add_converse, bool short_dist_mprim)
+void SBPLFullBodyParams::addMotionPrim(std::vector<double> mprim, bool add_converse, bool short_dist_mprim)
 {
   if(short_dist_mprim)
   {
@@ -975,7 +975,7 @@ void SBPLDualArmPlannerParams::addMotionPrim(std::vector<double> mprim, bool add
   num_mprims_ = num_short_dist_mprims_ + num_long_dist_mprims_;
 }
 
-void SBPLDualArmPlannerParams::printMotionPrims(std::string stream)
+void SBPLFullBodyParams::printMotionPrims(std::string stream)
 {
   int i;
   SBPL_DEBUG_NAMED(stream,"Long Distance Motion Primitives: %d", num_long_dist_mprims_);
@@ -997,7 +997,7 @@ void SBPLDualArmPlannerParams::printMotionPrims(std::string stream)
   }
 }
 
-void SBPLDualArmPlannerParams::printLongMotionPrims(std::string stream)
+void SBPLFullBodyParams::printLongMotionPrims(std::string stream)
 {
   ROS_INFO_NAMED(stream, "Statespace Resolution: xyz: %0.3f rpy: %0.3f fa: %0.3f",xyz_resolution_, rpy_resolution_,fa_resolution_);
   ROS_INFO_NAMED(stream, "# Motion Primitives: %d", int(mp_.size()));
@@ -1017,9 +1017,9 @@ void SBPLDualArmPlannerParams::printLongMotionPrims(std::string stream)
   }
 }
 
-void SBPLDualArmPlannerParams::printParams(std::string stream)
+void SBPLFullBodyParams::printParams(std::string stream)
 {
-  SBPL_DEBUG_NAMED(stream,"Arm Planner Parameters:");
+  SBPL_DEBUG_NAMED(stream,"Full Body Planner Parameters:");
   SBPL_DEBUG_NAMED(stream,"%40s: %d", "# motion primitives",num_mprims_);
   SBPL_DEBUG_NAMED(stream,"%40s: %d", "# short distance motion primitives", num_short_dist_mprims_);
   SBPL_DEBUG_NAMED(stream,"%40s: %d", "# long distance motion primitives", num_long_dist_mprims_);
@@ -1035,7 +1035,7 @@ void SBPLDualArmPlannerParams::printParams(std::string stream)
   SBPL_DEBUG_NAMED(stream," ");
 }
 
-double SBPLDualArmPlannerParams::getSmallestShoulderPanMotion()
+double SBPLFullBodyParams::getSmallestShoulderPanMotion()
 {
   double min_pan = 360.0;
   for (int i = 0; i < num_mprims_; i++)
@@ -1050,7 +1050,7 @@ double SBPLDualArmPlannerParams::getSmallestShoulderPanMotion()
   return min_pan;
 }
 
-double SBPLDualArmPlannerParams::getLargestMotionPrimOffset()
+double SBPLFullBodyParams::getLargestMotionPrimOffset()
 {
   double max_offset = 0;
   for (int i = 0; i < num_mprims_; i++)
@@ -1068,7 +1068,7 @@ double SBPLDualArmPlannerParams::getLargestMotionPrimOffset()
   return max_offset;
 }
 
-void SBPLDualArmPlannerParams::changeLoggerLevel(std::string name, std::string level)
+void SBPLFullBodyParams::changeLoggerLevel(std::string name, std::string level)
 {
   ROSCONSOLE_AUTOINIT;
 
@@ -1089,7 +1089,7 @@ void SBPLDualArmPlannerParams::changeLoggerLevel(std::string name, std::string l
 }
 
 /*
-void SBPLDualArmPlannerParams::addLongMotionPrimitives(MotionPrimitive m, std::vector<bool> &reflect, std::vector<int> &rotate)
+void SBPLFullBodyParams::addLongMotionPrimitives(MotionPrimitive m, std::vector<bool> &reflect, std::vector<int> &rotate)
 {
   double theta = 0;
 

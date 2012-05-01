@@ -46,8 +46,8 @@
 #include <sbpl_arm_planner/bfs_3d.h>
 #include <sbpl_arm_planner/occupancy_grid.h>
 #include <sbpl_arm_planner/sbpl_arm_planning_error_codes.h>
-#include <sbpl_full_body_planner/sbpl_dual_collision_space.h>
-#include <sbpl_full_body_planner/sbpl_dual_arm_planner_params.h>
+#include <sbpl_full_body_planner/pr2_collision_space.h>
+#include <sbpl_full_body_planner/sbpl_full_body_params.h>
 #include <pviz/pviz.h>
 #include <boost/lexical_cast.hpp>
 
@@ -186,7 +186,7 @@ class EnvironmentDUALROBARM3D: public DiscreteSpaceInformation
 
     void setReferenceFrameTransform(KDL::Frame f, std::string &name);
 
-    sbpl_full_body_planner::SBPLDualCollisionSpace* getCollisionSpace() const;
+    sbpl_full_body_planner::PR2CollisionSpace* getCollisionSpace() const;
  
     sbpl_arm_planner::OccupancyGrid* getOccupancyGrid() const;
     
@@ -230,7 +230,7 @@ class EnvironmentDUALROBARM3D: public DiscreteSpaceInformation
 
     void getHeuristicTime(double* init_time, double* in_search_time){dijkstra_->getHeuristicTime(init_time,in_search_time);};
 
-    sbpl_full_body_planner::SBPLDualArmPlannerParams prms_;
+    sbpl_full_body_planner::SBPLFullBodyParams prms_;
   protected:
     virtual void GetSuccs(int SourceStateID, vector<int>* SuccIDV, vector<int>* CostV, vector<int>* ActionV=NULL );
 
@@ -253,7 +253,7 @@ class EnvironmentDUALROBARM3D: public DiscreteSpaceInformation
     sbpl_arm_planner::OccupancyGrid *grid_;
     sbpl_arm_planner::BFS3D* dijkstra_;
     sbpl_arm_planner::SBPLArmModel* arm_[2];
-    sbpl_full_body_planner::SBPLDualCollisionSpace *cspace_;
+    sbpl_full_body_planner::PR2CollisionSpace *cspace_;
 
     std::string params_filename_;
     std::string arm0_filename_;
@@ -389,7 +389,7 @@ inline double EnvironmentDUALROBARM3D::getEuclideanDistance(double x1, double y1
   return sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2));
 }
 
-inline sbpl_full_body_planner::SBPLDualCollisionSpace* EnvironmentDUALROBARM3D::getCollisionSpace() const
+inline sbpl_full_body_planner::PR2CollisionSpace* EnvironmentDUALROBARM3D::getCollisionSpace() const
 {
   return cspace_;
 }
