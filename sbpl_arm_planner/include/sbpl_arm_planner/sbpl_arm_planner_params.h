@@ -38,8 +38,8 @@
 #include <angles/angles.h>
 #include <sbpl/config.h>
 
-#define DEG2RAD(d) ((d)*(M_PI/180.0))
-#define RAD2DEG(r) ((r)*(180.0/M_PI))
+//#define DEG2RAD(d) ((d)*(M_PI/180.0))
+//#define RAD2DEG(r) ((r)*(180.0/M_PI))
 
 using namespace std;
 
