@@ -27,6 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _SBPL_DUAL_COLLISION_SPACE_
+#define _SBPL_DUAL_COLLISION_SPACE_
+
+
 #include <ros/ros.h>
 #include <vector>
 #include <sbpl_arm_planner/bresenham.h>
@@ -34,9 +38,6 @@
 #include <sbpl_arm_planner/sbpl_arm_planning_error_codes.h>
 #include <sbpl_arm_planner/occupancy_grid.h>
 #include <sbpl_arm_planner/sbpl_geometry_utils.h>
-//#include <geometric_shapes/shapes.h>
-//#include <geometric_shapes/bodies.h>
-//#include <geometric_shapes/shape_operations.h>
 #include <tf_conversions/tf_kdl.h>
 #include <tf/tf.h>
 #include <arm_navigation_msgs/CollisionObject.h>
@@ -52,11 +53,16 @@
 
 using namespace std;
 
-#ifndef _SBPL_DUAL_COLLISION_SPACE_
-#define _SBPL_DUAL_COLLISION_SPACE_
+static const std::string arm_side_names[2] = {"right", "left"};
 
 namespace sbpl_full_body_planner
 {
+
+enum Side
+{
+  Right, 
+  Left
+};
 
 typedef struct
 {
@@ -102,6 +108,19 @@ typedef struct
   std::string group;
   std::string frame;
 } CollisionLink;
+
+typedef struct
+{
+  //bool attached;
+  Side side;   // 0: right, 1: left
+  std::string name;
+  int kdl_segment;
+  std::string link;
+  KDL::Frame pose;  // pose in link frame
+  KDL::Frame f;     // temp variable
+  //std::vector<KDL::Frame> points;
+  std::vector<Sphere> spheres;
+} AttachedObject;
 
 class SBPLDualCollisionSpace
 {
@@ -153,15 +172,20 @@ class SBPLDualCollisionSpace
     void addCollisionObject(const arm_navigation_msgs::CollisionObject &object);
 
     /* attached objects */
+    //void addAttachedObject(const arm_navigation_msgs::CollisionObject &object);
+    //void getAttachedObjectVoxels(const std::vector<double> &pose, std::vector<std::vector<int> > &objectv);
+    //void getAttachedObjectInWorldFrame(const std::vector<double> &pose, std::vector<std::vector<double> > &objectv);
+    //void attachSphere(KDL::Frame& pose, std::string frame, double radius);
+    //void attachCylinder(KDL::Frame& pose, std::string frame, double radius, double length);
+    //void attachCube(KDL::Frame& pose, std::string frame, double x_dim, double y_dim, double z_dim);
+    void removeAttachedObject(std::string name);
     void removeAllAttachedObjects();
-    void addAttachedObject(const arm_navigation_msgs::CollisionObject &object);
-    void getAttachedObjectVoxels(const std::vector<double> &pose, std::vector<std::vector<int> > &objectv);
-    void getAttachedObjectInWorldFrame(const std::vector<double> &pose, std::vector<std::vector<double> > &objectv);
-    bool isValidAttachedObject(const std::vector<double> &pose, unsigned char &dist, int &debug_code);
-
-    void attachSphere(KDL::Frame& pose, std::string frame, double radius);
-    void attachCylinder(KDL::Frame& pose, std::string frame, double radius, double length);
-    void attachCube(KDL::Frame& pose, std::string frame, double x_dim, double y_dim, double z_dim);
+    void attachSphere(std::string name, std::string link, geometry_msgs::Pose pose, double radius);
+    void attachCube(std::string name, std::string link, geometry_msgs::Pose pose, double x_dim, double y_dim, double z_dim);
+    void attachCylinder(std::string name, std::string link, geometry_msgs::Pose pose, double radius, double length);
+    void getAttachedObjectSpheres(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, std::vector<std::vector<double> > &spheres);
+    void getAttachedObjectVoxels(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, std::vector<std::vector<int> > &voxels);
+    bool isAttachedObjectValid(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code);
 
     void setAttachedRobotLinkToMultiDofTransform(KDL::Frame& transform);
 
@@ -280,10 +304,14 @@ class SBPLDualCollisionSpace
     KDL::Chain full_body_chain_;
     KDL::ChainFkSolverPos_recursive* fk_solver_;
 
+    /* non-planning joint angles */
     double head_pan_angle_;
     double head_tilt_angle_;
 
     bool checkCollisionArmsToGroup(Group &group, unsigned char &dist);
+
+    /* ---- attached object ---- */
+    std::vector<AttachedObject> objects_;
 };
 
 inline bool SBPLDualCollisionSpace::isValidCell(const int x, const int y, const int z, const int radius)

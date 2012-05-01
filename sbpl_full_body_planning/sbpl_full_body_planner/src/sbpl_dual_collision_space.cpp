@@ -45,6 +45,7 @@ SBPLDualCollisionSpace::SBPLDualCollisionSpace(sbpl_arm_planner::SBPLArmModel* r
   arm_[0] = right_arm;
   arm_[1] = left_arm;
   fOut_ = stdout;
+  cube_filling_sphere_radius_ = 0.04;
 
   cspace_log_ = "cspace";
 
@@ -923,7 +924,7 @@ void SBPLDualCollisionSpace::transformPose(const std::string &current_frame, con
   tf_.transformPose(desired_frame, stpose_in, stpose_out);
   pose_out = stpose_out.pose;
 }
-
+/*
 void SBPLDualCollisionSpace::removeAllAttachedObjects()
 {
   attached_object_.clear();
@@ -958,10 +959,10 @@ void SBPLDualCollisionSpace::addAttachedObject(const arm_navigation_msgs::Collis
 
   is_object_attached_ = true;
  
-  /* 
-  for(size_t i = 0; i < attached_object_.size(); ++i)
-    ROS_INFO("[cspace] [%d] xyz: %0.3f %0.3f %0.3f radius: %0.3f (%d)",int(i),attached_object_[i].x(),attached_object_[i].y(),attached_object_[i].z(),object_radius_w_[i],object_radius_[i]);
-  */
+  
+  //for(size_t i = 0; i < attached_object_.size(); ++i)
+  //  ROS_INFO("[cspace] [%d] xyz: %0.3f %0.3f %0.3f radius: %0.3f (%d)",int(i),attached_object_[i].x(),attached_object_[i].y(),attached_object_[i].z(),object_radius_w_[i],object_radius_[i]);
+  
 }
 
 void SBPLDualCollisionSpace::getAttachedObjectVoxels(const std::vector<double> &pose, std::vector<std::vector<int> > &objectv)
@@ -1112,7 +1113,7 @@ void SBPLDualCollisionSpace::setAttachedRobotLinkToMultiDofTransform(KDL::Frame&
 //	sbpl_arm_planner::printKDLFrame(attached_robot_link_in_multi_dof_, "right_wrist_in_multi-dof");
 //	sbpl_arm_planner::printKDLFrame(attached_object_in_multi_dof_, "object_in_multi-dof");
 }
-
+*/
 bool SBPLDualCollisionSpace::getCollisionLinks()
 {
   XmlRpc::XmlRpcValue xml_links;
@@ -1453,6 +1454,7 @@ bool SBPLDualCollisionSpace::computeFullBodyKinematics(double x, double y, doubl
   getMaptoRobotTransform(x,y,theta,map_to_robot_);
   fk_out = map_to_robot_*fk_out;
 
+  ROS_DEBUG("[cspace] x: %0.3f  y: %0.3f  theta: %0.3f  torso: %0.3f  frame_num: %d  pose: %0.3f %0.3f %0.3f", x, y, theta, torso, frame_num, fk_out.p.x(), fk_out.p.y(), fk_out.p.z());
   return true;
 }
 
@@ -1930,4 +1932,231 @@ void SBPLDualCollisionSpace::getIntermediatePoints(KDL::Vector a, KDL::Vector b,
 	}
 	points.push_back(b);
 }
+
+/* ******************  Attached Object **************** */
+void SBPLDualCollisionSpace::removeAllAttachedObjects()
+{
+  is_object_attached_ = false;
+  objects_.clear();
+  ROS_INFO("[cspace] Removed all attached objects.");
+}
+
+void SBPLDualCollisionSpace::removeAttachedObject(std::string name)
+{
+  bool removed = false;
+  for(size_t i = 0; i < objects_.size(); ++i)
+  {
+    if(objects_[i].name.compare(name) == 0)
+    {
+      objects_.erase(objects_.begin()+i);
+      removed = true;
+    }   
+  }
+  if(removed)
+    ROS_INFO("[cspace] Removed requested attached object, '%s'.", name.c_str());
+  else
+    ROS_WARN("[cspace] Was asked to remove %s attached object but it wasn't attached.", name.c_str());
+}
+
+void SBPLDualCollisionSpace::attachSphere(std::string name, std::string link, geometry_msgs::Pose pose, double radius)
+{
+  is_object_attached_ = true;
+  AttachedObject obj;
+
+  // TODO: Get KDL segment index for 'frame', for now we know it's _wrist_roll_link, 8
+  obj.kdl_segment = 10;
+  obj.name = name;
+  tf::PoseMsgToKDL(pose, obj.pose);
+  obj.link = link;
+
+  if(link.substr(0,1).compare("r") == 0)
+    obj.side = sbpl_full_body_planner::Right; 
+  else
+    obj.side = sbpl_full_body_planner::Left;
+
+  obj.spheres.resize(1);
+  obj.spheres[0].radius = radius;
+  obj.spheres[0].radius_c = radius / grid_->getResolution() + 0.5;
+  obj.spheres[0].v.x(0.0); 
+  obj.spheres[0].v.y(0.0); 
+  obj.spheres[0].v.z(0.0); 
+  objects_.push_back(obj);
+
+  ROS_INFO("[cspace] [attached_object] Attached '%s' sphere to the %s arm.  pose: %0.3f %0.3f %0.3f radius: %0.3fm (%d cells)", name.c_str(), arm_side_names[obj.side].c_str(), pose.position.x,pose.position.y,pose.position.z, obj.spheres[0].radius, obj.spheres[0].radius_c);
+}
+
+void SBPLDualCollisionSpace::attachCylinder(std::string name, std::string link, geometry_msgs::Pose pose, double radius, double length)
+{
+  std::vector<KDL::Vector> points;
+  
+  is_object_attached_ = true;
+  AttachedObject obj;
+  obj.kdl_segment = 10;
+  obj.name = name;
+  obj.link = link;
+  tf::PoseMsgToKDL(pose, obj.pose);
+
+  if(link.substr(0,1).compare("r") == 0)
+    obj.side = sbpl_full_body_planner::Right; 
+  else
+    obj.side = sbpl_full_body_planner::Left;
+
+  // compute end points of cylinder
+  KDL::Vector top, bottom;
+  //KDL::Vector top(obj.pose.p), bottom(obj.pose.p);
+  top.data[2] += length/2.0;
+  bottom.data[2] -= length/2.0;
+
+  // get spheres 
+  getIntermediatePoints(top, bottom, radius, points);
+
+  if(points.size() < 1)
+  {
+    ROS_WARN("[cspace] Trying to attach '%s' cylinder (with radius %0.3fm) to %s arm but it got converted to 0 spheres?", name.c_str(), radius, arm_side_names[obj.side].c_str());
+    return;
+  }
+  obj.spheres.resize(points.size());
+  ROS_INFO("[cspace] %s spheres:", name.c_str());
+  for(size_t i = 0; i < points.size(); ++i)
+  {
+    obj.spheres[i].name = name + "_" + boost::lexical_cast<std::string>(i);
+    obj.spheres[i].v = points[i];
+    obj.spheres[i].radius = radius;
+    obj.spheres[i].radius_c = radius / grid_->getResolution() + 0.5;
+    ROS_INFO("[cspace] [%d] xyz: %0.3f %0.3f %0.3f  radius: %0.3fm", int(i), obj.spheres[i].v.x(), obj.spheres[i].v.y(), obj.spheres[i].v.z(), radius);
+  }
+  objects_.push_back(obj);
+
+  ROS_INFO("[cspace] [attached_object] Attaching cylinder. pose: %0.3f %0.3f %0.3f radius: %0.3f length: %0.3f spheres: %d", pose.position.x,pose.position.y,pose.position.z, radius, length, int(obj.spheres.size()));
+  ROS_INFO("[cspace] [attached_object]    top: xyz: %0.3f %0.3f %0.3f  radius: %0.3fm (%d cells)", top.x(), top.y(), top.z(), radius, obj.spheres[0].radius_c);
+  ROS_INFO("[cspace] [attached_object] bottom: xyz: %0.3f %0.3f %0.3f  radius: %0.3fm (%d cells)", bottom.x(), bottom.y(), bottom.z(), radius, obj.spheres[0].radius_c);
+}
+
+void SBPLDualCollisionSpace::attachCube(std::string name, std::string link, geometry_msgs::Pose pose, double x_dim, double y_dim, double z_dim)
+{
+  std::vector<std::vector<double> > spheres;
+  is_object_attached_ = true;
+  AttachedObject obj;
+  obj.kdl_segment = 8;
+  obj.name = name;
+  obj.link = link;
+  tf::PoseMsgToKDL(pose, obj.pose);
+
+  if(link.substr(0,1).compare("r") == 0)
+    obj.side = sbpl_full_body_planner::Right; 
+  else
+    obj.side = sbpl_full_body_planner::Left;
+
+  sbpl_geometry_utils::getEnclosingSpheresOfCube(x_dim, y_dim, z_dim, cube_filling_sphere_radius_, spheres);
+
+  if(spheres.size() <= 3)
+    ROS_WARN("[cspace] Attached cube is represented by %d collision spheres. Consider lowering the radius of the spheres used to populate the attached cube. (radius = %0.3fm)", int(spheres.size()), cube_filling_sphere_radius_);
+
+  obj.spheres.resize(spheres.size());
+  for(size_t i = 0; i < spheres.size(); ++i)
+  {
+    obj.spheres[i].name = name + "_" + boost::lexical_cast<std::string>(i);
+    obj.spheres[i].v.x(spheres[i][0]);
+    obj.spheres[i].v.y(spheres[i][1]);
+    obj.spheres[i].v.z(spheres[i][2]);
+    obj.spheres[i].radius = spheres[i][3];
+    obj.spheres[i].radius_c = spheres[i][3] / grid_->getResolution() + 0.5;
+    ROS_INFO("[%d] %0.3f %0.3f %0.3f", int(i), obj.spheres[i].v.x(), obj.spheres[i].v.y(), obj.spheres[i].v.z());
+  }
+  objects_.push_back(obj);
+  ROS_INFO("[cspace] Attaching cube represented by %d spheres with dimensions: %0.3f %0.3f %0.3f", int(spheres.size()), x_dim, y_dim, z_dim);
+}
+
+
+void SBPLDualCollisionSpace::getAttachedObjectSpheres(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, std::vector<std::vector<double> > &spheres)
+{
+  KDL::Frame f;
+  KDL::Vector v;
+  spheres.clear();
+  std::vector<std::vector<double> > obj_sph;
+  for(size_t i = 0; i < objects_.size(); ++i)
+  {
+    if(objects_[i].side == sbpl_full_body_planner::Right)
+      arm_[objects_[i].side]->computeFK(rangles, pose, objects_[i].kdl_segment, &(objects_[i].f));
+    else
+      arm_[objects_[i].side]->computeFK(langles, pose, objects_[i].kdl_segment, &(objects_[i].f));
+
+    ROS_DEBUG_NAMED(cspace_log_, "[cspace]    pose of wrist in map: %0.3f %0.3f %0.3f", objects_[i].f.p.x(), objects_[i].f.p.y(), objects_[i].f.p.z());
+    // T_obj_in_world = T_link_in_world * T_obj_in_link
+    f = objects_[i].f * objects_[i].pose;
+    
+    ROS_DEBUG_NAMED(cspace_log_, "[cspace]   pose of object in map: %0.3f %0.3f %0.3f", f.p.x(), f.p.y(), f.p.z());
+
+    //spheres.resize(spheres.size()+objects_[i].spheres.size(),std::vector<double>(5,0));
+    obj_sph.resize(objects_[i].spheres.size(), std::vector<double>(5,0));
+    for(size_t j = 0; j < objects_[i].spheres.size(); ++j)
+    {
+      // v_sphere_in_world = T_obj_in_world * v_pos_in_obj
+      v = f * objects_[i].spheres[j].v;
+      /*
+      spheres[i][0] = v.x();
+      spheres[i][1] = v.y();
+      spheres[i][2] = v.z();
+      spheres[i][3] = objects_[i].spheres[j].radius;
+      spheres[i][4] = objects_[i].spheres[j].radius_c;
+      ROS_INFO("[cspace] pose of sphere in object: %0.3f %0.3f %0.3f",  objects_[i].spheres[j].v.x(),  objects_[i].spheres[j].v.y(), objects_[i].spheres[j].v.z());
+      ROS_INFO("[cspace] [%d-%d] pose of sphere in map: %0.3f %0.3f %0.3f  radius: %0.3fm   radius_c: %2.0f", int(i), int(j), spheres[i][0], spheres[i][1], spheres[i][2], spheres[i][3], spheres[i][4]);
+      */
+
+      obj_sph[j][0] = v.x();
+      obj_sph[j][1] = v.y();
+      obj_sph[j][2] = v.z();
+      obj_sph[j][3] = objects_[i].spheres[j].radius;
+      obj_sph[j][4] = objects_[i].spheres[j].radius_c;
+      ROS_DEBUG_NAMED(cspace_log_, "[cspace] [%d] pose of sphere in object: %0.3f %0.3f %0.3f",  int(i), objects_[i].spheres[j].v.x(),  objects_[i].spheres[j].v.y(), objects_[i].spheres[j].v.z());
+    }
+    spheres.insert(spheres.end(), obj_sph.begin(), obj_sph.end());
+  }
+
+  // debug
+  for(size_t i = 0; i < spheres.size(); ++i)
+    ROS_DEBUG_NAMED(cspace_log_, "[cspace] [%d] xyz: %0.3f %0.3f %0.3f  radius: %0.3f  radius_c: %2.0f", int(i), spheres[i][0], spheres[i][1], spheres[i][2], spheres[i][3], spheres[i][4]);
+  ROS_DEBUG_NAMED(cspace_log_, "[cspace] Fetched %d spheres.", int(spheres.size()));
+}
+
+void SBPLDualCollisionSpace::getAttachedObjectVoxels(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, std::vector<std::vector<int> > &voxels)
+{
+  std::vector<std::vector<double> > spheres;
+  getAttachedObjectSpheres(langles, rangles, pose, spheres);
+  
+  voxels.resize(spheres.size(), std::vector<int> (4,0));
+  for(size_t i = 0; i < spheres.size(); ++i)
+  {
+    grid_->worldToGrid(spheres[i][0],spheres[i][1],spheres[i][2],voxels[i][0],voxels[i][1],voxels[i][2]);
+    voxels[i][3] = spheres[i][4];
+  }
+
+  ROS_INFO("[cspace] Fetched %d voxels.", int(voxels.size()));
+}
+
+bool SBPLDualCollisionSpace::isAttachedObjectValid(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
+{
+  if(!is_object_attached_)
+    return true;
+
+  unsigned char dist_temp = 100;
+  std::vector<std::vector<int> > voxels;
+  getAttachedObjectVoxels(langles, rangles, pose, voxels);
+  
+
+  for(size_t i = 0; i < voxels.size(); ++i)
+  {
+    if((dist_temp = grid_->getCell(voxels[i][0], voxels[i][1], voxels[i][2])) <= voxels[i][3])
+    {
+      dist = dist_temp;
+      debug_code = sbpl_arm_planner::ATTACHED_OBJECT_IN_COLLISION;
+      return false;
+    }
+
+    if(dist > dist_temp)
+      dist = dist_temp;
+  }
+  return true;
+}
+
 }
