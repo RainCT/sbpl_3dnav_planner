@@ -1,7 +1,6 @@
 /** /author Andrew Dornbrush */
 
 #include <Eigen/Core>
-#include <geometry_msgs/Point.h>
 #include <sbpl_arm_planner/sbpl_geometry_utils.h>
 
 namespace sbpl_geometry_utils
@@ -552,11 +551,16 @@ void sbpl_geometry_utils::getEnclosingSpheresOfMesh(const std::vector<geometry_m
 			}
 		}
 	}
-
-	// for every triangle
+	
+  // for every triangle
 	for(int triangleIdx = 0; triangleIdx < (int)triangles.size(); triangleIdx++)
 	{
 		// get the vertices of the triangle as geometry_msgs::Point
+    if(3*triangleIdx + 2 >= vertices.size())
+    {
+      //printf("triangleIdx: %d  # vertices: %d  [3*triangleIdx+2]: %d\n", triangleIdx, int(vertices.size()), 3 * triangleIdx + 2);
+      continue;
+    }
 		geometry_msgs::Point pt1 = vertices[3 * triangleIdx + 0];
 		geometry_msgs::Point pt2 = vertices[3 * triangleIdx + 1];
 		geometry_msgs::Point pt3 = vertices[3 * triangleIdx + 2];
@@ -669,3 +673,49 @@ void sbpl_geometry_utils::getEnclosingSpheresOfMesh(const std::vector<geometry_m
 		}
 	}
 }
+
+void sbpl_geometry_utils::getEnclosingSpheresOfMesh(const std::vector<geometry_msgs::Point>& vertices,
+                                                    const std::vector<int>& triangles,
+                                                    double radius, std::vector<std::vector<double> >& spheres,
+                                                    bool fillMesh)
+{
+  std::vector<sbpl_geometry_utils::Sphere> s;
+  getEnclosingSpheresOfMesh(vertices, triangles, radius, s, fillMesh);
+
+  spheres.resize(s.size(), std::vector<double> (4,0));
+  for(std::size_t i = 0; i < s.size(); ++i)
+  {
+    spheres[i][0] = s[i].p.x;
+    spheres[i][1] = s[i].p.y;
+    spheres[i][2] = s[i].p.z;
+    spheres[i][3] = s[i].radius;
+  }
+}
+
+bool sbpl_geometry_utils::getTrianglesFromMeshFile(std::string mesh_file, std::vector<int32_t> &triangles, std::vector<geometry_msgs::Point> &vertices)
+{
+  shapes::Shape *mesh = shapes::createMeshFromFilename(mesh_file);
+
+  if(mesh != NULL)
+  {
+    triangles.resize(static_cast<shapes::Mesh*>(mesh)->triangleCount*3);
+    for(size_t i=0; i<triangles.size(); ++i)
+      triangles[i] = static_cast<shapes::Mesh*>(mesh)->triangles[i];
+
+    vertices.resize((static_cast<shapes::Mesh*>(mesh)->vertexCount));
+    for(size_t i=0; i<vertices.size(); ++i)
+    {
+      vertices[i].x = static_cast<shapes::Mesh*>(mesh)->vertices[3*i];
+      vertices[i].y = static_cast<shapes::Mesh*>(mesh)->vertices[3*i+1];
+      vertices[i].z = static_cast<shapes::Mesh*>(mesh)->vertices[3*i+2];
+    }
+  }
+  else
+  {
+    printf("Failed to load mesh '%s'\n", mesh_file.c_str());
+    return false;
+  }
+
+  return true;
+}
+

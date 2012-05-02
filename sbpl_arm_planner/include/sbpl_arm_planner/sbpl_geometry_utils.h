@@ -5,6 +5,9 @@
 
 #include <vector>
 #include <math.h>
+#include <string>
+#include <geometry_msgs/Point.h>
+#include <geometric_shapes/shape_operations.h>
 
 namespace sbpl_geometry_utils
 {
@@ -55,5 +58,13 @@ void getEnclosingSpheresOfMesh(const std::vector<geometry_msgs::Point>& vertices
                                const std::vector<int>& triangles,
                                double radius, std::vector<Sphere>& spheres,
                                bool fillMesh = false);
+
+void getEnclosingSpheresOfMesh(const std::vector<geometry_msgs::Point>& vertices,
+                               const std::vector<int>& triangles,
+                               double radius, std::vector<std::vector<double> >& spheres,
+                               bool fillMesh = false);
+
+bool getTrianglesFromMeshFile(std::string mesh_file, std::vector<int32_t> &triangles, std::vector<geometry_msgs::Point> &vertices);
+
 } // namespace sbpl_geometry_utils
 #endif
