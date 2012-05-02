@@ -522,8 +522,7 @@ void Sbpl3DNavPlanner::attachObject(const arm_navigation_msgs::CollisionObject &
     else if(object.shapes[i].type == arm_navigation_msgs::Shape::MESH)
     {
       ROS_INFO("[3dnav] Attaching a '%s' mesh with %d triangles  & %d vertices.", object.id.c_str(), int(object.shapes[i].triangles.size()/3), int(object.shapes[i].vertices.size()));
-      ROS_ERROR("[3dnav] Attaching a mesh is not supported!");
-      //cspace_->attachMesh(object.id, object.header.frame_id, object.poses[i], object.shapes[i].triangles, object.shapes[i].vertices);
+      cspace_->attachMesh(object.id, object.header.frame_id, object.poses[i], object.shapes[i].vertices, object.shapes[i].triangles);
     }
     else if(object.shapes[i].type == arm_navigation_msgs::Shape::BOX)
     {
@@ -1920,7 +1919,7 @@ void Sbpl3DNavPlanner::visualizeAttachedObject()
 	color[2] = 0;
 
   cspace_->getAttachedObjectSpheres(langles_, rangles_, body_pos_, spheres); 
-	ROS_INFO("[3dnav] Displaying %d spheres for the attached object.", int(spheres.size()));
+	ROS_DEBUG("[3dnav] Displaying %d spheres for the attached object.", int(spheres.size()));
 
 	for (size_t i = 0; i < spheres.size(); ++i)
     ROS_DEBUG("[%d] xyz: %0.3f %0.3f %0.3f radius: %0.3f", int(i), spheres[i][0], spheres[i][1] , spheres[i][2], spheres[i][3]);

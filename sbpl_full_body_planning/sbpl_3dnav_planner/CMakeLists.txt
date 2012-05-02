@@ -38,4 +38,4 @@ rosbuild_add_executable(test_get_base_poses src/test_get_base_poses.cpp)
 
 rosbuild_add_executable(attachObject src/attach_object_to_right_gripper.cpp)
 
-rosbuild_add_executable(raiseTorso src/raise_torso.cpp)
+#rosbuild_add_executable(raiseTorso src/raise_torso.cpp)
