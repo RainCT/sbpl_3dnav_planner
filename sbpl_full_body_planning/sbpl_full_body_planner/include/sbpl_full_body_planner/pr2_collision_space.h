@@ -172,17 +172,12 @@ class PR2CollisionSpace
     void addCollisionObject(const arm_navigation_msgs::CollisionObject &object);
 
     /* attached objects */
-    //void addAttachedObject(const arm_navigation_msgs::CollisionObject &object);
-    //void getAttachedObjectVoxels(const std::vector<double> &pose, std::vector<std::vector<int> > &objectv);
-    //void getAttachedObjectInWorldFrame(const std::vector<double> &pose, std::vector<std::vector<double> > &objectv);
-    //void attachSphere(KDL::Frame& pose, std::string frame, double radius);
-    //void attachCylinder(KDL::Frame& pose, std::string frame, double radius, double length);
-    //void attachCube(KDL::Frame& pose, std::string frame, double x_dim, double y_dim, double z_dim);
     void removeAttachedObject(std::string name);
     void removeAllAttachedObjects();
     void attachSphere(std::string name, std::string link, geometry_msgs::Pose pose, double radius);
     void attachCube(std::string name, std::string link, geometry_msgs::Pose pose, double x_dim, double y_dim, double z_dim);
     void attachCylinder(std::string name, std::string link, geometry_msgs::Pose pose, double radius, double length);
+    void attachMesh(std::string name, std::string link, geometry_msgs::Pose pose, const std::vector<geometry_msgs::Point> &vertices, const std::vector<int> &triangles);
     void getAttachedObjectSpheres(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, std::vector<std::vector<double> > &spheres);
     void getAttachedObjectVoxels(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, std::vector<std::vector<int> > &voxels);
     bool isAttachedObjectValid(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code);

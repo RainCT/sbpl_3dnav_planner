@@ -924,185 +924,8 @@ void PR2CollisionSpace::transformPose(const std::string &current_frame, const st
   tf_.transformPose(desired_frame, stpose_in, stpose_out);
   pose_out = stpose_out.pose;
 }
+
 /*
-void PR2CollisionSpace::removeAllAttachedObjects()
-{
-  attached_object_.clear();
-  object_radius_.clear();
-  object_radius_w_.clear();
-  is_object_attached_ = false;
-}
-
-void PR2CollisionSpace::addAttachedObject(const arm_navigation_msgs::CollisionObject &object)
-{
-  KDL::Vector point;
-
-  //TODO: This is a hack. Maybe we should allow multiple attached objects?
-  removeAllAttachedObjects();
-
-  for(size_t i = 0; i < object.shapes.size(); ++i)
-  {
-    if(object.shapes[i].vertices.size() != object.shapes[i].dimensions.size())
-      ROS_WARN("[cspace] There are %d points to %s but only %d dimensions.",int(object.shapes[i].vertices.size()),object.id.c_str(), int(object.shapes[i].dimensions.size()));
-
-    for(size_t j = 0; j < object.shapes[i].vertices.size(); ++j)
-    {
-      point.x(object.shapes[i].vertices[j].x);
-      point.y(object.shapes[i].vertices[j].y);
-      point.z(object.shapes[i].vertices[j].z);
-      attached_object_.push_back(point);
-
-      object_radius_w_.push_back(object.shapes[i].dimensions[j]);
-      object_radius_.push_back(int(object_radius_w_.back()/grid_->getResolution()+0.5));
-    }
-  }
-
-  is_object_attached_ = true;
- 
-  
-  //for(size_t i = 0; i < attached_object_.size(); ++i)
-  //  ROS_INFO("[cspace] [%d] xyz: %0.3f %0.3f %0.3f radius: %0.3f (%d)",int(i),attached_object_[i].x(),attached_object_[i].y(),attached_object_[i].z(),object_radius_w_[i],object_radius_[i]);
-  
-}
-
-void PR2CollisionSpace::getAttachedObjectVoxels(const std::vector<double> &pose, std::vector<std::vector<int> > &objectv)
-{
-  KDL::Frame f;
-  KDL::Vector v;
-
-  f.p.x(pose[0]);
-  f.p.y(pose[1]);
-  f.p.z(pose[2]);
-  f.M.RPY(pose[3],pose[4],pose[5]);
-
-  //f = attached_object_in_multi_dof_ * f;
-  f = f * attached_object_in_multi_dof_;
-  objectv.resize(attached_object_.size(),std::vector<int>(3,0));
-  for(size_t i = 0; i < attached_object_.size(); ++i)
-  {
-    v = f*attached_object_[i];
-    grid_->worldToGrid(v.data[0],v.data[1],v.data[2],objectv[i][0],objectv[i][1],objectv[i][2]);
-  }
-}
-
-void PR2CollisionSpace::getAttachedObjectInWorldFrame(const std::vector<double> &pose, std::vector<std::vector<double> > &objectv)
-{
-  KDL::Frame f;
-  KDL::Vector v;
-
-  f.p.x(pose[0]);
-  f.p.y(pose[1]);
-  f.p.z(pose[2]);
-  f.M.RPY(pose[3],pose[4],pose[5]);
-
-  //f =  attached_object_in_multi_dof_ * f;
-  f =  f * attached_object_in_multi_dof_;
-  objectv.resize(attached_object_.size(),std::vector<double>(4,0));
-  for(size_t i = 0; i < attached_object_.size(); ++i)
-  {
-    v = f*attached_object_[i];
-    objectv[i][0] = v.x();
-    objectv[i][1] = v.y();
-    objectv[i][2] = v.z();
-    objectv[i][3] = object_radius_w_[i];
-  }
-}
-
-bool PR2CollisionSpace::isValidAttachedObject(const std::vector<double> &pose, unsigned char &dist, int &debug_code)
-{
-  if(!is_object_attached_)
-    return true;
-
-  unsigned char dist_temp = 100;
-
-  getAttachedObjectVoxels(pose, attached_voxels_);
-
-  for(size_t i = 0; i < attached_voxels_.size(); ++i)
-  {
-    if((dist_temp = grid_->getCell(attached_voxels_[i][0],attached_voxels_[i][1],attached_voxels_[i][2])) <= object_radius_[i])
-    {
-      dist = dist_temp;
-      debug_code = sbpl_arm_planner::ATTACHED_OBJECT_IN_COLLISION;
-      return false;
-    }
-    
-    if(dist > dist_temp)
-      dist = dist_temp;
-  }
-  return true;
-}
-
-void PR2CollisionSpace::attachSphere(KDL::Frame& pose, std::string frame, double radius)
-{
-	KDL::Vector sphere(0, 0, 0);
-	is_object_attached_ = true;
-	attached_robot_link_ = frame;
-	attached_object_pose_ = pose;
-
-	attached_object_.push_back(sphere);
-	object_radius_w_.push_back(radius);
-	object_radius_.push_back(int(object_radius_w_.back() / grid_->getResolution() + 0.5));
-}
-
-void PR2CollisionSpace::attachCylinder(KDL::Frame& pose, std::string frame, double radius, double length)
-{
-	is_object_attached_ = true;
-	attached_robot_link_ = frame;
-	attached_object_pose_ = pose;
-
-	// compute end points of cylinder
-	KDL::Vector top(0, 0, 0);
-	KDL::Vector bottom(0, 0, 0);
-	std::vector<KDL::Vector> points;
-
-	top.data[2] += length / 2.0;
-	bottom.data[2] -= length / 2.0;
-
-	// get spheres
-	getIntermediatePoints(top, bottom, radius, points);
-	for (size_t i = 0; i < points.size(); i++) {
-		attached_object_.push_back(points[i]);
-		object_radius_w_.push_back(radius);
-		object_radius_.push_back(int(object_radius_w_.back() / grid_->getResolution() + 0.5));
-	}
-
-	ROS_DEBUG("[cspace] Attached cylinder with radius:%0.3fm  legth: %0.3fm", radius, length);
-
-	for (size_t i = 0; i < attached_object_.size(); i++) {
-		ROS_DEBUG("[cspace] [%d] xyz: %0.3f %0.3f %0.3f radius: %0.3fm",
-		          int(i), attached_object_[i].x(), attached_object_[i].y(), attached_object_[i].z(),
-		          object_radius_w_[i]);
-	}
-}
-
-void PR2CollisionSpace::attachCube(KDL::Frame& pose, std::string frame, double x_dim, double y_dim, double z_dim)
-{
-	KDL::Vector v;
-	is_object_attached_ = true;
-	attached_robot_link_ = frame;
-	attached_object_pose_ = pose;
-
-	std::vector<std::vector<double> > spheres;
-	sbpl_geometry_utils::getEnclosingSpheresOfCube(x_dim, y_dim, z_dim, cube_filling_sphere_radius_, spheres);
-
-	for (size_t i = 0; i < spheres.size(); ++i) {
-		v.x(spheres[i][0]);
-		v.y(spheres[i][1]);
-		v.z(spheres[i][2]);
-		attached_object_.push_back(v);
-		object_radius_w_.push_back(spheres[i][3]);
-		object_radius_.push_back(int(object_radius_w_.back() / grid_->getResolution() + 0.5));
-	}
-
-	ROS_DEBUG("[cspace] Attaching cube represented by %d spheres with dimensions: %0.3f %0.3f %0.3f",
-	          int(spheres.size()), x_dim, y_dim, z_dim);
-
-	for (size_t i = 0; i < attached_object_.size(); ++i) {
-		ROS_DEBUG("[cspace] [%d] xyz: %0.3f %0.3f %0.3f radius: %0.3fm", int(i),
-		          attached_object_[i].x(), attached_object_[i].y(), attached_object_[i].z(), object_radius_w_[i]);
-	}
-}
-
 void PR2CollisionSpace::setAttachedRobotLinkToMultiDofTransform(KDL::Frame& transform)
 {
 	attached_robot_link_in_multi_dof_ = transform;
@@ -1114,6 +937,7 @@ void PR2CollisionSpace::setAttachedRobotLinkToMultiDofTransform(KDL::Frame& tran
 //	sbpl_arm_planner::printKDLFrame(attached_object_in_multi_dof_, "object_in_multi-dof");
 }
 */
+
 bool PR2CollisionSpace::getCollisionLinks()
 {
   XmlRpc::XmlRpcValue xml_links;
@@ -2037,7 +1861,7 @@ void PR2CollisionSpace::attachCube(std::string name, std::string link, geometry_
   std::vector<std::vector<double> > spheres;
   is_object_attached_ = true;
   AttachedObject obj;
-  obj.kdl_segment = 8;
+  obj.kdl_segment = 10;
   obj.name = name;
   obj.link = link;
   tf::PoseMsgToKDL(pose, obj.pose);
@@ -2067,6 +1891,41 @@ void PR2CollisionSpace::attachCube(std::string name, std::string link, geometry_
   ROS_INFO("[cspace] Attaching cube represented by %d spheres with dimensions: %0.3f %0.3f %0.3f", int(spheres.size()), x_dim, y_dim, z_dim);
 }
 
+void PR2CollisionSpace::attachMesh(std::string name, std::string link, geometry_msgs::Pose pose, const std::vector<geometry_msgs::Point> &vertices, const std::vector<int> &triangles)
+{
+  std::vector<std::vector<double> > spheres;
+  is_object_attached_ = true;
+  AttachedObject obj;
+  obj.kdl_segment = 10;
+  obj.name = name;
+  obj.link = link;
+  tf::PoseMsgToKDL(pose, obj.pose);
+
+  if(link.substr(0,1).compare("r") == 0)
+    obj.side = sbpl_full_body_planner::Right; 
+  else
+    obj.side = sbpl_full_body_planner::Left;
+
+  ROS_INFO("get enclosing spheres");
+  sbpl_geometry_utils::getEnclosingSpheresOfMesh(vertices, triangles, cube_filling_sphere_radius_, spheres);
+  ROS_INFO("got enclosing spheres! spheres: %d", int(spheres.size()));
+  if(spheres.size() <= 3)
+    ROS_WARN("[cspace] Attached mesh is represented by %d collision spheres. Consider lowering the radius of the spheres used to populate the attached mesh more accuratly. (radius = %0.3fm)", int(spheres.size()), cube_filling_sphere_radius_);
+
+  obj.spheres.resize(spheres.size());
+  for(size_t i = 0; i < spheres.size(); ++i)
+  {
+    obj.spheres[i].name = name + "_" + boost::lexical_cast<std::string>(i);
+    obj.spheres[i].v.x(spheres[i][0]);
+    obj.spheres[i].v.y(spheres[i][1]);
+    obj.spheres[i].v.z(spheres[i][2]);
+    obj.spheres[i].radius = spheres[i][3];
+    obj.spheres[i].radius_c = spheres[i][3] / grid_->getResolution() + 0.5;
+    ROS_INFO("[%d] %0.3f %0.3f %0.3f", int(i), obj.spheres[i].v.x(), obj.spheres[i].v.y(), obj.spheres[i].v.z());
+  }
+  objects_.push_back(obj);
+  ROS_INFO("[cspace] Attaching mesh represented by %d spheres with %d vertices and %d triangles.", int(spheres.size()), int(vertices.size()), int(triangles.size()));
+}
 
 void PR2CollisionSpace::getAttachedObjectSpheres(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, std::vector<std::vector<double> > &spheres)
 {
