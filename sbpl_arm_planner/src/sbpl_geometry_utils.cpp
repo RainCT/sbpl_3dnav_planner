@@ -551,19 +551,19 @@ void sbpl_geometry_utils::getEnclosingSpheresOfMesh(const std::vector<geometry_m
 			}
 		}
 	}
-	
+  
+  if ((int)triangles.size() % 3 != 0) {
+    ROS_ERROR("Mesh triangle list is not well-formed. Triangle list size should be a multiple of three.");
+    return;
+  }
+
   // for every triangle
-	for(int triangleIdx = 0; triangleIdx < (int)triangles.size(); triangleIdx++)
-	{
-		// get the vertices of the triangle as geometry_msgs::Point
-    if(3*triangleIdx + 2 >= vertices.size())
-    {
-      //printf("triangleIdx: %d  # vertices: %d  [3*triangleIdx+2]: %d\n", triangleIdx, int(vertices.size()), 3 * triangleIdx + 2);
-      continue;
-    }
-		geometry_msgs::Point pt1 = vertices[3 * triangleIdx + 0];
-		geometry_msgs::Point pt2 = vertices[3 * triangleIdx + 1];
-		geometry_msgs::Point pt3 = vertices[3 * triangleIdx + 2];
+  for(int triangleIdx = 0; triangleIdx < (int)triangles.size() / 3; triangleIdx += 3)
+  {
+    // get the vertices of the triangle as geometry_msgs::Point
+		geometry_msgs::Point pt1 = vertices[triangles[3 * triangleIdx + 0]];
+		geometry_msgs::Point pt2 = vertices[triangles[3 * triangleIdx + 1]];
+		geometry_msgs::Point pt3 = vertices[triangles[3 * triangleIdx + 2]];
 
 		// Pack those vertices into my Triangle struct
 		Triangle triangle;
