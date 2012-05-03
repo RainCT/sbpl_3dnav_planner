@@ -290,7 +290,7 @@ private:
 
     void visualizeHeuristicGrid();
 
-    void visualizeAttachedObject();
+    void visualizeAttachedObject(bool delete_first=false);
 
     void visualizeCollisionObject(const arm_navigation_msgs::CollisionObject &object);
 

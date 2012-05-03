@@ -147,7 +147,6 @@ bool Sbpl3DNavPlanner::init()
 	node_handle_.param<std::string>("planner/motion_primitive_file", mprims_filename_, "");
 	node_handle_.param<std::string>("planner/base_motion_primitive_file", base_mprims_filename_, "");
 	node_handle_.param("planner/use_shortened_path", use_shortened_path_, false);
-	node_handle_.param("planner/use_inner_circle_of_object", use_inner_circle_, true);
 
 	// debug params
 	node_handle_.param("debug/print_out_path", print_path_, true);
@@ -265,9 +264,9 @@ void Sbpl3DNavPlanner::collisionMapCallback(const arm_navigation_msgs::Collision
 {
 	if(colmap_mutex_.try_lock()){
 		ROS_DEBUG("collision map callback");
-		if (collision_map->header.frame_id.compare(reference_frame_) != 0) {
-			ROS_WARN("collision_map_occ is in %s not in %s", collision_map->header.frame_id.c_str(), reference_frame_.c_str());
-			ROS_DEBUG("the collision map has %i cubic obstacles", int(collision_map->boxes.size()));
+		if (collision_map->header.frame_id.compare(reference_frame_) != 0 &&
+        collision_map->header.frame_id.compare("/" + reference_frame_) != 0) {
+			ROS_WARN("[3dnav] The collision map received is in %s frame but expected in %s frame.", collision_map->header.frame_id.c_str(), reference_frame_.c_str());
 		}
 
 		// add collision map msg
@@ -277,8 +276,6 @@ void Sbpl3DNavPlanner::collisionMapCallback(const arm_navigation_msgs::Collision
 
 		map_frame_ = collision_map->header.frame_id;
 		setArmToMapTransform(map_frame_);
-
-		ROS_WARN("collision_map_occ frame: %s", map_frame_.c_str());
 
 		cspace_->putCollisionObjectsInGrid();
 		colmap_mutex_.unlock();
@@ -381,53 +378,6 @@ void Sbpl3DNavPlanner::jointStatesCallback(const sensor_msgs::JointStateConstPtr
   ROS_DEBUG("[3dnav] [robot state] x: %0.3f  y: %0.3f  theta: %0.3f  torso: %0.3f", body_pos_.x, body_pos_.y, body_pos_.theta, body_pos_.z); 
 }
 
-/*
-void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::AttachedCollisionObjectConstPtr &attached_object)
-{
-	if(colmap_mutex_.try_lock()){
-		// remove all objects
-		if (attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::REMOVE) {
-			ROS_INFO("[3dnav] Removing all attached objects.");
-			attached_object_ = false;
-			cspace_->removeAllAttachedObjects();
-		}
-		// add object
-		else if (attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::ADD) {
-			attached_object_ = true;
-			ROS_INFO("[3dnav] Received a message to ADD an object (%s) with %d shapes.", attached_object->object.id.c_str(),
-				 int(attached_object->object.shapes.size()));
-			cspace_->attachObject(attached_object->object);
-		}
-		else {
-			ROS_INFO("[3dnav] We don't support this operation.");
-		}
-
-		// get object radius
-		if (attached_object->object.poses.size() > 0) {
-			if (!use_inner_circle_) {
-				double objRadius = max(attached_object->object.poses[0].position.x, attached_object->object.poses[0].position.y) / 2.0;
-				ROS_INFO("[3dnav] Setting the object radius to the OUTER radius of %0.3fm", objRadius);
-				sbpl_arm_env_.setObjectRadius(objRadius);
-			}
-			else {
-				double objRadius = min(attached_object->object.poses[0].position.x, attached_object->object.poses[0].position.y) / 2.0;
-				ROS_INFO("[3dnav] Setting the object radius to the INNER radius of %0.3fm", objRadius);
-				sbpl_arm_env_.setObjectRadius(objRadius);
-			}
-
-			// temporary hack to get Z inflation of object
-			ROS_INFO("[3dnav] Object should be inflated by %0.3fm above it.", attached_object->object.poses[0].orientation.x);
-			sbpl_arm_env_.setObjectZInflation(int(attached_object->object.poses[0].orientation.x / env_resolution_ + 0.5), 0);
-		}
-
-		if (attached_object_) {
-			visualizeAttachedObject();
-		}
-
-		colmap_mutex_.unlock();
-	}
-}
-*/
 void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::AttachedCollisionObjectConstPtr &attached_object)
 {
   // remove all objects
@@ -437,6 +387,7 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
     ROS_DEBUG("[3dnav] Removing all attached objects.");
     attached_object_ = false;
     cspace_->removeAllAttachedObjects();
+    visualizeAttachedObject(true);
   }
   // add object
   else if(attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::ADD)
@@ -468,9 +419,9 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
   // remove object
   else if(attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::REMOVE)
   {
-    attached_object_ = false;
     ROS_DEBUG("[3dnav] Removing object (%s) from gripper.", attached_object->object.id.c_str());
     cspace_->removeAttachedObject(attached_object->object.id);
+    visualizeAttachedObject(true);
   }
   else if(attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::DETACH_AND_ADD_AS_OBJECT)
   {
@@ -498,11 +449,11 @@ void Sbpl3DNavPlanner::attachObject(const arm_navigation_msgs::CollisionObject &
     pose_in.pose = object.poses[i];
     try
     {
-      tf_.transformPose("r_wrist_roll_link", pose_in, pose_out);
+      tf_.transformPose(cspace_->getExpectedAttachedObjectFrame(object.header.frame_id), pose_in, pose_out);
     }
     catch(int e)
     {
-      ROS_ERROR("[3dnav] Failed to transform the pose of the attached object from %s to %s. (exception: %d)", object.header.frame_id.c_str(), "r_wrist_roll_link", e);
+      ROS_ERROR("[3dnav] Failed to transform the pose of the attached object from %s to %s. (exception: %d)", object.header.frame_id.c_str(), cspace_->getExpectedAttachedObjectFrame(object.header.frame_id).c_str(), e);
       ROS_ERROR("[3dnav] Failed to attach '%s' object.", object.id.c_str());
       return;
     }
@@ -521,7 +472,7 @@ void Sbpl3DNavPlanner::attachObject(const arm_navigation_msgs::CollisionObject &
     }
     else if(object.shapes[i].type == arm_navigation_msgs::Shape::MESH)
     {
-      ROS_INFO("[3dnav] Attaching a '%s' mesh with %d triangles  & %d vertices.", object.id.c_str(), int(object.shapes[i].triangles.size()/3), int(object.shapes[i].vertices.size()));
+      ROS_INFO("[3dnav] Attaching a '%s' mesh with %d triangles/3  & %d vertices.", object.id.c_str(), int(object.shapes[i].triangles.size()/3), int(object.shapes[i].vertices.size()));
       cspace_->attachMesh(object.id, object.header.frame_id, object.poses[i], object.shapes[i].vertices, object.shapes[i].triangles);
     }
     else if(object.shapes[i].type == arm_navigation_msgs::Shape::BOX)
@@ -1911,16 +1862,23 @@ void Sbpl3DNavPlanner::visualizeCollisionObjects()
 	laviz_->visualizeBasicStates(points, color, "known_objects", 0.01);
 }
 
-void Sbpl3DNavPlanner::visualizeAttachedObject()
+void Sbpl3DNavPlanner::visualizeAttachedObject(bool delete_first)
 {
 	std::vector<std::vector<double> > spheres;
 	std::vector<double> color(4, 1);
 	std::vector<double> radius;
 	color[2] = 0;
 
-  cspace_->getAttachedObjectSpheres(langles_, rangles_, body_pos_, spheres); 
-	ROS_DEBUG("[3dnav] Displaying %d spheres for the attached object.", int(spheres.size()));
+  // first delete old visualizations
+  if(delete_first)
+    pviz_.deleteVisualizations("attached_objects", 500);
 
+  cspace_->getAttachedObjectSpheres(langles_, rangles_, body_pos_, spheres); 
+  
+  if(spheres.empty())
+    return;
+
+	ROS_DEBUG("[3dnav] Displaying %d spheres for the attached object.", int(spheres.size()));
 	for (size_t i = 0; i < spheres.size(); ++i)
     ROS_DEBUG("[%d] xyz: %0.3f %0.3f %0.3f radius: %0.3f", int(i), spheres[i][0], spheres[i][1] , spheres[i][2], spheres[i][3]);
 
