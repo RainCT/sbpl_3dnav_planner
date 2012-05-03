@@ -48,6 +48,7 @@ PR2CollisionSpace::PR2CollisionSpace(sbpl_arm_planner::SBPLArmModel* right_arm, 
   cube_filling_sphere_radius_ = 0.04;
 
   cspace_log_ = "cspace";
+  attached_object_frame_suffix_ = "_wrist_roll_link";
 
   //changed inc_ to a vector 8/28/2010
   inc_.resize(arm_[0]->num_joints_,0.0348);
@@ -1906,9 +1907,9 @@ void PR2CollisionSpace::attachMesh(std::string name, std::string link, geometry_
   else
     obj.side = sbpl_full_body_planner::Left;
 
-  ROS_INFO("get enclosing spheres");
+  ROS_INFO("[cspace] vertices: %d  triangles: %d", vertices.size(), triangles.size());
   sbpl_geometry_utils::getEnclosingSpheresOfMesh(vertices, triangles, cube_filling_sphere_radius_, spheres);
-  ROS_INFO("got enclosing spheres! spheres: %d", int(spheres.size()));
+  
   if(spheres.size() <= 3)
     ROS_WARN("[cspace] Attached mesh is represented by %d collision spheres. Consider lowering the radius of the spheres used to populate the attached mesh more accuratly. (radius = %0.3fm)", int(spheres.size()), cube_filling_sphere_radius_);
 
@@ -1921,7 +1922,7 @@ void PR2CollisionSpace::attachMesh(std::string name, std::string link, geometry_
     obj.spheres[i].v.z(spheres[i][2]);
     obj.spheres[i].radius = spheres[i][3];
     obj.spheres[i].radius_c = spheres[i][3] / grid_->getResolution() + 0.5;
-    ROS_INFO("[%d] %0.3f %0.3f %0.3f", int(i), obj.spheres[i].v.x(), obj.spheres[i].v.y(), obj.spheres[i].v.z());
+    ROS_DEBUG("[%d] %0.3f %0.3f %0.3f", int(i), obj.spheres[i].v.x(), obj.spheres[i].v.y(), obj.spheres[i].v.z());
   }
   objects_.push_back(obj);
   ROS_INFO("[cspace] Attaching mesh represented by %d spheres with %d vertices and %d triangles.", int(spheres.size()), int(vertices.size()), int(triangles.size()));
@@ -1989,8 +1990,7 @@ void PR2CollisionSpace::getAttachedObjectVoxels(const std::vector<double> &langl
     grid_->worldToGrid(spheres[i][0],spheres[i][1],spheres[i][2],voxels[i][0],voxels[i][1],voxels[i][2]);
     voxels[i][3] = spheres[i][4];
   }
-
-  ROS_INFO("[cspace] Fetched %d voxels.", int(voxels.size()));
+  ROS_DEBUG("[cspace] Fetched %d voxels.", int(voxels.size()));
 }
 
 bool PR2CollisionSpace::isAttachedObjectValid(const std::vector<double> &langles, const std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
@@ -2002,7 +2002,6 @@ bool PR2CollisionSpace::isAttachedObjectValid(const std::vector<double> &langles
   std::vector<std::vector<int> > voxels;
   getAttachedObjectVoxels(langles, rangles, pose, voxels);
   
-
   for(size_t i = 0; i < voxels.size(); ++i)
   {
     if((dist_temp = grid_->getCell(voxels[i][0], voxels[i][1], voxels[i][2])) <= voxels[i][3])
@@ -2016,6 +2015,11 @@ bool PR2CollisionSpace::isAttachedObjectValid(const std::vector<double> &langles
       dist = dist_temp;
   }
   return true;
+}
+
+std::string PR2CollisionSpace::getExpectedAttachedObjectFrame(std::string frame)
+{
+  return frame.substr(0,1) + attached_object_frame_suffix_;
 }
 
 }

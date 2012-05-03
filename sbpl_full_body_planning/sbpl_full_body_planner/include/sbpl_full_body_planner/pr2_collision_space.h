@@ -224,6 +224,8 @@ class PR2CollisionSpace
     bool checkSpineMotion(std::vector<double> &langles, std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code);
     bool checkAllMotion(std::vector<double> &langles, std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code);
 
+    std::string getExpectedAttachedObjectFrame(std::string frame);
+
   private:
 
     /** @brief arm model used by planner */
@@ -307,6 +309,7 @@ class PR2CollisionSpace
 
     /* ---- attached object ---- */
     std::vector<AttachedObject> objects_;
+    std::string attached_object_frame_suffix_;
 };
 
 inline bool PR2CollisionSpace::isValidCell(const int x, const int y, const int z, const int radius)
