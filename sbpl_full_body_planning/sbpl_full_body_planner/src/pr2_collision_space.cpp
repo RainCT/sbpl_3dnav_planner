@@ -1690,6 +1690,10 @@ bool PR2CollisionSpace::checkBaseMotion(std::vector<double> &langles, std::vecto
     return false;
   }
 
+  // attached_object-world
+  if(!isAttachedObjectValid(langles, rangles, pose, verbose, dist, debug_code))
+    return false;
+
   // arms-world
   if(!checkCollision(rangles, pose, 0, verbose, dist))
   {
@@ -1709,7 +1713,7 @@ bool PR2CollisionSpace::checkBaseMotion(std::vector<double> &langles, std::vecto
   // head-world
   if(!isHeadValid(pose.x, pose.y, pose.theta, pose.z, dist))
     return false;
- 
+
   return true;
 }
 
@@ -1728,6 +1732,10 @@ bool PR2CollisionSpace::checkArmsMotion(std::vector<double> &langles, std::vecto
 
 bool PR2CollisionSpace::checkAllMotion(std::vector<double> &langles, std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code)
 {
+  // attached_object-world
+  if(!isAttachedObjectValid(langles, rangles, pose, verbose, dist, debug_code))
+    return false;
+
   // arms-world, arms-arms
   if(!checkCollisionArms(langles, rangles, pose, verbose, dist, debug_code))
     return false;
@@ -1930,7 +1938,6 @@ void PR2CollisionSpace::attachMesh(std::string name, std::string link, geometry_
   else
     obj.side = sbpl_full_body_planner::Left;
 
-  ROS_INFO("[cspace] vertices: %d  triangles: %d", vertices.size(), triangles.size());
   sbpl_geometry_utils::getEnclosingSpheresOfMesh(vertices, triangles, cube_filling_sphere_radius_, spheres);
   
   if(spheres.size() <= 3)

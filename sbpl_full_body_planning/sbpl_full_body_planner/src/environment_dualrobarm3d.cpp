@@ -402,14 +402,14 @@ void EnvironmentDUALROBARM3D::GetSuccs(int SourceStateID, vector<int>* SuccIDV, 
 
 
         //check attached object for collision
-        //if(!cspace_->isValidAttachedObject(succ_wcoord, dist_temp, debug_code_))
-        //{
-        //ROS_DEBUG_NAMED(prms_.expands_log_, " succ: %2d  dist: %2d attached object is in collision.", int(i), int(dist_temp));
-        //invalid_prim = true;
-        //break;
-        //}
-        //else
-        //ROS_DEBUG_NAMED(prms_.expands_log_, " succ: %2d  dist: %2d attached object is NOT in collision.", int(i), int(dist_temp));
+        if(!cspace_->isAttachedObjectValid(sangles1, sangles0, pose_source, false, dist_temp, debug_code_))
+        {
+          ROS_DEBUG_NAMED(prms_.expands_log_, " succ: %2d  dist: %2d attached object is in collision.", int(i), int(dist_temp));
+          invalid_prim = true;
+          break;
+        }
+        else
+        ROS_DEBUG_NAMED(prms_.expands_log_, " succ: %2d  dist: %2d attached object is NOT in collision.", int(i), int(dist_temp));
 
         //check for collisions
         if(!cspace_->checkCollision(sangles1, sangles0, pose_source, true, dist_temp, debug_code_))
@@ -611,8 +611,7 @@ ROS_ERROR("bound check fail");
       
       if(!cspace_->checkBaseMotion(parent->angles1, parent->angles0, body_pose, prms_.verbose_, dist_temp /* padding */, debug_code_))
       {
-	//ROS_ERROR("collision check fail");
-        ROS_DEBUG_NAMED(prms_.expands_log_, " [env] collision");
+        ROS_DEBUG_NAMED(prms_.expands_log_, " [env] collision (dist: %d)", int(dist_temp));
         inCollision = true;
         break;
       }
