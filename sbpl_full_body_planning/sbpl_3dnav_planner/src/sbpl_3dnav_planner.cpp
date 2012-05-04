@@ -484,7 +484,7 @@ void Sbpl3DNavPlanner::attachObject(const arm_navigation_msgs::CollisionObject &
       ROS_WARN("[3dnav] Currently attaching objects of type '%d' aren't supported.", object.shapes[i].type);
   }
 
-  visualizeAttachedObject();
+  visualizeAttachedObject(true);
 }
 
 /********************* Get Valid Base Poses Service ********************************/
