@@ -310,6 +310,8 @@ class PR2CollisionSpace
     /* ---- attached object ---- */
     std::vector<AttachedObject> objects_;
     std::string attached_object_frame_suffix_;
+
+    int getAttachedObjectIndex(std::string name);
 };
 
 inline bool PR2CollisionSpace::isValidCell(const int x, const int y, const int z, const int radius)

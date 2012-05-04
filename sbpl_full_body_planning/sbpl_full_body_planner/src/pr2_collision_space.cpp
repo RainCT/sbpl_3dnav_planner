@@ -1805,7 +1805,15 @@ void PR2CollisionSpace::attachSphere(std::string name, std::string link, geometr
   obj.spheres[0].v.x(0.0); 
   obj.spheres[0].v.y(0.0); 
   obj.spheres[0].v.z(0.0); 
-  objects_.push_back(obj);
+
+  int ind = -1;
+  if((ind = getAttachedObjectIndex(name)) > -1)
+  {
+    ROS_WARN("[cspace] Already had an object attached with the name, '%s'. Replacing that object with this new one.", name.c_str());
+    objects_[ind] = obj;
+  }
+  else
+    objects_.push_back(obj);
 
   ROS_INFO("[cspace] [attached_object] Attached '%s' sphere to the %s arm.  pose: %0.3f %0.3f %0.3f radius: %0.3fm (%d cells)", name.c_str(), arm_side_names[obj.side].c_str(), pose.position.x,pose.position.y,pose.position.z, obj.spheres[0].radius, obj.spheres[0].radius_c);
 }
@@ -1828,7 +1836,6 @@ void PR2CollisionSpace::attachCylinder(std::string name, std::string link, geome
 
   // compute end points of cylinder
   KDL::Vector top, bottom;
-  //KDL::Vector top(obj.pose.p), bottom(obj.pose.p);
   top.data[2] += length/2.0;
   bottom.data[2] -= length/2.0;
 
@@ -1850,7 +1857,14 @@ void PR2CollisionSpace::attachCylinder(std::string name, std::string link, geome
     obj.spheres[i].radius_c = radius / grid_->getResolution() + 0.5;
     ROS_INFO("[cspace] [%d] xyz: %0.3f %0.3f %0.3f  radius: %0.3fm", int(i), obj.spheres[i].v.x(), obj.spheres[i].v.y(), obj.spheres[i].v.z(), radius);
   }
-  objects_.push_back(obj);
+  int ind = -1;
+  if((ind = getAttachedObjectIndex(name)) > -1)
+  {
+    ROS_WARN("[cspace] Already had an object attached with the name, '%s'. Replacing that object with this new one.", name.c_str());
+    objects_[ind] = obj;
+  }
+  else
+    objects_.push_back(obj);
 
   ROS_INFO("[cspace] [attached_object] Attaching cylinder. pose: %0.3f %0.3f %0.3f radius: %0.3f length: %0.3f spheres: %d", pose.position.x,pose.position.y,pose.position.z, radius, length, int(obj.spheres.size()));
   ROS_INFO("[cspace] [attached_object]    top: xyz: %0.3f %0.3f %0.3f  radius: %0.3fm (%d cells)", top.x(), top.y(), top.z(), radius, obj.spheres[0].radius_c);
@@ -1888,7 +1902,16 @@ void PR2CollisionSpace::attachCube(std::string name, std::string link, geometry_
     obj.spheres[i].radius_c = spheres[i][3] / grid_->getResolution() + 0.5;
     ROS_INFO("[%d] %0.3f %0.3f %0.3f", int(i), obj.spheres[i].v.x(), obj.spheres[i].v.y(), obj.spheres[i].v.z());
   }
-  objects_.push_back(obj);
+ 
+  int ind = -1;
+  if((ind = getAttachedObjectIndex(name)) > -1)
+  {
+    ROS_WARN("[cspace] Already had an object attached with the name, '%s'. Replacing that object with this new one.", name.c_str());
+    objects_[ind] = obj;
+  }
+  else
+    objects_.push_back(obj);
+   
   ROS_INFO("[cspace] Attaching cube represented by %d spheres with dimensions: %0.3f %0.3f %0.3f", int(spheres.size()), x_dim, y_dim, z_dim);
 }
 
@@ -1924,7 +1947,16 @@ void PR2CollisionSpace::attachMesh(std::string name, std::string link, geometry_
     obj.spheres[i].radius_c = spheres[i][3] / grid_->getResolution() + 0.5;
     ROS_DEBUG("[%d] %0.3f %0.3f %0.3f", int(i), obj.spheres[i].v.x(), obj.spheres[i].v.y(), obj.spheres[i].v.z());
   }
-  objects_.push_back(obj);
+
+  int ind = -1;
+  if((ind = getAttachedObjectIndex(name)) > -1)
+  {
+    ROS_WARN("[cspace] Already had an object attached with the name, '%s'. Replacing that object with this new one.", name.c_str());
+    objects_[ind] = obj;
+  }
+  else
+    objects_.push_back(obj);
+
   ROS_INFO("[cspace] Attaching mesh represented by %d spheres with %d vertices and %d triangles.", int(spheres.size()), int(vertices.size()), int(triangles.size()));
 }
 
@@ -1953,16 +1985,6 @@ void PR2CollisionSpace::getAttachedObjectSpheres(const std::vector<double> &lang
     {
       // v_sphere_in_world = T_obj_in_world * v_pos_in_obj
       v = f * objects_[i].spheres[j].v;
-      /*
-      spheres[i][0] = v.x();
-      spheres[i][1] = v.y();
-      spheres[i][2] = v.z();
-      spheres[i][3] = objects_[i].spheres[j].radius;
-      spheres[i][4] = objects_[i].spheres[j].radius_c;
-      ROS_INFO("[cspace] pose of sphere in object: %0.3f %0.3f %0.3f",  objects_[i].spheres[j].v.x(),  objects_[i].spheres[j].v.y(), objects_[i].spheres[j].v.z());
-      ROS_INFO("[cspace] [%d-%d] pose of sphere in map: %0.3f %0.3f %0.3f  radius: %0.3fm   radius_c: %2.0f", int(i), int(j), spheres[i][0], spheres[i][1], spheres[i][2], spheres[i][3], spheres[i][4]);
-      */
-
       obj_sph[j][0] = v.x();
       obj_sph[j][1] = v.y();
       obj_sph[j][2] = v.z();
@@ -2020,6 +2042,16 @@ bool PR2CollisionSpace::isAttachedObjectValid(const std::vector<double> &langles
 std::string PR2CollisionSpace::getExpectedAttachedObjectFrame(std::string frame)
 {
   return frame.substr(0,1) + attached_object_frame_suffix_;
+}
+
+int PR2CollisionSpace::getAttachedObjectIndex(std::string name)
+{
+  for(int i = 0; i < int(objects_.size()); ++i)
+  {
+    if(objects_[i].name.compare(name) == 0)
+      return i;
+  }
+  return -1;
 }
 
 }
