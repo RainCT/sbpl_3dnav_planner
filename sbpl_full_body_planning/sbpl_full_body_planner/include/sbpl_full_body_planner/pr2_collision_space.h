@@ -29,8 +29,8 @@
 
 /* /author Benjamin Cohen */
 
-#ifndef _PR2_COLLISION_SPACE_
-#define _PR2_COLLISION_SPACE_
+#ifndef _PR2_COLLISION_SPACE_OLD_
+#define _PR2_COLLISION_SPACE_OLD_
 
 #include <ros/ros.h>
 #include <vector>
