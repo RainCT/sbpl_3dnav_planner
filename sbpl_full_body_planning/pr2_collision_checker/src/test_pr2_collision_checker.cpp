@@ -39,7 +39,9 @@
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "test_pr2_collision_space");
-
+  ros::NodeHandle nh("~");
+  ROSCONSOLE_AUTOINIT;
+  sleep(1);
   FILE* rarm_fp=NULL;
   FILE* larm_fp=NULL;
   std::string reference_frame, larm_filename, rarm_filename;
@@ -48,6 +50,8 @@ int main(int argc, char **argv)
   sbpl_arm_planner::OccupancyGrid *grid;
   pr2_collision_checker::PR2CollisionSpace *cspace;
   pr2_collision_checker::PR2CollisionSpaceMonitor *cspace_mon;
+  nh.param<std::string>("planner/left_arm_description_file", larm_filename, "");
+  nh.param<std::string>("planner/right_arm_description_file", rarm_filename, "");
 
   // initialize basic sbpl arm planner parameters
   prms.initFromParamServer();
@@ -63,12 +67,14 @@ int main(int argc, char **argv)
     ROS_ERROR("[pr2cc] Failed to open left arm description file.");
     return -1;
   }
+  ROS_INFO("Initializing Arms");
   rarm = new sbpl_arm_planner::SBPLArmModel(rarm_fp);
   larm = new sbpl_arm_planner::SBPLArmModel(larm_fp);
   rarm->setResolution(prms.resolution_);
   larm->setResolution(prms.resolution_);
   rarm->setDebugLogName(prms.arm_log_);
   larm->setDebugLogName(prms.arm_log_);
+  ROS_INFO("Initialized Arms");
 
   if(!rarm->initKDLChainFromParamServer() || !larm->initKDLChainFromParamServer())
   {
