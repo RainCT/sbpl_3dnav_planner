@@ -29,21 +29,11 @@
 
 /* /author Benjamin Cohen */
 
-#ifndef _PR2_COLLISION_SPACE_OLD_
-#define _PR2_COLLISION_SPACE_OLD_
+#ifndef _PR2_COLLISION_SPACE_
+#define _PR2_COLLISION_SPACE_
 
 #include <ros/ros.h>
 #include <vector>
-#include <sbpl_arm_planner/bresenham.h>
-#include <sbpl_arm_planner/sbpl_arm_model.h>
-#include <sbpl_arm_planner/sbpl_arm_planning_error_codes.h>
-#include <sbpl_arm_planner/occupancy_grid.h>
-#include <sbpl_arm_planner/sbpl_geometry_utils.h>
-#include <tf_conversions/tf_kdl.h>
-#include <tf/tf.h>
-#include <arm_navigation_msgs/CollisionObject.h>
-
-/* added for full body planning */
 #include <boost/lexical_cast.hpp>
 #include <kdl/frames.hpp>
 #include <kdl_parser/kdl_parser.hpp>
@@ -51,12 +41,20 @@
 #include <kdl/chainfksolverpos_recursive.hpp>
 #include <kdl/chain.hpp>
 #include <kdl/frames.hpp>
+#include <tf_conversions/tf_kdl.h>
+#include <tf/tf.h>
+#include <sbpl_arm_planner/bresenham.h>
+#include <sbpl_arm_planner/sbpl_arm_model.h>
+#include <sbpl_arm_planner/sbpl_arm_planning_error_codes.h>
+#include <sbpl_arm_planner/occupancy_grid.h>
+#include <sbpl_arm_planner/sbpl_geometry_utils.h>
+#include <arm_navigation_msgs/CollisionObject.h>
 
 using namespace std;
 
-static const std::string arm_side_names[2] = {"right", "left"};
+//static const std::string arm_side_names[2] = {"right", "left"};
 
-namespace sbpl_full_body_planner
+namespace pr2_collision_checker
 {
 
 enum Side
@@ -225,6 +223,10 @@ class PR2CollisionSpace
     bool checkAllMotion(std::vector<double> &langles, std::vector<double> &rangles, BodyPose &pose, bool verbose, unsigned char &dist, int &debug_code);
 
     std::string getExpectedAttachedObjectFrame(std::string frame);
+
+    void setKinematicsToReferenceTransform(KDL::Frame f, std::string &name);
+
+    std::string getKinematicsFrame();
 
   private:
 

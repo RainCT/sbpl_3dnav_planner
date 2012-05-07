@@ -1,5 +1,8 @@
 /* \author Benjamin Cohen */
 
+#ifndef _VISUALIZE_ARM_
+#define _VISUALIZE_ARM_
+
 #include <string>
 #include <fstream>
 #include <stdlib.h>
@@ -195,3 +198,4 @@ class VisualizeArm
 };
 
 }
+#endif

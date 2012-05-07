@@ -29,6 +29,9 @@
 
 /** \Author: Benjamin Cohen /bcohen@seas.upenn.edu **/
 
+#ifndef __ENVIRONMENT_DUALROBARM3D_H_
+#define __ENVIRONMENT_DUALROBARM3D_H_
+
 #include <time.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -50,9 +53,6 @@
 #include <sbpl_full_body_planner/sbpl_full_body_params.h>
 #include <pviz/pviz.h>
 #include <boost/lexical_cast.hpp>
-
-#ifndef __ENVIRONMENT_DUALROBARM3D_H_
-#define __ENVIRONMENT_DUALROBARM3D_H_
 
 namespace sbpl_full_body_planner {
 
