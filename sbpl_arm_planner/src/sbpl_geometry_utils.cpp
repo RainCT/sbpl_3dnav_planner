@@ -2,6 +2,7 @@
 
 #include <Eigen/Core>
 #include <sbpl_arm_planner/sbpl_geometry_utils.h>
+#include <set>
 
 namespace sbpl_geometry_utils
 {
@@ -90,7 +91,7 @@ bool pointOnTriangle(const Eigen::Vector3d& point, const Eigen::Vector3d& vertex
 	return insideCcw || insideCw;
 }
 
-bool intersects(const Triangle tr1, const Triangle& tr2, const double eps = 1.0e-4)
+bool intersects(const Triangle& tr1, const Triangle& tr2, const double eps = 1.0e-4)
 {
 	// Vertices 0, 1, and 2 on triangle 1
 	Eigen::Vector3d v10(tr1.p1.x, tr1.p1.y, tr1.p1.z);
@@ -457,6 +458,16 @@ void createCubeMesh(double x, double y, double z, double length, std::vector<Tri
 	temp.p3 = rightTopBackCorner;
 	trianglesOut.push_back(temp);
 }
+
+bool isInDiscreteBoundingBox(int i, int j, int k, int minx, int miny, int minz, int maxx, int maxy, int maxz)
+{
+	bool inside = true;
+	inside &= i >= minx && i <= maxx;
+	inside &= j >= miny && j <= maxy;
+	inside &= k >= minz && k <= maxz;
+	return inside;
+
+}
 } // empty namespace
 } // namespace sbpl_geometry_utils
 
@@ -551,54 +562,73 @@ void sbpl_geometry_utils::getEnclosingSpheresOfMesh(const std::vector<geometry_m
 			}
 		}
 	}
-  
-  if ((int)triangles.size() % 3 != 0) {
-    ROS_ERROR("Mesh triangle list is not well-formed. Triangle list size should be a multiple of three.");
-    return;
-  }
+	
+	// create a mesh for the voxel grid surrounding the mesh
+	std::vector<Triangle> entireVoxelMesh;
+	for (int i = 0; i < numVoxelsX; i++) {
+		for (int j = 0; j < numVoxelsY; j++) {
+			for (int k = 0; k < numVoxelsZ; k++) {
+				// Get the world coordinate of the voxel from its indices in the graph
+				double voxelCenterX = (i + minVoxelX) * voxelLength + 0.5 * voxelLength;
+				double voxelCenterY = (j + minVoxelY) * voxelLength + 0.5 * voxelLength;
+				double voxelCenterZ = (k + minVoxelZ) * voxelLength + 0.5 * voxelLength;
 
-  // for every triangle
-  for(int triangleIdx = 0; triangleIdx < (int)triangles.size() / 3; triangleIdx += 3)
-  {
-    // get the vertices of the triangle as geometry_msgs::Point
-		geometry_msgs::Point pt1 = vertices[triangles[3 * triangleIdx + 0]];
-		geometry_msgs::Point pt2 = vertices[triangles[3 * triangleIdx + 1]];
-		geometry_msgs::Point pt3 = vertices[triangles[3 * triangleIdx + 2]];
+				std::vector<Triangle> voxelMesh;
+				createCubeMesh(voxelCenterX, voxelCenterY, voxelCenterZ, voxelLength, voxelMesh);
+				for (unsigned ii = 0; ii < voxelMesh.size(); ii++) {
+					entireVoxelMesh.push_back(voxelMesh[ii]); // add these triangles to the full voxel mesh
+				}
+			}
+		}
+	}
 
-		// Pack those vertices into my Triangle struct
+	if ((int)triangles.size() % 3 != 0) {
+		ROS_ERROR("Mesh triangle list is not well-formed. Triangle list size should be a multiple of three.");
+		return;
+	}
+
+	 // for every triangle
+	for(int triangleIdx = 0; triangleIdx < (int)triangles.size(); triangleIdx += 3)
+	{
+		// get the vertices of the triangle as geometry_msgs::Point
+		const geometry_msgs::Point& pt1 = vertices[triangles[triangleIdx + 0]];
+		const geometry_msgs::Point& pt2 = vertices[triangles[triangleIdx + 1]];
+		const geometry_msgs::Point& pt3 = vertices[triangles[triangleIdx + 2]];
+
+		// pack those vertices into my Triangle struct
 		Triangle triangle;
 		triangle.p1.x = pt1.x; triangle.p1.y = pt1.y; triangle.p1.z = pt1.z;
 		triangle.p2.x = pt2.x; triangle.p2.y = pt2.y; triangle.p2.z = pt2.z;
 		triangle.p3.x = pt3.x; triangle.p3.y = pt3.y; triangle.p3.z = pt3.z;
 
-		// for every voxel
-		for(int i = 0; i < numVoxelsX; i++)
-		{
-			for(int j = 0; j < numVoxelsY; j++)
+		// get the bounding voxelsx of the triangle
+		double triMinX, triMinY, triMinZ, triMaxX, triMaxY, triMaxZ;
+		std::vector<geometry_msgs::Point> triPointV;
+		triPointV.push_back(pt1); triPointV.push_back(pt2); triPointV.push_back(pt3);
+		if (!getAxisAlignedBoundingBox(triPointV, triMinX, triMinY, triMinZ, triMaxX, triMaxY, triMaxZ)) {
+			continue; // just skip this triangle; it's bogus
+		}
+		// shift all the voxels over to be aligned with the memory grid
+		int triMinVoxelX = floor(triMinX / voxelLength) - minVoxelX;
+		int triMinVoxelY = floor(triMinY / voxelLength) - minVoxelY;
+		int triMinVoxelZ = floor(triMinZ / voxelLength) - minVoxelZ;
+		int triMaxVoxelX = floor(triMaxX / voxelLength) - minVoxelX;
+		int triMaxVoxelY = floor(triMaxY / voxelLength) - minVoxelY;
+		int triMaxVoxelZ = floor(triMaxZ / voxelLength) - minVoxelZ;
+
+		// for every voxel in the voxel mesh i've constructed
+		for (unsigned a = 0; a < entireVoxelMesh.size(); a++) {
+			int voxelNum = a / 12; // there are 12 mesh triangles per voxel
+			int i = (voxelNum / (numVoxelsZ * numVoxelsY)) % numVoxelsX;
+			int j = (voxelNum / numVoxelsZ) % numVoxelsY;
+			int k = voxelNum % numVoxelsZ;
+			// if not already filled, is in the bounding voxel grid of the triangle, and this voxel mesh
+			// triangle intersects the current triangle, fill in the voxel
+			if (!voxelGrid[i][j][k] &&
+				isInDiscreteBoundingBox(i, j, k, triMinVoxelX, triMinVoxelY, triMinVoxelZ, triMaxVoxelX, triMaxVoxelY, triMaxVoxelZ) &&
+				intersects(triangle, entireVoxelMesh[a]))
 			{
-				for(int k = 0; k < numVoxelsZ; k++)
-				{
-					// if not already filled
-					if(!voxelGrid[i][j][k])
-					{
-						// Get the world coordinate of the voxel from its indices in the graph
-						double voxelCenterX = (i + minVoxelX) * voxelLength + 0.5 * voxelLength;
-						double voxelCenterY = (j + minVoxelY) * voxelLength + 0.5 * voxelLength;
-						double voxelCenterZ = (k + minVoxelZ) * voxelLength + 0.5 * voxelLength;
-
-						std::vector<Triangle> voxelMesh;
-						createCubeMesh(voxelCenterX, voxelCenterY, voxelCenterZ, voxelLength, voxelMesh);
-
-						// If the mesh triangle collides with this voxel, fill the voxel
-						for(int a = 0; a < (int)voxelMesh.size(); a++)
-						{
-							if(intersects(triangle, voxelMesh[a]))
-							{
-								voxelGrid[i][j][k] = true;
-							}
-						}
-					}
-				}
+					voxelGrid[i][j][k] = true;
 			}
 		}
 	}
