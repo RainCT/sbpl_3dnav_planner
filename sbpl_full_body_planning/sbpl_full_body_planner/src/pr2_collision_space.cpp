@@ -1804,8 +1804,15 @@ void PR2CollisionSpace::attachSphere(std::string name, std::string link, geometr
 
   if(link.substr(0,1).compare("r") == 0)
     obj.side = sbpl_full_body_planner::Right; 
-  else
+  else if(link.substr(0,1).compare("l") == 0)
     obj.side = sbpl_full_body_planner::Left;
+  else
+  {
+    obj.side = sbpl_full_body_planner::Body;
+    obj.kdl_segment = getSegmentIndex(link, full_body_chain_);
+    if(obj.kdl_segment == -1)
+      return;
+  }
 
   obj.spheres.resize(1);
   obj.spheres[0].radius = radius;
@@ -1839,8 +1846,15 @@ void PR2CollisionSpace::attachCylinder(std::string name, std::string link, geome
 
   if(link.substr(0,1).compare("r") == 0)
     obj.side = sbpl_full_body_planner::Right; 
-  else
+  else if(link.substr(0,1).compare("l") == 0)
     obj.side = sbpl_full_body_planner::Left;
+  else
+  {
+    obj.side = sbpl_full_body_planner::Body;
+    obj.kdl_segment = getSegmentIndex(link, full_body_chain_);
+    if(obj.kdl_segment == -1)
+      return;
+  }
 
   // compute end points of cylinder
   KDL::Vector top, bottom;
@@ -1891,8 +1905,15 @@ void PR2CollisionSpace::attachCube(std::string name, std::string link, geometry_
 
   if(link.substr(0,1).compare("r") == 0)
     obj.side = sbpl_full_body_planner::Right; 
-  else
+  else if(link.substr(0,1).compare("l") == 0)
     obj.side = sbpl_full_body_planner::Left;
+  else
+  {
+    obj.side = sbpl_full_body_planner::Body;
+    obj.kdl_segment = getSegmentIndex(link, full_body_chain_);
+    if(obj.kdl_segment == -1)
+      return;
+  }
 
   sbpl_geometry_utils::getEnclosingSpheresOfCube(x_dim, y_dim, z_dim, cube_filling_sphere_radius_, spheres);
 
@@ -1935,8 +1956,15 @@ void PR2CollisionSpace::attachMesh(std::string name, std::string link, geometry_
 
   if(link.substr(0,1).compare("r") == 0)
     obj.side = sbpl_full_body_planner::Right; 
-  else
+  else if(link.substr(0,1).compare("l") == 0)
     obj.side = sbpl_full_body_planner::Left;
+  else
+  {
+    obj.side = sbpl_full_body_planner::Body;
+    obj.kdl_segment = getSegmentIndex(link, full_body_chain_);
+    if(obj.kdl_segment == -1)
+      return;
+  }
 
   sbpl_geometry_utils::getEnclosingSpheresOfMesh(vertices, triangles, cube_filling_sphere_radius_, spheres);
   
@@ -1977,10 +2005,12 @@ void PR2CollisionSpace::getAttachedObjectSpheres(const std::vector<double> &lang
   {
     if(objects_[i].side == sbpl_full_body_planner::Right)
       arm_[objects_[i].side]->computeFK(rangles, pose, objects_[i].kdl_segment, &(objects_[i].f));
-    else
+    else if(objects_[i].side == sbpl_full_body_planner::Left)
       arm_[objects_[i].side]->computeFK(langles, pose, objects_[i].kdl_segment, &(objects_[i].f));
-
-    ROS_DEBUG_NAMED(cspace_log_, "[cspace]    pose of wrist in map: %0.3f %0.3f %0.3f", objects_[i].f.p.x(), objects_[i].f.p.y(), objects_[i].f.p.z());
+    else
+      computeFullBodyKinematics(pose.x, pose.y, pose.theta, pose.z, objects_[i].kdl_segment, objects_[i].f);
+  
+    ROS_DEBUG_NAMED(cspace_log_, "[cspace]    pose of attached link in map: %0.3f %0.3f %0.3f", objects_[i].f.p.x(), objects_[i].f.p.y(), objects_[i].f.p.z());
     // T_obj_in_world = T_link_in_world * T_obj_in_link
     f = objects_[i].f * objects_[i].pose;
     
@@ -2048,7 +2078,62 @@ bool PR2CollisionSpace::isAttachedObjectValid(const std::vector<double> &langles
 
 std::string PR2CollisionSpace::getExpectedAttachedObjectFrame(std::string frame)
 {
-  return frame.substr(0,1) + attached_object_frame_suffix_;
+  int ind=-1;
+
+  // is the object attached to the right arm?
+  if((ind = arm_[0]->getSegmentIndex(frame)) > -1 || frame.compare("r_gripper_l_finger_tip_link") == 0)
+  {
+    ROS_INFO("[cspace] Attached object frame (%s) was found in the right arm kdl chain at index: %d.", frame.c_str(), ind);
+    return "r" + attached_object_frame_suffix_;
+  }
+  // is the object attached to the left arm?
+  else if((ind = arm_[1]->getSegmentIndex(frame)) > -1 || frame.compare("l_gripper_l_finger_tip_link") == 0)
+  {
+    ROS_INFO("[cspace] Attached object frame (%s) was found in the left arm kdl chain at index: %d.", frame.c_str(), ind);
+    return "l" + attached_object_frame_suffix_;
+  }
+  // is the object attached to the body?
+  else if((ind = getSegmentIndex(frame, full_body_chain_)) > -1)
+  {
+    ROS_INFO("[cspace] Attached object frame (%s) was found in the body kdl chain at index: %d.", frame.c_str(), ind);
+    return "base_link";
+  }
+  else
+  {
+    ROS_ERROR("[cspace] Cannot compute kinematics for the attached object frame, '%s', so I'm not attaching it.", frame.c_str());
+    return "";
+  }
+}
+
+// NOT USED
+bool PR2CollisionSpace::getAttachedFrameInfo(std::string frame, int &segment, int &chain)
+{  
+  // is the object attached to the right arm?
+  if((segment = arm_[0]->getSegmentIndex(frame)) > -1)
+  {
+    ROS_INFO("[cspace] Attached object frame (%s) was found in the right arm kdl chain at index: %d.", frame.c_str(), segment);
+    chain = sbpl_full_body_planner::Right;
+    return true;
+  }
+  // is the object attached to the left arm?
+  else if((segment = arm_[1]->getSegmentIndex(frame)) > -1)
+  {
+    ROS_INFO("[cspace] Attached object frame (%s) was found in the left arm kdl chain at index: %d.", frame.c_str(), segment);
+    chain = sbpl_full_body_planner::Left;
+    return true;
+  }
+  // is the object attached to the body?
+  else if((segment = getSegmentIndex(frame, full_body_chain_)) > -1)
+  {
+    ROS_INFO("[cspace] Attached object frame (%s) was found in the body kdl chain at index: %d.", frame.c_str(), segment);
+    chain = sbpl_full_body_planner::Body;
+    return true;
+  }
+  else
+  {
+    ROS_ERROR("[cspace] Cannot compute kinematics for the attached object frame, '%s', so can't attach it.", frame.c_str());
+    return false;
+  }
 }
 
 int PR2CollisionSpace::getAttachedObjectIndex(std::string name)
@@ -2059,6 +2144,25 @@ int PR2CollisionSpace::getAttachedObjectIndex(std::string name)
       return i;
   }
   return -1;
+}
+
+int PR2CollisionSpace::getSegmentIndex(std::string &name, KDL::Chain &chain)
+{
+  for(size_t k = 0; k < chain.getNrOfSegments(); ++k)
+  {
+    if(chain.getSegment(k).getName().compare(name) == 0)
+      return k;
+  }
+  ROS_DEBUG("Failed to find %s segment in the chain.", name.c_str());
+  return -1;
+}
+
+bool PR2CollisionSpace::isObjectAttached()
+{
+  if(objects_.empty())
+    return false;
+  else
+    return true;
 }
 
 }

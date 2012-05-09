@@ -62,7 +62,8 @@ namespace sbpl_full_body_planner
 enum Side
 {
   Right, 
-  Left
+  Left,
+  Body
 };
 
 typedef struct
@@ -226,6 +227,8 @@ class PR2CollisionSpace
 
     std::string getExpectedAttachedObjectFrame(std::string frame);
 
+    bool isObjectAttached();
+
   private:
 
     /** @brief arm model used by planner */
@@ -312,6 +315,9 @@ class PR2CollisionSpace
     std::string attached_object_frame_suffix_;
 
     int getAttachedObjectIndex(std::string name);
+
+    bool getAttachedFrameInfo(std::string frame, int &segment, int &chain);
+    int getSegmentIndex(std::string &name, KDL::Chain &chain);
 };
 
 inline bool PR2CollisionSpace::isValidCell(const int x, const int y, const int z, const int radius)
