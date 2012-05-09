@@ -221,6 +221,7 @@ private:
     std::vector<int> solution_state_ids_;
     std::vector<int> solution_state_ids_short_;
 
+    arm_navigation_msgs::CollisionMap last_collision_map_;
     /** transforms and kinematics **/
 
     tf::TransformListener tf_;
@@ -278,7 +279,7 @@ private:
 
     void visualizeGoal(geometry_msgs::Pose goal);
 
-    void visualizeCollisionObjects();
+    void visualizeCollisionObjects(bool delete_first=false);
 
     void visualizeGoalPosition(const arm_navigation_msgs::Constraints &goal);
     

@@ -262,25 +262,27 @@ bool Sbpl3DNavPlanner::initializePlannerAndEnvironment()
 
 void Sbpl3DNavPlanner::collisionMapCallback(const arm_navigation_msgs::CollisionMapConstPtr &collision_map)
 {
-	if(colmap_mutex_.try_lock()){
-		ROS_DEBUG("collision map callback");
-		if (collision_map->header.frame_id.compare(reference_frame_) != 0 &&
-        collision_map->header.frame_id.compare("/" + reference_frame_) != 0) {
-			ROS_WARN("[3dnav] The collision map received is in %s frame but expected in %s frame.", collision_map->header.frame_id.c_str(), reference_frame_.c_str());
-		}
+  colmap_mutex_.lock();
+  ROS_DEBUG("collision map callback");
+  if (collision_map->header.frame_id.compare(reference_frame_) != 0 &&
+      collision_map->header.frame_id.compare("/" + reference_frame_) != 0) {
+    ROS_WARN("[3dnav] The collision map received is in %s frame but expected in %s frame.", collision_map->header.frame_id.c_str(), reference_frame_.c_str());
+  }
 
-		// add collision map msg
-		if (use_collision_map_from_sensors_) {
-			grid_->updateFromCollisionMap(*collision_map);
-		}
+  // add collision map msg
+  if (use_collision_map_from_sensors_) {
+    grid_->updateFromCollisionMap(*collision_map);
+  }
 
-		map_frame_ = collision_map->header.frame_id;
-		setArmToMapTransform(map_frame_);
+  last_collision_map_ = *collision_map;
+  cspace_->storeCollisionMap(*collision_map);
+  map_frame_ = collision_map->header.frame_id;
+  setArmToMapTransform(map_frame_);
 
-		cspace_->putCollisionObjectsInGrid();
-		colmap_mutex_.unlock();
-		grid_->visualize();
-	}
+  cspace_->putCollisionObjectsInGrid();
+  colmap_mutex_.unlock();
+  grid_->visualize();
+
 }
 
 void Sbpl3DNavPlanner::collisionObjectCallback(const arm_navigation_msgs::CollisionObjectConstPtr &collision_object)
@@ -306,10 +308,13 @@ void Sbpl3DNavPlanner::collisionObjectCallback(const arm_navigation_msgs::Collis
 
   cspace_->processCollisionObjectMsg(*collision_object);
 
-  //visualize collision object voxels
-  visualizeCollisionObject(*collision_object);
+  //visualizeCollisionObject(*collision_object);
 
   colmap_mutex_.unlock();
+
+  grid_->visualize();
+  //visualize collision object voxels
+  visualizeCollisionObjects(true);
 }
 
 void Sbpl3DNavPlanner::jointStatesCallback(const sensor_msgs::JointStateConstPtr &state)
@@ -411,7 +416,8 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
     }
     ROS_INFO("[3dnav] Just attached '%s', now I'll remove it from the world.", attached_object->object.id.c_str());
     cspace_->removeCollisionObject(attached_object->object);
-    ROS_WARN("[3dnav] Just did an 'attach & remove' object operation. Did the distance field visualization update?");
+    visualizeCollisionObjects(true);
+    grid_->visualize();
   }
   // remove object
   else if(attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::REMOVE)
@@ -445,8 +451,8 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
       cspace_->addCollisionObject(attached_object->object);
     }
     //visualize exact collision object
-    visualizeCollisionObject(attached_object->object);
-    ROS_WARN("[3dnav] Just did a 'detach & add' object operation. Did the distance field visualization update?");
+    //visualizeCollisionObject(attached_object->object);
+    visualizeCollisionObjects(true);
   }
   else
     ROS_WARN("[3dnav] Received a collision object with an unknown operation");
@@ -1862,13 +1868,17 @@ void Sbpl3DNavPlanner::visualizeGoal(geometry_msgs::Pose goal)
   pviz_.visualizePose(goal, "3dnav_goal");
 }
 
-void Sbpl3DNavPlanner::visualizeCollisionObjects()
+void Sbpl3DNavPlanner::visualizeCollisionObjects(bool delete_first)
 {
 	std::vector<geometry_msgs::Pose> poses;
 	std::vector<std::vector<double> > points(1, std::vector<double>(3, 0));
 	std::vector<double> color(4, 1);
 	color[2] = 0;
 
+  // first delete old visualizations
+  if(delete_first)
+    pviz_.deleteVisualizations("known_objects", 1000);
+  
 	cspace_->getCollisionObjectVoxelPoses(poses);
 
 	points.resize(poses.size());
@@ -2036,6 +2046,9 @@ void Sbpl3DNavPlanner::visualizeCollisionObject(const arm_navigation_msgs::Colli
 {
 	geometry_msgs::PoseStamped pose;
 	std::vector<double> dim, color(4, 0.0);
+  color[1] = 1.0;
+  color[2] = 1.0;
+  color[3] = 0.8;
 
 	for (size_t i = 0; i < object.shapes.size(); ++i) {
 		if (object.shapes[i].type == arm_navigation_msgs::Shape::BOX) {
@@ -2045,17 +2058,11 @@ void Sbpl3DNavPlanner::visualizeCollisionObject(const arm_navigation_msgs::Colli
 			for (size_t j = 0; j < object.shapes[i].dimensions.size(); ++j)
 				dim[j] = object.shapes[i].dimensions[j];
 
-			for (size_t j = 0; j < object.shapes[i].triangles.size(); ++j)
-				color[j] = double(object.shapes[i].triangles[j]) / 255.0;
-			/*
-			 //alpha shouldn't be divided by 255
-			 color[j] = double(object.shapes[i].triangles[j]);
-			 */
 			ROS_INFO("[3dnav] Visualizing %s", object.id.c_str());
-			raviz_->visualizeCube(pose, color, object.id, int(i), dim);
+			raviz_->visualizeCube(pose, color, "3dnav_" + object.id, int(i), dim);
 		}
 		else
-			ROS_WARN("[3dnav] Collision objects of type %d are not yet supported.", object.shapes[i].type);
+			ROS_DEBUG("[3dnav] Visualizations of collision objects of type %d are not yet supported.", object.shapes[i].type);
 	}
 }
 
