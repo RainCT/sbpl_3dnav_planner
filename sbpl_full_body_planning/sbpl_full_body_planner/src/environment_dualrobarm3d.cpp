@@ -402,7 +402,7 @@ void EnvironmentDUALROBARM3D::GetSuccs(int SourceStateID, vector<int>* SuccIDV, 
 
 
         //check attached object for collision
-        if(!cspace_->isAttachedObjectValid(sangles1, sangles0, pose_source, false, dist_temp, debug_code_))
+        if(!cspace_->isAttachedObjectValid(sangles1, sangles0, pose_source, prms_.verbose_, dist_temp, debug_code_))
         {
           ROS_DEBUG_NAMED(prms_.expands_log_, " succ: %2d  dist: %2d attached object is in collision.", int(i), int(dist_temp));
           invalid_prim = true;

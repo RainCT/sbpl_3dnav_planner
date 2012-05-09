@@ -2091,9 +2091,24 @@ bool PR2CollisionSpace::isAttachedObjectValid(const std::vector<double> &langles
   unsigned char dist_temp = 100;
   std::vector<std::vector<int> > voxels;
   getAttachedObjectVoxels(langles, rangles, pose, voxels);
-  
+
   for(size_t i = 0; i < voxels.size(); ++i)
   {
+    // check bounds
+    if(!grid_->isInBounds(voxels[i][0], voxels[i][1], voxels[i][2]))
+    {
+      //if(verbose)
+      //{
+      int dimx, dimy, dimz;
+      grid_->getGridSize(dimx,dimy,dimz);
+
+      //ROS_DEBUG_NAMED(cspace_log_,"[cspace] Sphere %d is out of bounds. (xyz: %d %d %d,  dims: %d %d %d)", int(i), voxels[i][0], voxels[i][1], voxels[i][2], dimx, dimy, dimz);
+      ROS_INFO("[cspace] [attached object] Sphere %d is out of bounds. (xyz: %d %d %d,  dims: %d %d %d)", int(i), voxels[i][0], voxels[i][1], voxels[i][2], dimx, dimy, dimz);
+      //}
+      return false;
+    }
+
+    // check collision
     if((dist_temp = grid_->getCell(voxels[i][0], voxels[i][1], voxels[i][2])) <= voxels[i][3])
     {
       dist = dist_temp;
