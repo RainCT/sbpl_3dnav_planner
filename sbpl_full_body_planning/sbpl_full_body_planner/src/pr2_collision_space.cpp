@@ -1357,6 +1357,14 @@ bool PR2CollisionSpace::isBaseValid(double x, double y, double theta, unsigned c
   getVoxelsInGroup(base_g_.f, base_g_);
   for(size_t i = 0; i < base_g_.spheres.size(); ++i)
   {
+    // check bounds
+    if(!grid_->isInBounds(base_g_.spheres[i].voxel[0], base_g_.spheres[i].voxel[1], base_g_.spheres[i].voxel[2]))
+    {
+      int dimx, dimy, dimz;
+      grid_->getGridSize(dimx,dimy,dimz);
+      ROS_DEBUG_NAMED(cspace_log_,"[cspace] [base] Sphere %d is out of bounds. (xyz: %d %d %d,  dims: %d %d %d)", int(i), base_g_.spheres[i].voxel[0], base_g_.spheres[i].voxel[1], base_g_.spheres[i].voxel[2], dimx, dimy, dimz);
+      return false;
+    }
     if((dist_temp = grid_->getCell(base_g_.spheres[i].voxel[0], base_g_.spheres[i].voxel[1], base_g_.spheres[i].voxel[2])) <= base_g_.spheres[i].radius_c)
     {
       dist = dist_temp;
@@ -1372,6 +1380,14 @@ bool PR2CollisionSpace::isBaseValid(double x, double y, double theta, unsigned c
   getVoxelsInGroup(base_g_.f, torso_lower_g_);
   for(size_t i = 0; i < torso_lower_g_.spheres.size(); ++i)
   {
+    // check bounds
+    if(!grid_->isInBounds(torso_lower_g_.spheres[i].voxel[0], torso_lower_g_.spheres[i].voxel[1], torso_lower_g_.spheres[i].voxel[2]))
+    {
+      int dimx, dimy, dimz;
+      grid_->getGridSize(dimx,dimy,dimz);
+      ROS_DEBUG_NAMED(cspace_log_,"[cspace] [base] Sphere %d is out of bounds. (xyz: %d %d %d,  dims: %d %d %d)", int(i), torso_lower_g_.spheres[i].voxel[0], torso_lower_g_.spheres[i].voxel[1], torso_lower_g_.spheres[i].voxel[2], dimx, dimy, dimz);
+      return false;
+    }
     if((dist_temp = grid_->getCell(torso_lower_g_.spheres[i].voxel[0], torso_lower_g_.spheres[i].voxel[1], torso_lower_g_.spheres[i].voxel[2])) <= torso_lower_g_.spheres[i].radius_c)
     {
       dist = dist_temp;
@@ -1399,6 +1415,14 @@ bool PR2CollisionSpace::isTorsoValid(double x, double y, double theta, double to
   getVoxelsInGroup(torso_upper_g_.f, torso_upper_g_);
   for(size_t i = 0; i < torso_upper_g_.spheres.size(); ++i)
   {
+    // check bounds
+    if(!grid_->isInBounds(torso_upper_g_.spheres[i].voxel[0], torso_upper_g_.spheres[i].voxel[1], torso_upper_g_.spheres[i].voxel[2]))
+    {
+      int dimx, dimy, dimz;
+      grid_->getGridSize(dimx,dimy,dimz);
+      ROS_DEBUG_NAMED(cspace_log_,"[torso] [base] Sphere %d is out of bounds. (xyz: %d %d %d,  dims: %d %d %d)", int(i), torso_upper_g_.spheres[i].voxel[0], torso_upper_g_.spheres[i].voxel[1], torso_upper_g_.spheres[i].voxel[2], dimx, dimy, dimz);
+      return false;
+    }
     if((dist_temp = grid_->getCell(torso_upper_g_.spheres[i].voxel[0], torso_upper_g_.spheres[i].voxel[1], torso_upper_g_.spheres[i].voxel[2])) <= torso_upper_g_.spheres[i].radius_c)
     {
       dist = dist_temp;
@@ -1413,6 +1437,14 @@ bool PR2CollisionSpace::isTorsoValid(double x, double y, double theta, double to
   getVoxelsInGroup(tilt_laser_g_.f, tilt_laser_g_);
   for(size_t i = 0; i < tilt_laser_g_.spheres.size(); ++i)
   {
+    // check bounds
+    if(!grid_->isInBounds(tilt_laser_g_.spheres[i].voxel[0], tilt_laser_g_.spheres[i].voxel[1], tilt_laser_g_.spheres[i].voxel[2]))
+    {
+      int dimx, dimy, dimz;
+      grid_->getGridSize(dimx,dimy,dimz);
+      ROS_DEBUG_NAMED(cspace_log_,"[torso] [base] Sphere %d is out of bounds. (xyz: %d %d %d,  dims: %d %d %d)", int(i), tilt_laser_g_.spheres[i].voxel[0], tilt_laser_g_.spheres[i].voxel[1], tilt_laser_g_.spheres[i].voxel[2], dimx, dimy, dimz);
+      return false;
+    }
     if((dist_temp = grid_->getCell(tilt_laser_g_.spheres[i].voxel[0], tilt_laser_g_.spheres[i].voxel[1], tilt_laser_g_.spheres[i].voxel[2])) <= tilt_laser_g_.spheres[i].radius_c)
     {
       dist = dist_temp;
@@ -1427,6 +1459,14 @@ bool PR2CollisionSpace::isTorsoValid(double x, double y, double theta, double to
   getVoxelsInGroup(turrets_g_.f, turrets_g_);
   for(size_t i = 0; i < turrets_g_.spheres.size(); ++i)
   {
+    // check bounds
+    if(!grid_->isInBounds(turrets_g_.spheres[i].voxel[0], turrets_g_.spheres[i].voxel[1], turrets_g_.spheres[i].voxel[2]))
+    {
+      int dimx, dimy, dimz;
+      grid_->getGridSize(dimx,dimy,dimz);
+      ROS_DEBUG_NAMED(cspace_log_,"[cspace] [torso] Sphere %d is out of bounds. (xyz: %d %d %d,  dims: %d %d %d)", int(i), turrets_g_.spheres[i].voxel[0], turrets_g_.spheres[i].voxel[1], turrets_g_.spheres[i].voxel[2], dimx, dimy, dimz);
+      return false;
+    }
     if((dist_temp = grid_->getCell(turrets_g_.spheres[i].voxel[0], turrets_g_.spheres[i].voxel[1], turrets_g_.spheres[i].voxel[2])) <= turrets_g_.spheres[i].radius_c)
     {
       dist = dist_temp;
@@ -1455,6 +1495,14 @@ bool PR2CollisionSpace::isHeadValid(double x, double y, double theta, double tor
   getVoxelsInGroup(head_g_.f, head_g_);
   for(size_t i = 0; i < head_g_.spheres.size(); ++i)
   {
+    // check bounds
+    if(!grid_->isInBounds(head_g_.spheres[i].voxel[0], head_g_.spheres[i].voxel[1], head_g_.spheres[i].voxel[2]))
+    {
+      int dimx, dimy, dimz;
+      grid_->getGridSize(dimx,dimy,dimz);
+      ROS_DEBUG_NAMED(cspace_log_,"[cspace] [head] Sphere %d is out of bounds. (xyz: %d %d %d,  dims: %d %d %d)", int(i), head_g_.spheres[i].voxel[0], head_g_.spheres[i].voxel[1], head_g_.spheres[i].voxel[2], dimx, dimy, dimz);
+      return false;
+    }
     if((dist_temp = grid_->getCell(head_g_.spheres[i].voxel[0], head_g_.spheres[i].voxel[1], head_g_.spheres[i].voxel[2])) <= head_g_.spheres[i].radius_c)
     {
       dist = dist_temp;
