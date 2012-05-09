@@ -208,7 +208,7 @@ bool Sbpl3DNavPlanner::init()
 	collision_map_filter_->registerCallback(boost::bind(&Sbpl3DNavPlanner::collisionMapCallback, this, _1));
 	joint_states_subscriber_ = root_handle_.subscribe("joint_states", 1, &Sbpl3DNavPlanner::jointStatesCallback, this);
 	collision_object_subscriber_ = root_handle_.subscribe("collision_object", 5, &Sbpl3DNavPlanner::collisionObjectCallback, this);
-	object_subscriber_ = root_handle_.subscribe("attached_collision_object", 1, &Sbpl3DNavPlanner::attachedObjectCallback, this);
+	object_subscriber_ = root_handle_.subscribe("attached_collision_object", 3, &Sbpl3DNavPlanner::attachedObjectCallback, this);
 	collision_check_service_ = root_handle_.advertiseService("/sbpl_full_body_planning/collision_check", &Sbpl3DNavPlanner::collisionCheck,this);
 	find_base_poses_service_ = root_handle_.advertiseService("/sbpl_full_body_planning/find_base_poses", &Sbpl3DNavPlanner::getBasePoses,this);
 
@@ -285,40 +285,31 @@ void Sbpl3DNavPlanner::collisionMapCallback(const arm_navigation_msgs::Collision
 
 void Sbpl3DNavPlanner::collisionObjectCallback(const arm_navigation_msgs::CollisionObjectConstPtr &collision_object)
 {
-	if(colmap_mutex_.try_lock()) {
-		// for some reason, it wasn't getting all of the 'all' messages...
-		if (collision_object->id.compare("all") == 0) {
-			cspace_->removeAllCollisionObjects();
-		}
+  colmap_mutex_.lock();
 
-		// debug: have we seen this collision object before?
-		if (object_map_.find(collision_object->id) != object_map_.end()) {
-			ROS_DEBUG("[collisionObjectCallback] We have seen this object ('%s')  before.",
-				  collision_object->id.c_str());
-		}
-		else {
-			ROS_DEBUG("[collisionObjectCallback] We have NOT seen this object ('%s') before.",
-				  collision_object->id.c_str());
-		}
+  if (collision_object->id.compare("all") == 0) {
+    cspace_->removeAllCollisionObjects();
+  }
 
-		object_map_[collision_object->id] = (*collision_object);
+  // debug: have we seen this collision object before?
+  if (object_map_.find(collision_object->id) != object_map_.end()) {
+    ROS_INFO("[3dnav] [collision_objects] We have seen this object ('%s')  before.",
+        collision_object->id.c_str());
+  }
+  else {
+    ROS_INFO("[3dnav] [collision_objects] We have NOT seen this object ('%s') before.",
+        collision_object->id.c_str());
+  }
 
-		ROS_DEBUG("[collisionObjectCallback] %s", collision_object->id.c_str());
-		cspace_->processCollisionObjectMsg(*collision_object);
+  // add the object to our internal map for later attaching
+  object_map_[collision_object->id] = (*collision_object);
 
-		//visualize exact collision object
-		visualizeCollisionObject(*collision_object);
+  cspace_->processCollisionObjectMsg(*collision_object);
 
-		//visualize collision voxels
-		//visualizeCollisionObjects();
+  //visualize collision object voxels
+  visualizeCollisionObject(*collision_object);
 
-		if (attached_object_) {
-			visualizeAttachedObject();
-		}
-
-		colmap_mutex_.unlock();
-	}
-
+  colmap_mutex_.unlock();
 }
 
 void Sbpl3DNavPlanner::jointStatesCallback(const sensor_msgs::JointStateConstPtr &state)
@@ -392,7 +383,7 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
   // add object
   else if(attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::ADD)
   {
-    ROS_DEBUG("[3dnav] Received a message to ADD an object (%s) with %d shapes.", attached_object->object.id.c_str(), int(attached_object->object.shapes.size()));
+    ROS_INFO("[3dnav] Received a message to ADD an object (%s) with %d shapes.", attached_object->object.id.c_str(), int(attached_object->object.shapes.size()));
     object_map_[attached_object->object.id] = attached_object->object;
     attachObject(attached_object->object, attached_object->link_name);
   }
@@ -404,22 +395,28 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
     // have we seen this collision object before?
     if(object_map_.find(attached_object->object.id) != object_map_.end())
     {
-      ROS_DEBUG("[3dnav] We have seen this object (%s) before.", attached_object->object.id.c_str());
+      ROS_INFO("[3dnav] We have seen this object (%s) before (it's in my internal object map).", attached_object->object.id.c_str());
       attachObject(object_map_.find(attached_object->object.id)->second, attached_object->link_name);
     }
     else
     {
-      ROS_DEBUG("[3dnav] We have NOT seen this object (%s) before.", attached_object->object.id.c_str());
+      ROS_INFO("[3dnav] We have NOT seen this object (%s) before (it's not in my internal object map).", attached_object->object.id.c_str());
+      if(attached_object->object.shapes.empty())
+      {
+        ROS_WARN("[3dnav] '%s' is not in my internal object map and the message doesn't contain any shapes. Can't attach it.", attached_object->object.id.c_str());
+        return;
+      }
       object_map_[attached_object->object.id] = attached_object->object;
       attachObject(attached_object->object, attached_object->link_name);
     }
+    ROS_INFO("[3dnav] Just attached '%s', now I'll remove it from the world.", attached_object->object.id.c_str());
     cspace_->removeCollisionObject(attached_object->object);
-    ROS_WARN("[3dnav] Just did an 'attach & remove' object operation. Did the map update?");
+    ROS_WARN("[3dnav] Just did an 'attach & remove' object operation. Did the distance field visualization update?");
   }
   // remove object
   else if(attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::REMOVE)
   {
-    ROS_DEBUG("[3dnav] Removing object (%s) from gripper.", attached_object->object.id.c_str());
+    ROS_INFO("[3dnav] Removing object (%s) from gripper.", attached_object->object.id.c_str());
     cspace_->removeAttachedObject(attached_object->object.id);
     visualizeAttachedObject(true);
   }
@@ -443,7 +440,7 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
     }
     //visualize exact collision object
     visualizeCollisionObject(attached_object->object);
-    ROS_WARN("[3dnav] Just did an 'attach & remove' object operation. Did the map update?");
+    ROS_WARN("[3dnav] Just did a 'detach & add' object operation. Did the distance field visualization update?");
   }
   else
     ROS_WARN("[3dnav] Received a collision object with an unknown operation");
