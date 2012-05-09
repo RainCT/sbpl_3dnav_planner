@@ -384,7 +384,7 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
   if(attached_object->link_name.compare(arm_navigation_msgs::AttachedCollisionObject::REMOVE_ALL_ATTACHED_OBJECTS) == 0 &&
       attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::REMOVE)
   {
-    ROS_DEBUG("[3dnav] Removing all attached objects.");
+    ROS_INFO("[3dnav] Removing all attached objects.");
     attached_object_ = false;
     cspace_->removeAllAttachedObjects();
     visualizeAttachedObject(true);
@@ -393,6 +393,7 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
   else if(attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::ADD)
   {
     ROS_DEBUG("[3dnav] Received a message to ADD an object (%s) with %d shapes.", attached_object->object.id.c_str(), int(attached_object->object.shapes.size()));
+    object_map_[attached_object->object.id] = attached_object->object;
     attachObject(attached_object->object, attached_object->link_name);
   }
   // attach object and remove it from collision space
@@ -403,13 +404,12 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
     // have we seen this collision object before?
     if(object_map_.find(attached_object->object.id) != object_map_.end())
     {
-      ROS_INFO("[3dnav] We have seen this object (%s) before.", attached_object->object.id.c_str());
-      ROS_WARN("[3dnav] Attached objects we have seen before are not handled correctly right now.");
+      ROS_DEBUG("[3dnav] We have seen this object (%s) before.", attached_object->object.id.c_str());
       attachObject(object_map_.find(attached_object->object.id)->second, attached_object->link_name);
     }
     else
     {
-      ROS_INFO("[3dnav] We have NOT seen this object (%s) before.", attached_object->object.id.c_str());
+      ROS_DEBUG("[3dnav] We have NOT seen this object (%s) before.", attached_object->object.id.c_str());
       object_map_[attached_object->object.id] = attached_object->object;
       attachObject(attached_object->object, attached_object->link_name);
     }
@@ -423,16 +423,32 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
     cspace_->removeAttachedObject(attached_object->object.id);
     visualizeAttachedObject(true);
   }
+  // detach and add as object
   else if(attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::DETACH_AND_ADD_AS_OBJECT)
   {
-    attached_object_ = false;
-    ROS_DEBUG("[3dnav] Removing object (%s) from gripper and adding to collision map.", attached_object->object.id.c_str());
+    ROS_INFO("[3dnav] Removing object (%s) from gripper and adding to collision map.", attached_object->object.id.c_str());
     cspace_->removeAttachedObject(attached_object->object.id);
-    cspace_->addCollisionObject(attached_object->object);
+    //sometimes people are lazy and they don't fill in the object's
+    //description. in those cases - we have to depend on our stored
+    //description of the object to be added. if we can't find it in our
+    //object map, we hope that they added in a description themselves.
+    if(object_map_.find(attached_object->object.id) != object_map_.end())
+    {
+      cspace_->addCollisionObject(object_map_.find(attached_object->object.id)->second);
+    }
+    else
+    {
+      object_map_[attached_object->object.id] = attached_object->object;
+      cspace_->addCollisionObject(attached_object->object);
+    }
+    //visualize exact collision object
+    visualizeCollisionObject(attached_object->object);
     ROS_WARN("[3dnav] Just did an 'attach & remove' object operation. Did the map update?");
   }
   else
     ROS_WARN("[3dnav] Received a collision object with an unknown operation");
+
+  attached_object_ = cspace_->isObjectAttached();
 }
 
 void Sbpl3DNavPlanner::attachObject(const arm_navigation_msgs::CollisionObject &obj, std::string link_name)
@@ -444,21 +460,23 @@ void Sbpl3DNavPlanner::attachObject(const arm_navigation_msgs::CollisionObject &
 
   for(size_t i = 0; i < object.shapes.size(); i++)
   {
+    // transform the object's pose into the link_name's pose
+    // (we know that that link must be on the robot)
     pose_in.header = object.header;
     pose_in.header.stamp = ros::Time();
     pose_in.pose = object.poses[i];
     try
     {
-      tf_.transformPose(cspace_->getExpectedAttachedObjectFrame(object.header.frame_id), pose_in, pose_out);
+      tf_.transformPose(cspace_->getExpectedAttachedObjectFrame(link_name), pose_in, pose_out);
     }
     catch(int e)
     {
-      ROS_ERROR("[3dnav] Failed to transform the pose of the attached object from %s to %s. (exception: %d)", object.header.frame_id.c_str(), cspace_->getExpectedAttachedObjectFrame(object.header.frame_id).c_str(), e);
+      ROS_ERROR("[3dnav] Failed to transform the pose of the attached object from %s to %s. (exception: %d)", object.header.frame_id.c_str(), cspace_->getExpectedAttachedObjectFrame(link_name).c_str(), e);
       ROS_ERROR("[3dnav] Failed to attach '%s' object.", object.id.c_str());
       return;
     }
     object.poses[i] = pose_out.pose;
-    ROS_WARN("[3dnav] Converted attached object pose of '%s' shape from %s (%0.2f %0.2f %0.2f) to %s (%0.3f %0.3f %0.3f)", obj.id.c_str(), pose_in.header.frame_id.c_str(), pose_in.pose.position.x, pose_in.pose.position.y, pose_in.pose.position.z, pose_out.header.frame_id.c_str(), pose_out.pose.position.x, pose_out.pose.position.y, pose_out.pose.position.z);
+    ROS_INFO("[3dnav] Converted attached object pose of '%s' shape from %s (%0.2f %0.2f %0.2f) to %s (%0.3f %0.3f %0.3f)", obj.id.c_str(), pose_in.header.frame_id.c_str(), pose_in.pose.position.x, pose_in.pose.position.y, pose_in.pose.position.z, pose_out.header.frame_id.c_str(), pose_out.pose.position.x, pose_out.pose.position.y, pose_out.pose.position.z);
 
     if(object.shapes[i].type == arm_navigation_msgs::Shape::SPHERE)
     {
