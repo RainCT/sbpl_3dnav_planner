@@ -749,3 +749,186 @@ bool sbpl_geometry_utils::getTrianglesFromMeshFile(std::string mesh_file, std::v
   return true;
 }
 
+void sbpl_geometry_utils::voxelizeMesh(const std::vector<geometry_msgs::Point>& vertices,
+                                                    const std::vector<int>& triangles,
+                                                    double radius, std::vector<btVector3>& voxels, 
+                                                    bool fillMesh)
+{
+	double voxelLength = sqrt(2.0) * radius;
+
+	voxels.clear();
+
+	double minX, minY, minZ;
+	double maxX, maxY, maxZ;
+	if(!getAxisAlignedBoundingBox(vertices, minX, minY, minZ, maxX, maxY, maxZ))
+	{
+		return;
+	}
+
+	// get the grid coordinates of the bounding voxel grid
+	int minVoxelX = (int)floor(minX / voxelLength);
+	int maxVoxelX = (int)floor(maxX / voxelLength);
+	int minVoxelY = (int)floor(minY / voxelLength);
+	int maxVoxelY = (int)floor(maxY / voxelLength);
+	int minVoxelZ = (int)floor(minZ / voxelLength);
+	int maxVoxelZ = (int)floor(maxZ / voxelLength);
+
+	int numVoxelsX = maxVoxelX - minVoxelX + 1;
+	int numVoxelsY = maxVoxelY - minVoxelY + 1;
+	int numVoxelsZ = maxVoxelZ - minVoxelZ + 1;
+
+	// Initialize the voxel grid
+	std::vector<std::vector<std::vector<bool> > > voxelGrid(numVoxelsX);
+	for(int i = 0; i < numVoxelsX; i++)
+	{
+		voxelGrid[i].resize(numVoxelsY);
+		for(int j = 0; j < numVoxelsY; j++)
+		{
+			voxelGrid[i][j].resize(numVoxelsZ);
+			for(int k = 0; k < numVoxelsZ; k++)
+			{
+				voxelGrid[i][j][k] = false;
+			}
+		}
+	}
+	
+	// create a mesh for the voxel grid surrounding the mesh
+	std::vector<Triangle> entireVoxelMesh;
+	for (int i = 0; i < numVoxelsX; i++) {
+		for (int j = 0; j < numVoxelsY; j++) {
+			for (int k = 0; k < numVoxelsZ; k++) {
+				// Get the world coordinate of the voxel from its indices in the graph
+				double voxelCenterX = (i + minVoxelX) * voxelLength + 0.5 * voxelLength;
+				double voxelCenterY = (j + minVoxelY) * voxelLength + 0.5 * voxelLength;
+				double voxelCenterZ = (k + minVoxelZ) * voxelLength + 0.5 * voxelLength;
+
+				std::vector<Triangle> voxelMesh;
+				createCubeMesh(voxelCenterX, voxelCenterY, voxelCenterZ, voxelLength, voxelMesh);
+				for (unsigned ii = 0; ii < voxelMesh.size(); ii++) {
+					entireVoxelMesh.push_back(voxelMesh[ii]); // add these triangles to the full voxel mesh
+				}
+			}
+		}
+	}
+
+	if ((int)triangles.size() % 3 != 0) {
+		ROS_ERROR("Mesh triangle list is not well-formed. Triangle list size should be a multiple of three.");
+		return;
+	}
+
+	 // for every triangle
+	for(int triangleIdx = 0; triangleIdx < (int)triangles.size(); triangleIdx += 3)
+	{
+		// get the vertices of the triangle as geometry_msgs::Point
+		const geometry_msgs::Point& pt1 = vertices[triangles[triangleIdx + 0]];
+		const geometry_msgs::Point& pt2 = vertices[triangles[triangleIdx + 1]];
+		const geometry_msgs::Point& pt3 = vertices[triangles[triangleIdx + 2]];
+
+		// pack those vertices into my Triangle struct
+		Triangle triangle;
+		triangle.p1.x = pt1.x; triangle.p1.y = pt1.y; triangle.p1.z = pt1.z;
+		triangle.p2.x = pt2.x; triangle.p2.y = pt2.y; triangle.p2.z = pt2.z;
+		triangle.p3.x = pt3.x; triangle.p3.y = pt3.y; triangle.p3.z = pt3.z;
+
+		// get the bounding voxelsx of the triangle
+		double triMinX, triMinY, triMinZ, triMaxX, triMaxY, triMaxZ;
+		std::vector<geometry_msgs::Point> triPointV;
+		triPointV.push_back(pt1); triPointV.push_back(pt2); triPointV.push_back(pt3);
+		if (!getAxisAlignedBoundingBox(triPointV, triMinX, triMinY, triMinZ, triMaxX, triMaxY, triMaxZ)) {
+			continue; // just skip this triangle; it's bogus
+		}
+		// shift all the voxels over to be aligned with the memory grid
+		int triMinVoxelX = floor(triMinX / voxelLength) - minVoxelX;
+		int triMinVoxelY = floor(triMinY / voxelLength) - minVoxelY;
+		int triMinVoxelZ = floor(triMinZ / voxelLength) - minVoxelZ;
+		int triMaxVoxelX = floor(triMaxX / voxelLength) - minVoxelX;
+		int triMaxVoxelY = floor(triMaxY / voxelLength) - minVoxelY;
+		int triMaxVoxelZ = floor(triMaxZ / voxelLength) - minVoxelZ;
+
+		// for every voxel in the voxel mesh i've constructed
+		for (unsigned a = 0; a < entireVoxelMesh.size(); a++) {
+			int voxelNum = a / 12; // there are 12 mesh triangles per voxel
+			int i = (voxelNum / (numVoxelsZ * numVoxelsY)) % numVoxelsX;
+			int j = (voxelNum / numVoxelsZ) % numVoxelsY;
+			int k = voxelNum % numVoxelsZ;
+			// if not already filled, is in the bounding voxel grid of the triangle, and this voxel mesh
+			// triangle intersects the current triangle, fill in the voxel
+			if (!voxelGrid[i][j][k] &&
+				isInDiscreteBoundingBox(i, j, k, triMinVoxelX, triMinVoxelY, triMinVoxelZ, triMaxVoxelX, triMaxVoxelY, triMaxVoxelZ) &&
+				intersects(triangle, entireVoxelMesh[a]))
+			{
+					voxelGrid[i][j][k] = true;
+			}
+		}
+	}
+
+	// fill the mesh by scanning lines in the voxel outline grid
+	if(fillMesh)
+	{
+		for(int i = 0; i < numVoxelsX; i++)
+		{
+			for(int j = 0; j < numVoxelsY; j++)
+			{
+				const int OUTSIDE = 0, ON_BOUNDARY_FROM_OUTSIDE = 1, INSIDE = 2, ON_BOUNDARY_FROM_INSIDE = 4;
+				int scanState = OUTSIDE;
+
+				for(int k = 0; k < numVoxelsZ; k++)
+				{
+					if(scanState == OUTSIDE && voxelGrid[i][j][k])
+					{
+						scanState = ON_BOUNDARY_FROM_OUTSIDE;
+					}
+					else if(scanState == ON_BOUNDARY_FROM_OUTSIDE && !voxelGrid[i][j][k])
+					{
+						bool allEmpty = true;
+						for(int l = k; l < numVoxelsZ; l++)
+						{
+							allEmpty &= !voxelGrid[i][j][l];
+						}
+						if(allEmpty)
+						{
+							scanState = OUTSIDE;
+						}
+						else
+						{
+							scanState = INSIDE;
+							voxelGrid[i][j][k] = true;
+						}
+					}
+					else if(scanState == INSIDE && !voxelGrid[i][j][k])
+					{
+						voxelGrid[i][j][k] = true;
+					}
+					else if(scanState == INSIDE && voxelGrid[i][j][k])
+					{
+						scanState = ON_BOUNDARY_FROM_INSIDE;
+					}
+					else if(scanState == ON_BOUNDARY_FROM_INSIDE && !voxelGrid[i][j][k])
+					{
+						scanState = OUTSIDE;
+					}
+				}
+			}
+		}
+	}
+
+	// push back all the voxels corresponding to filled voxels
+  btVector3 v;
+	for(int i = 0; i < numVoxelsX; i++)
+	{
+		for(int j = 0; j < numVoxelsY; j++)
+		{
+			for(int k = 0; k < numVoxelsZ; k++)
+			{
+				if(voxelGrid[i][j][k])
+				{
+					v.setX((i + minVoxelX) * voxelLength + 0.5 * voxelLength);
+					v.setY((j + minVoxelY) * voxelLength + 0.5 * voxelLength);
+					v.setZ((k + minVoxelZ) * voxelLength + 0.5 * voxelLength);
+				  voxels.push_back(v);
+				}
+			}
+		}
+	}
+}
+

@@ -8,6 +8,7 @@
 #include <string>
 #include <geometry_msgs/Point.h>
 #include <geometric_shapes/shape_operations.h>
+#include <LinearMath/btVector3.h>
 
 namespace sbpl_geometry_utils
 {
@@ -65,6 +66,11 @@ void getEnclosingSpheresOfMesh(const std::vector<geometry_msgs::Point>& vertices
                                bool fillMesh = false);
 
 bool getTrianglesFromMeshFile(std::string mesh_file, std::vector<int32_t> &triangles, std::vector<geometry_msgs::Point> &vertices);
+
+void voxelizeMesh(const std::vector<geometry_msgs::Point>& vertices,
+                  const std::vector<int>& triangles,
+                  double radius, std::vector<btVector3>& voxels,
+                  bool fillMesh = false);
 
 } // namespace sbpl_geometry_utils
 #endif
