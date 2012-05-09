@@ -504,7 +504,7 @@ void Sbpl3DNavPlanner::attachObject(const arm_navigation_msgs::CollisionObject &
     else if(object.shapes[i].type == arm_navigation_msgs::Shape::MESH)
     {
       ROS_INFO("[3dnav] Attaching a '%s' mesh with %d triangles/3  & %d vertices.", object.id.c_str(), int(object.shapes[i].triangles.size()/3), int(object.shapes[i].vertices.size()));
-      cspace_->attachMesh(object.id, object.header.frame_id, object.poses[i], object.shapes[i].vertices, object.shapes[i].triangles);
+      cspace_->attachMesh(object.id, link_name, object.poses[i], object.shapes[i].vertices, object.shapes[i].triangles);
     }
     else if(object.shapes[i].type == arm_navigation_msgs::Shape::BOX)
     {
