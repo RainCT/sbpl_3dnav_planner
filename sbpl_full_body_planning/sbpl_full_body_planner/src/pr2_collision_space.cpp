@@ -851,7 +851,7 @@ void PR2CollisionSpace::addCollisionObject(const arm_navigation_msgs::CollisionO
       ROS_DEBUG_NAMED(cspace_log_,"[%s] occupies %d voxels.",object.id.c_str(), int(object_voxel_map_[object.id].size()));
     }
     else
-      ROS_WARN("Collision objects of type %d are not yet supported.", object.shapes[i].type);
+      ROS_WARN("[cspace] Collision objects of type %d are not yet supported. (Only boxes)", object.shapes[i].type);
   }
 
   // add this object to list of objects that get added to grid
@@ -865,7 +865,7 @@ void PR2CollisionSpace::addCollisionObject(const arm_navigation_msgs::CollisionO
     known_objects_.push_back(object.id);
 
   grid_->addPointsToField(object_voxel_map_[object.id]);
-  ROS_INFO("[cspace] Just added %s to the distance field.", object.id.c_str());
+  ROS_INFO("[cspace] Just added %s to the distance field, represented as %d voxels.", object.id.c_str(), int(object_voxel_map_[object.id].size()));
 }
 
 void PR2CollisionSpace::getCollisionObjectVoxelPoses(std::vector<geometry_msgs::Pose> &points)
