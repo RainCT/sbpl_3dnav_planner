@@ -819,11 +819,13 @@ void PR2CollisionSpace::processCollisionObjectMsg(const arm_navigation_msgs::Col
   }
   else if(object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::DETACH_AND_ADD_AS_OBJECT)
   {
+    // This option should never be used.
     object_map_[object.id] = object;
     addCollisionObject(object);
   }
   else if(object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::ATTACH_AND_REMOVE_AS_OBJECT)
   {
+    //This option should never be used.
     //TODO: Attach to gripper
     removeCollisionObject(object);
   }
@@ -895,8 +897,15 @@ void PR2CollisionSpace::removeCollisionObject(const arm_navigation_msgs::Collisi
     {
       known_objects_.erase(known_objects_.begin() + i);
       object_voxel_map_[object.id].clear();
-      ROS_DEBUG("[removeCollisionObject] Removing %s from list of known objects.", object.id.c_str());
+      ROS_INFO("[cspace] Removing %s from list of known collision objects.", object.id.c_str());
+      break;
     }
+  }
+  // reset the map, add all the known objects again
+  grid_->updateFromCollisionMap(last_collision_map_);
+  for(size_t i = 0; i < known_objects_.size(); ++i)
+  {
+    grid_->addPointsToField(object_voxel_map_[known_objects_[i]]);
   }
 }
 
@@ -2163,6 +2172,11 @@ bool PR2CollisionSpace::isObjectAttached()
     return false;
   else
     return true;
+}
+
+void PR2CollisionSpace::storeCollisionMap(const arm_navigation_msgs::CollisionMap &collision_map)
+{
+  last_collision_map_ = collision_map;
 }
 
 }

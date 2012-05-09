@@ -229,6 +229,8 @@ class PR2CollisionSpace
 
     bool isObjectAttached();
 
+    void storeCollisionMap(const arm_navigation_msgs::CollisionMap &collision_map);
+
   private:
 
     /** @brief arm model used by planner */
@@ -318,6 +320,8 @@ class PR2CollisionSpace
 
     bool getAttachedFrameInfo(std::string frame, int &segment, int &chain);
     int getSegmentIndex(std::string &name, KDL::Chain &chain);
+
+    arm_navigation_msgs::CollisionMap last_collision_map_;
 };
 
 inline bool PR2CollisionSpace::isValidCell(const int x, const int y, const int z, const int radius)
