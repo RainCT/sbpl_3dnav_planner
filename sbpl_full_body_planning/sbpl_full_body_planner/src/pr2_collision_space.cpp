@@ -850,6 +850,28 @@ void PR2CollisionSpace::addCollisionObject(const arm_navigation_msgs::CollisionO
       ROS_DEBUG_NAMED(cspace_log_,"[%s] %s: xyz: %0.3f %0.3f %0.3f   quat: %0.3f %0.3f %0.3f %0.3f", object.id.c_str(), grid_->getReferenceFrame().c_str(), pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
       ROS_DEBUG_NAMED(cspace_log_,"[%s] occupies %d voxels.",object.id.c_str(), int(object_voxel_map_[object.id].size()));
     }
+    else if(object.shapes[i].type == arm_navigation_msgs::Shape::MESH)
+    {
+      transformPose(object.header.frame_id, grid_->getReferenceFrame(), object.poses[i], pose);
+      object_voxel_map_[object.id].clear();
+      sbpl_geometry_utils::voxelizeMesh(object.shapes[i].vertices, object.shapes[i].triangles, 0.02, object_voxel_map_[object.id], true);
+
+      // transform voxels in mesh frame into the world frame
+      btVector3 v(pose.position.x, pose.position.y, pose.position.z);
+      btMatrix3x3 m(btQuaternion(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w));
+      //btTransform trans = Transform(Quaternion(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w), Vector3(pose.position.x, pose.position.y, pose.position.z));
+      for(size_t j = 0; j <  object_voxel_map_[object.id].size(); ++j)
+      {
+        object_voxel_map_[object.id][j] = m *  object_voxel_map_[object.id][j];
+        object_voxel_map_[object.id][j] += v;
+      }
+
+      ROS_DEBUG_NAMED(cspace_log_,"[%s] TransformPose from %s to %s.", object.id.c_str(), object.header.frame_id.c_str(), grid_->getReferenceFrame().c_str());
+      ROS_DEBUG_NAMED(cspace_log_,"[%s] %s: xyz: %0.3f %0.3f %0.3f   quat: %0.3f %0.3f %0.3f %0.3f", object.id.c_str(), object.header.frame_id.c_str(), object.poses[i].position.x,  object.poses[i].position.y, object.poses[i].position.z, object.poses[i].orientation.x, object.poses[i].orientation.y, object.poses[i].orientation.z,object.poses[i].orientation.w);
+      ROS_DEBUG_NAMED(cspace_log_,"[%s] %s: xyz: %0.3f %0.3f %0.3f   quat: %0.3f %0.3f %0.3f %0.3f", object.id.c_str(), grid_->getReferenceFrame().c_str(), pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+      ROS_DEBUG_NAMED(cspace_log_,"[%s] occupies %d voxels.",object.id.c_str(), int(object_voxel_map_[object.id].size()));
+    }
+
     else
       ROS_WARN("[cspace] Collision objects of type %d are not yet supported. (Only boxes)", object.shapes[i].type);
   }
