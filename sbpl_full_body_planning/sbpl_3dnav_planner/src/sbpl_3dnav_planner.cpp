@@ -377,8 +377,9 @@ void Sbpl3DNavPlanner::jointStatesCallback(const sensor_msgs::JointStateConstPtr
 void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::AttachedCollisionObjectConstPtr &attached_object)
 {
   // remove all objects
-  if(attached_object->link_name.compare(arm_navigation_msgs::AttachedCollisionObject::REMOVE_ALL_ATTACHED_OBJECTS) == 0 &&
-      attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::REMOVE)
+  /*if(attached_object->link_name.compare(arm_navigation_msgs::AttachedCollisionObject::REMOVE_ALL_ATTACHED_OBJECTS) == 0)*/
+  if(attached_object->link_name.compare("all") == 0)/* &&
+      attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::REMOVE) */
   {
     ROS_INFO("[3dnav] Removing all attached objects.");
     attached_object_ = false;
@@ -396,7 +397,6 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
   else if(attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::ATTACH_AND_REMOVE_AS_OBJECT)
   {
     ROS_INFO("[3dnav] Received a message to ATTACH_AND_REMOVE_AS_OBJECT of object: %s", attached_object->object.id.c_str());
-
     // have we seen this collision object before?
     if(object_map_.find(attached_object->object.id) != object_map_.end())
     {
@@ -429,8 +429,11 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
   // detach and add as object
   else if(attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::DETACH_AND_ADD_AS_OBJECT)
   {
-    ROS_INFO("[3dnav] Removing object (%s) from gripper and adding to collision map.", attached_object->object.id.c_str());
+    ROS_INFO("[3dnav] Received a message to DETACH_AND_ADD_AS_OBJECT of object: %s", attached_object->object.id.c_str());
+    //ROS_INFO("[3dnav] Removing object (%s) from gripper and adding to collision map.", attached_object->object.id.c_str());
     cspace_->removeAttachedObject(attached_object->object.id);
+    attached_object_ = cspace_->isObjectAttached();
+    visualizeAttachedObject(true);
     //sometimes people are lazy and they don't fill in the object's
     //description. in those cases - we have to depend on our stored
     //description of the object to be added. if we can't find it in our
@@ -453,6 +456,7 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
     //visualize exact collision object
     //visualizeCollisionObject(attached_object->object);
     visualizeCollisionObjects(true);
+    grid_->visualize();
   }
   else
     ROS_WARN("[3dnav] Received a collision object with an unknown operation");
