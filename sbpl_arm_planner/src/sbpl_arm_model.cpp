@@ -1092,4 +1092,15 @@ int SBPLArmModel::getJointLimitDebugCode(const int &joint)
 }
 */
 
+int SBPLArmModel::getSegmentIndex(std::string &name)
+{
+  for(size_t k = 0; k < chain_.getNrOfSegments(); ++k)
+  {
+    if(chain_.getSegment(k).getName().compare(name) == 0)
+      return k;
+  }
+  ROS_DEBUG("[arm] Failed to find %s segment in the chain.", name.c_str());
+  return -1;
+}
+
 }

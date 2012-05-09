@@ -217,6 +217,8 @@ class SBPLArmModel{
 
     //int getJointLimitDebugCode(const int &joint);
 
+    int getSegmentIndex(std::string &name);
+
   private:
 
     /** \brief a string containing the URDF that describes the robot arm */
