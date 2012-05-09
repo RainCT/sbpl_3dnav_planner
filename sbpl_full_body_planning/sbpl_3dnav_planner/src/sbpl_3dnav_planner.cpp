@@ -431,10 +431,16 @@ void Sbpl3DNavPlanner::attachedObjectCallback(const arm_navigation_msgs::Attache
     //object map, we hope that they added in a description themselves.
     if(object_map_.find(attached_object->object.id) != object_map_.end())
     {
+      ROS_INFO("[3dnav] Detached '%s' and now I'll add it as a known collision object. The message does not contain its description but I had it stored so I know what it is.", attached_object->object.id.c_str());
       cspace_->addCollisionObject(object_map_.find(attached_object->object.id)->second);
     }
     else
     {
+      if(attached_object->object.shapes.empty())
+      {
+        ROS_WARN("[3dnav] '%s' was attached and now you want to add it as a collision object. Unfortunatly the message does not contain its decription and I don't have it in my internal database for some reason so I can't attach it. This is probably a bug.", attached_object->object.id.c_str());
+        return;
+      }
       object_map_[attached_object->object.id] = attached_object->object;
       cspace_->addCollisionObject(attached_object->object);
     }
