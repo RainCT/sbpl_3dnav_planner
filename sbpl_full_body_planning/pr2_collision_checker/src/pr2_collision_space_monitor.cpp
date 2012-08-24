@@ -37,8 +37,6 @@ PR2CollisionSpaceMonitor::PR2CollisionSpaceMonitor(sbpl_arm_planner::OccupancyGr
 	node_handle_("~"),
 	collision_map_filter_(NULL),
 	collision_map_subscriber_(root_handle_, "collision_map_occ", 1),
-	laviz_(NULL),
-	raviz_(NULL),
 	attached_object_(false),
 	map_frame_("map")
 {
@@ -70,8 +68,6 @@ PR2CollisionSpaceMonitor::PR2CollisionSpaceMonitor(sbpl_arm_planner::OccupancyGr
 
 PR2CollisionSpaceMonitor::~PR2CollisionSpaceMonitor()
 {
-	if (laviz_ != NULL) delete laviz_;
-	if (raviz_ != NULL) delete raviz_;
 	if (collision_map_filter_ != NULL) delete collision_map_filter_;
 }
 
@@ -91,12 +87,7 @@ bool PR2CollisionSpaceMonitor::init()
 	collision_object_subscriber_ = root_handle_.subscribe("collision_object", 1, &PR2CollisionSpaceMonitor::collisionObjectCallback, this);
 	object_subscriber_ = root_handle_.subscribe("attached_collision_object", 1, &PR2CollisionSpaceMonitor::attachedObjectCallback, this);
 
-  laviz_ = new sbpl_full_body_planner::VisualizeArm(std::string("left_arm"));
-	raviz_ = new sbpl_full_body_planner::VisualizeArm(std::string("right_arm"));
-	laviz_->setReferenceFrame(reference_frame_);
-	raviz_->setReferenceFrame(reference_frame_);
-
-	ROS_INFO("[cspace] The PR2 Collision Space Monitor is ready to rock.");
+  ROS_INFO("[cspace] The PR2CollisionSpaceMonitor is ready to rock.");
 	return true;
 }
 
@@ -109,8 +100,13 @@ void PR2CollisionSpaceMonitor::collisionMapCallback(const arm_navigation_msgs::C
     ROS_WARN("[cspace] The collision map received is in %s frame but expected in %s frame.", collision_map->header.frame_id.c_str(), reference_frame_.c_str());
   }
 
-  grid_->updateFromCollisionMap(*collision_map);
+  // add collision map msg
+  if (use_collision_map_from_sensors_) {
+    grid_->updateFromCollisionMap(*collision_map);
+  }
 
+  last_collision_map_ = *collision_map;
+  cspace_->storeCollisionMap(*collision_map);
   map_frame_ = collision_map->header.frame_id;
   setKinematicsToReferenceTransform(map_frame_);
 
@@ -130,7 +126,19 @@ void PR2CollisionSpaceMonitor::collisionObjectCallback(const arm_navigation_msgs
   else
     ROS_DEBUG("[cspace] We have NOT seen this object ('%s') before.", collision_object->id.c_str());
 
-  object_map_[collision_object->id] = (*collision_object);
+  // add the object to our internal map for later attaching
+  // make sure to transform the poses into the correct frame
+  arm_navigation_msgs::CollisionObject obj = *collision_object;
+  obj.header.stamp = ros::Time(0);
+  for (unsigned int i = 0; i < obj.poses.size(); i++) {
+    geometry_msgs::PoseStamped ps;
+    ps.header = obj.header;
+    ps.pose = obj.poses[i];
+    tf_.transformPose("map", ps, ps);
+    obj.poses[i] = ps.pose;
+  }
+  obj.header.frame_id = "map";
+  object_map_[collision_object->id] = obj;
 
   ROS_DEBUG("[cspace] %s", collision_object->id.c_str());
   cspace_->processCollisionObjectMsg(*collision_object);
@@ -139,7 +147,7 @@ void PR2CollisionSpaceMonitor::collisionObjectCallback(const arm_navigation_msgs
   visualizeCollisionObject(*collision_object);
 
   //visualize collision voxels
-  //visualizeCollisionObjects();
+  //visualizeCollisionObjects(true);
 
   if (attached_object_)
     visualizeAttachedObject();
@@ -213,7 +221,8 @@ void PR2CollisionSpaceMonitor::attachedObjectCallback(const arm_navigation_msgs:
   // add object
   else if(attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::ADD)
   {
-    ROS_DEBUG("[cspace] Received a message to ADD an object (%s) with %d shapes.", attached_object->object.id.c_str(), int(attached_object->object.shapes.size()));
+    ROS_INFO("[cspace] Received a message to ADD an object (%s) with %d shapes.", attached_object->object.id.c_str(), int(attached_object->object.shapes.size()));
+    object_map_[attached_object->object.id] = attached_object->object;
     attachObject(attached_object->object, attached_object->link_name);
   }
   // attach object and remove it from collision space
@@ -230,12 +239,19 @@ void PR2CollisionSpaceMonitor::attachedObjectCallback(const arm_navigation_msgs:
     }
     else
     {
-      ROS_INFO("[cspace] We have NOT seen this object (%s) before.", attached_object->object.id.c_str());
+      ROS_INFO("[cspace] We have NOT seen this object (%s) before (it's not in my internal object map).", attached_object->object.id.c_str());
+      if(attached_object->object.shapes.empty())
+      {
+        ROS_WARN("[cspace] '%s' is not in my internal object map and the message doesn't contain any shapes. Can't attach it.", attached_object->object.id.c_str());
+        return;
+      }
       object_map_[attached_object->object.id] = attached_object->object;
       attachObject(attached_object->object, attached_object->link_name);
     }
+    ROS_INFO("[3dnav] Just attached '%s', now I'll remove it from the world.", attached_object->object.id.c_str());
     cspace_->removeCollisionObject(attached_object->object);
-    ROS_WARN("[cspace] Just did an 'attach & remove' object operation. Did the map update?");
+    visualizeCollisionObjects(true);
+    grid_->visualize();
   }
   // remove object
   else if(attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::REMOVE)
@@ -244,16 +260,42 @@ void PR2CollisionSpaceMonitor::attachedObjectCallback(const arm_navigation_msgs:
     cspace_->removeAttachedObject(attached_object->object.id);
     visualizeAttachedObject(true);
   }
+  // detach and add as object
   else if(attached_object->object.operation.operation == arm_navigation_msgs::CollisionObjectOperation::DETACH_AND_ADD_AS_OBJECT)
   {
     attached_object_ = false;
     ROS_DEBUG("[cspace] Removing object (%s) from gripper and adding to collision map.", attached_object->object.id.c_str());
     cspace_->removeAttachedObject(attached_object->object.id);
-    cspace_->addCollisionObject(attached_object->object);
-    ROS_WARN("[cspace] Just did an 'attach & remove' object operation. Did the map update?");
+    attached_object_ = cspace_->isObjectAttached();
+    visualizeAttachedObject(true);
+    //sometimes people are lazy and they don't fill in the object's
+    //description. in those cases - we have to depend on our stored
+    //description of the object to be added. if we can't find it in our
+    //object map, we hope that they added in a description themselves.
+    if(object_map_.find(attached_object->object.id) != object_map_.end())
+    {
+      ROS_INFO("[3dnav] Detached '%s' and now I'll add it as a known collision object. The message does not contain its description but I had it stored so I know what it is.", attached_object->object.id.c_str());
+      cspace_->addCollisionObject(object_map_.find(attached_object->object.id)->second);
+    }
+    else
+    {
+      if(attached_object->object.shapes.empty())
+      {
+        ROS_WARN("[3dnav] '%s' was attached and now you want to add it as a collision object. Unfortunatly the message does not contain its decription and I don't have it in my internal database for some reason so I can't attach it. This is probably a bug.", attached_object->object.id.c_str());
+        return;
+      }
+      object_map_[attached_object->object.id] = attached_object->object;
+      cspace_->addCollisionObject(attached_object->object);
+    }
+    //visualize exact collision object
+    //visualizeCollisionObject(attached_object->object);
+    visualizeCollisionObjects(true);
+    grid_->visualize();
   }
   else
-    ROS_WARN("[cspace] Received a collision object with an unknown operation");
+    ROS_WARN("[3dnav] Received a collision object with an unknown operation");
+
+  attached_object_ = cspace_->isObjectAttached();
 }
 
 void PR2CollisionSpaceMonitor::attachObject(const arm_navigation_msgs::CollisionObject &obj, std::string link_name)
@@ -265,12 +307,14 @@ void PR2CollisionSpaceMonitor::attachObject(const arm_navigation_msgs::Collision
 
   for(size_t i = 0; i < object.shapes.size(); i++)
   {
+    // transform the object's pose into the link_name's pose
+    // (we know that that link must be on the robot)
     pose_in.header = object.header;
     pose_in.header.stamp = ros::Time();
     pose_in.pose = object.poses[i];
     try
     {
-      tf_.transformPose(cspace_->getExpectedAttachedObjectFrame(object.header.frame_id), pose_in, pose_out);
+      tf_.transformPose(cspace_->getExpectedAttachedObjectFrame(link_name), pose_in, pose_out);
     }
     catch(int e)
     {
@@ -293,8 +337,8 @@ void PR2CollisionSpaceMonitor::attachObject(const arm_navigation_msgs::Collision
     }
     else if(object.shapes[i].type == arm_navigation_msgs::Shape::MESH)
     {
-      ROS_INFO("[cspace] Attaching a '%s' mesh with %d triangles/3  & %d vertices.", object.id.c_str(), int(object.shapes[i].triangles.size()/3), int(object.shapes[i].vertices.size()));
-      cspace_->attachMesh(object.id, object.header.frame_id, object.poses[i], object.shapes[i].vertices, object.shapes[i].triangles);
+      ROS_INFO("[3dnav] Attaching a '%s' mesh with %d triangles/3  & %d vertices.", object.id.c_str(), int(object.shapes[i].triangles.size()/3), int(object.shapes[i].vertices.size()));
+      cspace_->attachMesh(object.id, link_name, object.poses[i], object.shapes[i].vertices, object.shapes[i].triangles);
     }
     else if(object.shapes[i].type == arm_navigation_msgs::Shape::BOX)
     {
@@ -394,13 +438,17 @@ void PR2CollisionSpaceMonitor::setKinematicsToReferenceTransform(std::string &ma
 }
 
 /* Visualizations ------------------------------------------------------------*/
-void PR2CollisionSpaceMonitor::visualizeCollisionObjects()
+void PR2CollisionSpaceMonitor::visualizeCollisionObjects(bool delete_first)
 {
 	std::vector<geometry_msgs::Pose> poses;
 	std::vector<std::vector<double> > points(1, std::vector<double>(3, 0));
 	std::vector<double> color(4, 1);
 	color[2] = 0;
 
+  // first delete old visualizations
+  if(delete_first)
+    pviz_.deleteVisualizations("known_objects", 1000);
+  
 	cspace_->getCollisionObjectVoxelPoses(poses);
 
 	points.resize(poses.size());
@@ -412,7 +460,7 @@ void PR2CollisionSpaceMonitor::visualizeCollisionObjects()
 	}
 
 	ROS_DEBUG("[cspace] Displaying %d known collision object voxels.", int(points.size()));
-	laviz_->visualizeBasicStates(points, color, "known_objects", 0.01);
+	pviz_.visualizeBasicStates(points, color, "known_objects", 0.01);
 }
 
 void PR2CollisionSpaceMonitor::visualizeAttachedObject(bool delete_first)
@@ -441,27 +489,23 @@ void PR2CollisionSpaceMonitor::visualizeAttachedObject(bool delete_first)
 void PR2CollisionSpaceMonitor::visualizeCollisionObject(const arm_navigation_msgs::CollisionObject &object)
 {
 	geometry_msgs::PoseStamped pose;
-	std::vector<double> dim, color(4, 0.0);
+  std::vector<double> dim;
 
-	for (size_t i = 0; i < object.shapes.size(); ++i) {
-		if (object.shapes[i].type == arm_navigation_msgs::Shape::BOX) {
-			pose.pose = object.poses[i];
-			pose.header = object.header;
-			dim.resize(object.shapes[i].dimensions.size());
-			for (size_t j = 0; j < object.shapes[i].dimensions.size(); ++j)
-				dim[j] = object.shapes[i].dimensions[j];
+  for (size_t i = 0; i < object.shapes.size(); ++i)
+  {
+    if (object.shapes[i].type == arm_navigation_msgs::Shape::BOX)
+    {
+      pose.pose = object.poses[i];
+      pose.header = object.header;
+      dim.resize(object.shapes[i].dimensions.size());
+      for (size_t j = 0; j < object.shapes[i].dimensions.size(); ++j)
+        dim[j] = object.shapes[i].dimensions[j];
 
-			for (size_t j = 0; j < object.shapes[i].triangles.size(); ++j)
-				color[j] = double(object.shapes[i].triangles[j]) / 255.0;
-			/*
-			 //alpha shouldn't be divided by 255
-			 color[j] = double(object.shapes[i].triangles[j]);
-			 */
-			ROS_INFO("[cspace] Visualizing %s", object.id.c_str());
-			raviz_->visualizeCube(pose, color, object.id, int(i), dim);
-		}
-		else
-			ROS_WARN("[cspace] Collision objects of type %d are not yet supported.", object.shapes[i].type);
+      ROS_INFO("[cspace] Visualizing %s", object.id.c_str());
+      pviz_.visualizeCube(pose, 94, object.id, int(i), dim);
+    }
+    else
+      ROS_WARN("[cspace] Collision objects of type %d are not yet supported.", object.shapes[i].type);
 	}
 }
 
@@ -471,7 +515,7 @@ void PR2CollisionSpaceMonitor::visualizeCollisionModel(std::vector<double> &rang
   std::vector<int> hues, all_hues;
   std::string frame;
 
-  std::vector<std::string> sphere_groups(10);
+  std::vector<std::string> sphere_groups(12);
   sphere_groups[0] = "base"; 
   sphere_groups[1] = "torso_upper";
   sphere_groups[2] = "torso_lower";
@@ -482,6 +526,8 @@ void PR2CollisionSpaceMonitor::visualizeCollisionModel(std::vector<double> &rang
   sphere_groups[7] = "right_gripper";
   sphere_groups[8] = "left_forearm";
   sphere_groups[9] = "right_forearm";
+  sphere_groups[10] = "right_arm";
+  sphere_groups[11] = "left_arm";
 
   for(std::size_t i = 0; i < sphere_groups.size(); ++i)
   {
@@ -551,81 +597,6 @@ void PR2CollisionSpaceMonitor::changeLoggerLevel(std::string name, std::string l
 
 	ROS_DEBUG("[cspace] This is a debug statement, and should print if you enabled debug.");
 }
-
-/*
-void PR2CollisionSpaceMonitor::visualizeCollisions()
-{
-  double dist_m;
-  unsigned char dist = 100;
-
-  //laviz_->deleteVisualizations("text", 2);
-  laviz_->deleteVisualizations("left_arm_model_0", 70);
-  raviz_->deleteVisualizations("right_arm_model_0", 70);
-
-  if(!cspace_->isBodyValid(body_pos_.x, body_pos_.y, body_pos_.theta, body_pos_.z, dist))
-  {
-    dist_m = double(int(dist)*prms.resolution_);
-    ROS_INFO("dist = %0.3fm (%d cells)  BODY COLLISION", dist_m, int(dist));
-  }
-  else
-  { 
-    dist_m = double(int(dist)*prms.resolution_);
-    ROS_INFO("dist = %0.3fm (%d cells)  NO BODY COLLISION", dist_m, int(dist));
-  }
-
-  if(!cspace_->checkCollisionArmsToBody(langles_, rangles_, body_pos_, dist))
-  {
-    dist_m = double(int(dist)*prms.resolution_);
-    ROS_INFO("dist = %0.3fm (%d cells)  SELF COLLISION", dist_m, int(dist));
-    //printf("%s\n", cspace_->code_.c_str());
-    //laviz_->visualizeText(pose, cspace_->code_, "text",0,320);
-  }
-  else
-  {
-    dist_m = double(int(dist)*prms.resolution_);
-    ROS_INFO("dist = %0.3fm (%d cells) NO SELF COLLISION", dist_m, int(dist));
-    //laviz_->visualizeText(pose, "No Collision", "text",0,100);
-  }
-  ROS_INFO("---------------------------------------------------------");
-*/
-/*
-    printf("\n");
-    printf("right arm: ");
-    for(size_t i = 0; i < 7; ++i)
-      printf("%0.3f ", rangles_[i]);
-    printf("\n");
-
-    printf("left arm:  ");
-    for(size_t i = 0; i < 7; ++i)
-      printf("%0.3f ", langles_[i]);
-    printf("\n");
-*/
-/*
-  int debug_code;
-  if(!cspace_->checkCollision(langles_, rangles_, body_pos_, true, dist, debug_code))
-  {
-    dist_m = double(int(dist)*prms.resolution_);
-    ROS_INFO("dist = %0.3fm (%d cells)  COLLISION", dist_m, int(dist));
-    printf("%s\n", cspace_->code_.c_str());
-    laviz_->visualizeText(pose, cspace_->code_, "text",0,320);
-  }
-  else
-  {
-    dist_m = double(int(dist)*prms.resolution_);
-    ROS_INFO("dist = %0.3fm (%d cells)", dist_m, int(dist));
-    laviz_->visualizeText(pose, "No Collision", "text",0,100);
-  }
-*/
-  /*
-  std::vector<std::vector<double> > path(1,std::vector<double> (7,0));
-  path[0] = langles_;
-  laviz_->visualizeCollisionModel(path, *cspace_, 1);
-  path[0] = rangles_;
-  raviz_->visualizeCollisionModel(path, *cspace_, 1, 140);
-  */
-/*
-}
-*/
 
 }
 

@@ -8,7 +8,17 @@
         <param name="planner/left_arm_description_file" value="$(find sbpl_arm_planner)/config/pr2_left_arm.cfg"/>
         <param name="planner/right_arm_description_file" value="$(find sbpl_arm_planner)/config/pr2_right_arm.cfg"/>
 
-        <remap from="collision_map_occ" to="collision_map_out"/>
+        <param name="planner/right_arm_description_file" value="$(find sbpl_arm_planner)/config/pr2_right_arm.cfg"/>
+        
+        <param name="collision_space/resolution" value="0.02"/>
+        <param name="collision_space/reference_frame" value="map"/>
+        <param name="collision_space/occupancy_grid/origin_x" value="-3.5"/>
+        <param name="collision_space/occupancy_grid/origin_y" value="-1.2"/>
+        <param name="collision_space/occupancy_grid/origin_z" value="0.0"/>
+        <param name="collision_space/occupancy_grid/size_x" value="7.0"/>
+        <param name="collision_space/occupancy_grid/size_y" value="4.0"/>
+        <param name="collision_space/occupancy_grid/size_z" value="2.0"/>
+        <param name="visualizations/collision_model" value="true"/>
     </node>
 
 </launch>

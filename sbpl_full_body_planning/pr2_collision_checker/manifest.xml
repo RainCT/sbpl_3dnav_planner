@@ -19,7 +19,6 @@
   <depend package="pviz" />
   <depend package="trajectory_msgs" />
   <depend package="geometry_msgs" />
-  <depend package="sbpl_3dnav_planner" />
   <depend package="message_filters" />
 
   <export>

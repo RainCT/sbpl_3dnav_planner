@@ -52,7 +52,7 @@
 
 using namespace std;
 
-//static const std::string arm_side_names[2] = {"right", "left"};
+static const std::string arm_side_names[2] = {"right", "left"};
 
 namespace pr2_collision_checker
 {
@@ -60,7 +60,8 @@ namespace pr2_collision_checker
 enum Side
 {
   Right, 
-  Left
+  Left,
+  Body
 };
 
 typedef struct
@@ -191,7 +192,6 @@ class PR2CollisionSpace
     std::string code_;
     void setDebugFile(FILE* file_ptr){fOut_ = file_ptr;};
     void setDebugLogName(std::string name){cspace_log_ = name;};
-    bool getCollisionCylinders(const std::vector<double> &angles, BodyPose &pose, char i_arm, std::vector<std::vector<double> > &cylinders);
 
     /* full body planning */
     bool getCollisionLinks();
@@ -227,6 +227,10 @@ class PR2CollisionSpace
     void setKinematicsToReferenceTransform(KDL::Frame f, std::string &name);
 
     std::string getKinematicsFrame();
+
+    bool isObjectAttached();
+
+    void storeCollisionMap(const arm_navigation_msgs::CollisionMap &collision_map);
 
   private:
 
@@ -314,6 +318,11 @@ class PR2CollisionSpace
     std::string attached_object_frame_suffix_;
 
     int getAttachedObjectIndex(std::string name);
+
+    bool getAttachedFrameInfo(std::string frame, int &segment, int &chain);
+    int getSegmentIndex(std::string &name, KDL::Chain &chain);
+
+    arm_navigation_msgs::CollisionMap last_collision_map_;
 };
 
 inline bool PR2CollisionSpace::isValidCell(const int x, const int y, const int z, const int radius)

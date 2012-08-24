@@ -28,12 +28,6 @@
  */
 /** \author Benjamin Cohen */
 
-#include <iostream>
-#include <ros/ros.h>
-#include <sbpl_arm_planner/occupancy_grid.h>
-#include <sbpl_full_body_planner/pr2_collision_space.h>
-#include <sbpl_full_body_planner/sbpl_full_body_params.h>
-#include <pr2_collision_checker/pr2_collision_space.h>
 #include <pr2_collision_checker/pr2_collision_space_monitor.h>
 
 int main(int argc, char **argv)
@@ -45,16 +39,21 @@ int main(int argc, char **argv)
   FILE* rarm_fp=NULL;
   FILE* larm_fp=NULL;
   std::string reference_frame, larm_filename, rarm_filename;
-  sbpl_full_body_planner::SBPLFullBodyParams prms;
+  double originX, originY, originZ, sizeX, sizeY, sizeZ, resolution; 
   sbpl_arm_planner::SBPLArmModel *larm, *rarm;
   sbpl_arm_planner::OccupancyGrid *grid;
   pr2_collision_checker::PR2CollisionSpace *cspace;
   pr2_collision_checker::PR2CollisionSpaceMonitor *cspace_mon;
   nh.param<std::string>("planner/left_arm_description_file", larm_filename, "");
   nh.param<std::string>("planner/right_arm_description_file", rarm_filename, "");
-
-  // initialize basic sbpl arm planner parameters
-  prms.initFromParamServer();
+  nh.param("collision_space/resolution",resolution,0.02);
+  nh.param<std::string>("collision_space/reference_frame",reference_frame,"map");
+  nh.param("collision_space/occupancy_grid/origin_x",originX,-0.6);
+  nh.param("collision_space/occupancy_grid/origin_y",originY,-1.15);
+  nh.param("collision_space/occupancy_grid/origin_z",originZ,-0.05);
+  nh.param("collision_space/occupancy_grid/size_x",sizeX,1.6);
+  nh.param("collision_space/occupancy_grid/size_y",sizeY,1.8);
+  nh.param("collision_space/occupancy_grid/size_z",sizeZ,1.4);
 
   // create the left & right arm models
   if((rarm_fp=fopen(rarm_filename.c_str(),"r")) == NULL)
@@ -70,10 +69,10 @@ int main(int argc, char **argv)
   ROS_INFO("Initializing Arms");
   rarm = new sbpl_arm_planner::SBPLArmModel(rarm_fp);
   larm = new sbpl_arm_planner::SBPLArmModel(larm_fp);
-  rarm->setResolution(prms.resolution_);
-  larm->setResolution(prms.resolution_);
-  rarm->setDebugLogName(prms.arm_log_);
-  larm->setDebugLogName(prms.arm_log_);
+  rarm->setResolution(resolution);
+  larm->setResolution(resolution);
+  rarm->setDebugLogName("rarm");
+  larm->setDebugLogName("larm");
   ROS_INFO("Initialized Arms");
 
   if(!rarm->initKDLChainFromParamServer() || !larm->initKDLChainFromParamServer())
@@ -85,12 +84,12 @@ int main(int argc, char **argv)
   fclose(larm_fp);
 
   // create the occupancy grid
-  grid = new sbpl_arm_planner::OccupancyGrid(prms.sizeX_,prms.sizeY_,prms.sizeZ_, prms.resolution_,prms.originX_,prms.originY_,prms.originZ_);
-  grid->setReferenceFrame(prms.reference_frame_);
+  grid = new sbpl_arm_planner::OccupancyGrid(sizeX, sizeY, sizeZ, resolution, originX, originY, originZ);
+  grid->setReferenceFrame(reference_frame);
 
   // create the collision space
   cspace = new pr2_collision_checker::PR2CollisionSpace(rarm, larm, grid);
-  cspace->setDebugLogName(prms.cspace_log_);
+  cspace->setDebugLogName("cspace");
   if(!cspace->getSphereGroups())
   {
     ROS_ERROR("[pr2cc] Failed to get the full body spheres from the param server.");

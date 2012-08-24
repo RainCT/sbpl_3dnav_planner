@@ -29,8 +29,8 @@
 
 /** \author Benjamin Cohen  */
 
-#ifndef __PR2_COLLISION_SPACE_MONITOR_H_
-#define __PR2_COLLISION_SPACE_MONITOR_H_
+#ifndef _PR2_COLLISION_SPACE_MONITOR_H_
+#define _PR2_COLLISION_SPACE_MONITOR_H_
 
 #include <iostream>
 #include <map>
@@ -42,7 +42,6 @@
 #include <message_filters/subscriber.h>
 #include <pviz/pviz.h>
 #include <sbpl_arm_planner/body_pose.h>
-#include <sbpl_3dnav_planner/visualize_arm.h>
 #include <pr2_collision_checker/pr2_collision_space.h>
 #include <tf/tf.h>
 #include <tf/transform_listener.h>
@@ -57,13 +56,16 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <trajectory_msgs/JointTrajectoryPoint.h> 
 
+
 namespace pr2_collision_checker
 {
 
 class PR2CollisionSpaceMonitor
 {
   public:
+
     PR2CollisionSpaceMonitor(sbpl_arm_planner::OccupancyGrid *grid, pr2_collision_checker::PR2CollisionSpace *cspace);
+
     ~PR2CollisionSpaceMonitor();
 
     bool init();
@@ -71,13 +73,14 @@ class PR2CollisionSpaceMonitor
     void attachObject(const arm_navigation_msgs::CollisionObject &obj, std::string link_name);
 
     void getRobotState(BodyPose &body_pos, std::vector<double> &rangles, std::vector<double> &langles);
+    
     bool getRobotPoseFromRobotState(arm_navigation_msgs::RobotState &state, vector<double>& langles, vector<double>& rangles, BodyPose& body);
 
     /** debug output **/
     void printRobotState(std::vector<double> &rangles, std::vector<double> &langles, BodyPose &body_pos, std::string text);
 
     /** visualizations **/
-    void visualizeCollisionObjects();
+    void visualizeCollisionObjects(bool delete_first);
     void visualizeAttachedObject(bool delete_first=false);
     void visualizeCollisionObject(const arm_navigation_msgs::CollisionObject &object);
     void visualizeCollisionModel(std::vector<double> &rangles, std::vector<double> &langles, BodyPose &body_pos, std::string text);
@@ -89,14 +92,13 @@ class PR2CollisionSpaceMonitor
     ros::Subscriber joint_states_subscriber_;
     ros::Subscriber collision_object_subscriber_;
     ros::Subscriber object_subscriber_;
+    arm_navigation_msgs::CollisionMap last_collision_map_;        
     tf::MessageFilter<arm_navigation_msgs::CollisionMap>* collision_map_filter_;
     message_filters::Subscriber<arm_navigation_msgs::CollisionMap> collision_map_subscriber_;
 
     PViz pviz_;
     pr2_collision_checker::PR2CollisionSpace* cspace_;
     sbpl_arm_planner::OccupancyGrid* grid_;
-    sbpl_full_body_planner::VisualizeArm* laviz_;
-    sbpl_full_body_planner::VisualizeArm* raviz_;
     std::map<std::string, arm_navigation_msgs::CollisionObject> object_map_;
 
     /** general params **/
@@ -105,7 +107,8 @@ class PR2CollisionSpaceMonitor
     std::string reference_frame_;
     std::string collision_map_topic_;
     bool visualize_collision_model_;
-    
+    bool use_collision_map_from_sensors_;
+
     /** robot state & kinematics **/
     double torso_lift_;
     double head_pan_;
